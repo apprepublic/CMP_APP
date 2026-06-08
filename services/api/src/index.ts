@@ -18,6 +18,7 @@ import vtuRoutes from './routes/vtu.js';
 import adminRoutes from './routes/admin.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authenticate } from './middleware/auth.js';
+import { apiRateLimit, authRateLimit } from './middleware/rateLimit.js';
 
 config();
 
@@ -40,6 +41,9 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Apply rate limiting
+app.use(apiRateLimit);
+
 // Request logging
 app.use((req, res, next) => {
   const start = Date.now();
@@ -61,7 +65,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRateLimit, authRoutes);
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/wallet', authenticate, walletRoutes);
 app.use('/api/tasks', taskRoutes); // Some routes need auth, some don't
