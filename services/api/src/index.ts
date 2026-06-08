@@ -17,6 +17,7 @@ import contestRoutes from './routes/contests.js';
 import vtuRoutes from './routes/vtu.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
+import articleRoutes from './routes/articles.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authenticate } from './middleware/auth.js';
 import { apiRateLimit, authRateLimit } from './middleware/rateLimit.js';
@@ -77,6 +78,7 @@ app.use('/api/contests', contestRoutes);
 app.use('/api/vtu', authenticate, vtuRoutes);
 app.use('/api/admin', authenticate, adminRoutes);
 app.use('/api/notifications', authenticate, notificationRoutes);
+app.use('/api/articles', articleRoutes);
 
 // Error handling
 app.use(errorHandler);
