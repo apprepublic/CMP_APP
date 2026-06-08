@@ -24,3 +24,11 @@ Thumbs.db
 # Environment
 .env
 .env.local
+.env.*.local
+
+# Turbo
+.turbo/
+
+# Prisma
+*.db
+*.db-journal
