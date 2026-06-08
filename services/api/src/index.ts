@@ -18,6 +18,7 @@ import vtuRoutes from './routes/vtu.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
 import articleRoutes from './routes/articles.js';
+import webhookRoutes from './routes/webhooks.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authenticate } from './middleware/auth.js';
 import { apiRateLimit, authRateLimit } from './middleware/rateLimit.js';
@@ -65,6 +66,9 @@ app.use((req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Webhook endpoints (no auth)
+app.use('/webhooks', webhookRoutes);
 
 // API Routes
 app.use('/api/auth', authRateLimit, authRoutes);
