@@ -32,5 +32,6 @@ Thumbs.db
 # Prisma
 *.db
 *.db-journalapps/web/.next
+apps/web/.next/**
 node_modules
 .turbo
