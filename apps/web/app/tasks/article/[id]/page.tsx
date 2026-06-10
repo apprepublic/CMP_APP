@@ -1,3 +1,9 @@
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [{ id: 'demo' }];
+}
+
 'use client';
 
 import { useState, useEffect } from 'react';
