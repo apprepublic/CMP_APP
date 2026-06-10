@@ -2,6 +2,8 @@
 
 Nigeria's premier earning platform. Complete tasks, stream music, sell products, and earn CMP Coins!
 
+Built with Next.js 14, Tailwind CSS, Cloudflare Pages
+
 ## Features
 
 - **Earn Coins**: Complete daily tasks, read articles, watch videos, share content
