@@ -18,13 +18,21 @@
       "static/chunks/380-907c784523c127ac.js",
       "static/chunks/app/layout-035157c29de7d42c.js"
     ],
-    "/contests/page": [
+    "/marketplace/store/[id]/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/649-fbef8421bcd46ae8.js",
-      "static/chunks/app/contests/page-2fcdd42d03cb63af.js"
+      "static/chunks/146-32f4cd11faf54b36.js",
+      "static/chunks/app/marketplace/store/[id]/page-6f3bea2af8b10f54.js"
+    ],
+    "/music/[artist]/page": [
+      "static/chunks/webpack-ff0d51fac7785563.js",
+      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
+      "static/chunks/528-3f367c339089e373.js",
+      "static/chunks/main-app-7850dc0f8b1270d4.js",
+      "static/chunks/146-32f4cd11faf54b36.js",
+      "static/chunks/app/music/[artist]/page-1762803e6d7ec9d1.js"
     ],
     "/login/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -42,29 +50,13 @@
       "static/chunks/146-32f4cd11faf54b36.js",
       "static/chunks/app/marketplace/page-a64902e14982b0c3.js"
     ],
-    "/marketplace/store/[id]/page": [
+    "/register/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
       "static/chunks/146-32f4cd11faf54b36.js",
-      "static/chunks/app/marketplace/store/[id]/page-6f3bea2af8b10f54.js"
-    ],
-    "/music/[artist]/page": [
-      "static/chunks/webpack-ff0d51fac7785563.js",
-      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
-      "static/chunks/528-3f367c339089e373.js",
-      "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/146-32f4cd11faf54b36.js",
-      "static/chunks/app/music/[artist]/page-1762803e6d7ec9d1.js"
-    ],
-    "/music/page": [
-      "static/chunks/webpack-ff0d51fac7785563.js",
-      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
-      "static/chunks/528-3f367c339089e373.js",
-      "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/146-32f4cd11faf54b36.js",
-      "static/chunks/app/music/page-422129085418911b.js"
+      "static/chunks/app/register/page-34bca83dde8e5bdf.js"
     ],
     "/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -73,14 +65,6 @@
       "static/chunks/main-app-7850dc0f8b1270d4.js",
       "static/chunks/146-32f4cd11faf54b36.js",
       "static/chunks/app/page-aab50797ea9aaae2.js"
-    ],
-    "/register/page": [
-      "static/chunks/webpack-ff0d51fac7785563.js",
-      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
-      "static/chunks/528-3f367c339089e373.js",
-      "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/146-32f4cd11faf54b36.js",
-      "static/chunks/app/register/page-34bca83dde8e5bdf.js"
     ],
     "/tasks/article/[id]/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -98,12 +82,28 @@
       "static/chunks/146-32f4cd11faf54b36.js",
       "static/chunks/app/tasks/page-f9d1213b2e9008f6.js"
     ],
-    "/dashboard/contests/page": [
+    "/contests/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/app/dashboard/contests/page-1749b00a71859323.js"
+      "static/chunks/649-fbef8421bcd46ae8.js",
+      "static/chunks/app/contests/page-2fcdd42d03cb63af.js"
+    ],
+    "/music/page": [
+      "static/chunks/webpack-ff0d51fac7785563.js",
+      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
+      "static/chunks/528-3f367c339089e373.js",
+      "static/chunks/main-app-7850dc0f8b1270d4.js",
+      "static/chunks/146-32f4cd11faf54b36.js",
+      "static/chunks/app/music/page-422129085418911b.js"
+    ],
+    "/dashboard/marketplace/page": [
+      "static/chunks/webpack-ff0d51fac7785563.js",
+      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
+      "static/chunks/528-3f367c339089e373.js",
+      "static/chunks/main-app-7850dc0f8b1270d4.js",
+      "static/chunks/app/dashboard/marketplace/page-16164190dde0026b.js"
     ],
     "/dashboard/layout": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -113,12 +113,12 @@
       "static/chunks/146-32f4cd11faf54b36.js",
       "static/chunks/app/dashboard/layout-7b9626211d710c35.js"
     ],
-    "/dashboard/marketplace/page": [
+    "/dashboard/music/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/app/dashboard/marketplace/page-16164190dde0026b.js"
+      "static/chunks/app/dashboard/music/page-2202e7b190b66caf.js"
     ],
     "/dashboard/marketplace/store/[id]/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -134,20 +134,12 @@
       "static/chunks/main-app-7850dc0f8b1270d4.js",
       "static/chunks/app/dashboard/music/artist/[id]/page-bab96c67c1d3a3b8.js"
     ],
-    "/dashboard/music/page": [
+    "/dashboard/tasks/streak/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/app/dashboard/music/page-2202e7b190b66caf.js"
-    ],
-    "/dashboard/page": [
-      "static/chunks/webpack-ff0d51fac7785563.js",
-      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
-      "static/chunks/528-3f367c339089e373.js",
-      "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/146-32f4cd11faf54b36.js",
-      "static/chunks/app/dashboard/page-bfc6682ead80591e.js"
+      "static/chunks/app/dashboard/tasks/streak/page-80b19cb8e57fd5c6.js"
     ],
     "/dashboard/referrals/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -156,19 +148,13 @@
       "static/chunks/main-app-7850dc0f8b1270d4.js",
       "static/chunks/app/dashboard/referrals/page-33bef0d535cc8262.js"
     ],
-    "/dashboard/tasks/page": [
+    "/dashboard/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/app/dashboard/tasks/page-b09d9c3c71a01193.js"
-    ],
-    "/dashboard/tasks/streak/page": [
-      "static/chunks/webpack-ff0d51fac7785563.js",
-      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
-      "static/chunks/528-3f367c339089e373.js",
-      "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/app/dashboard/tasks/streak/page-80b19cb8e57fd5c6.js"
+      "static/chunks/146-32f4cd11faf54b36.js",
+      "static/chunks/app/dashboard/page-bfc6682ead80591e.js"
     ],
     "/dashboard/wallet/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
@@ -185,6 +171,14 @@
       "static/chunks/146-32f4cd11faf54b36.js",
       "static/chunks/app/dashboard/wallet/withdraw/bank/page-771bc84cc3c882fc.js"
     ],
+    "/dashboard/wallet/withdraw/page": [
+      "static/chunks/webpack-ff0d51fac7785563.js",
+      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
+      "static/chunks/528-3f367c339089e373.js",
+      "static/chunks/main-app-7850dc0f8b1270d4.js",
+      "static/chunks/146-32f4cd11faf54b36.js",
+      "static/chunks/app/dashboard/wallet/withdraw/page-e075ef32c1359f58.js"
+    ],
     "/dashboard/wallet/withdraw/confirm/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
@@ -193,13 +187,19 @@
       "static/chunks/146-32f4cd11faf54b36.js",
       "static/chunks/app/dashboard/wallet/withdraw/confirm/page-1f546d1258ddaf4f.js"
     ],
-    "/dashboard/wallet/withdraw/page": [
+    "/dashboard/contests/page": [
       "static/chunks/webpack-ff0d51fac7785563.js",
       "static/chunks/1dd3208c-59dbb469e6d430a9.js",
       "static/chunks/528-3f367c339089e373.js",
       "static/chunks/main-app-7850dc0f8b1270d4.js",
-      "static/chunks/146-32f4cd11faf54b36.js",
-      "static/chunks/app/dashboard/wallet/withdraw/page-e075ef32c1359f58.js"
+      "static/chunks/app/dashboard/contests/page-1749b00a71859323.js"
+    ],
+    "/dashboard/tasks/page": [
+      "static/chunks/webpack-ff0d51fac7785563.js",
+      "static/chunks/1dd3208c-59dbb469e6d430a9.js",
+      "static/chunks/528-3f367c339089e373.js",
+      "static/chunks/main-app-7850dc0f8b1270d4.js",
+      "static/chunks/app/dashboard/tasks/page-b09d9c3c71a01193.js"
     ]
   }
 }
