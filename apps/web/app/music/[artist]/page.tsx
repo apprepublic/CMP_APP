@@ -1,11 +1,6 @@
+'use client';
 export const runtime = 'edge';
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  return [{ artist: 'demo' }];
-}
-
-'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
