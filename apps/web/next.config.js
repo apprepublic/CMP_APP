@@ -10,11 +10,10 @@ const nextConfig = {
     ],
   },
   transpilePackages: ['@cmpapp/types', '@cmpapp/utils'],
+  output: 'standalone',
   webpack: (config, { isServer }) => {
-    // Disable webpack cache for production to reduce build size
-    if (!isServer) {
-      config.cache = false;
-    }
+    // Completely disable cache for production
+    config.cache = false;
     return config;
   },
 };
