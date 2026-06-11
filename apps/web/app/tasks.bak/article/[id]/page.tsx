@@ -1,12 +1,9 @@
 'use client';
+export const runtime = 'edge';
 export const dynamicParams = true;
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-export async function generateStaticParams() {
-  return [{ id: '1' }, { id: '2' }, { id: '3' }];
-}
 
 export default function ArticleReaderPage() {
   const [readingProgress, setReadingProgress] = useState(0);

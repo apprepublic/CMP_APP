@@ -1,14 +1,34 @@
 'use client';
+export const runtime = 'edge';
 export const dynamicParams = true;
 
 import { useState } from 'react';
 import Link from 'next/link';
 
-export async function generateStaticParams() {
-  return [{ id: 'aisha-m' }, { id: 'tomiwa' }, { id: 'zainab' }];
-}
-
 const artist = {
+  name: 'Aisha M.',
+  genre: 'Afro-Fusion / R&B',
+  bio: "Lagos-born singer, songwriter, and producer blending traditional highlife rhythms with modern R&B and electronic textures. Aisha's sound is the heartbeat of the new creative economy.",
+  coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBBm5MX0bZ5EXjRosQ9zaSSsknq22ZKyfAKDsPadqn5sJ4IAMbu77DcuV_wytvKPKnYLUtP_r59TWhAPpCE8-ckjQVxD9QLE8-a9pBcqDPyvKBhGzKSK0Bed9CK1VFprsZ0tbCN3DtKygdCuCMJRG_aDiN57NKwu8CKOZifjC8U4dmBGmgTUUKyphsnqk8nvPYTd9x5KA7E8uSuSBH0TMR-MWXCc2rszhvIBTzU12jVc1eVqiTVlY5jdWj1MinJvbLxWTocxBKWhfQ',
+  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBJyScrcc2YMz6GNwZ4-LzLytdHEeh6DDJUBd5QwnyN9-nAJ8AzxlgFXy2RHsYXfDfkAEmlYkILF60gNRjXTxAf0C4w3W3zx727aHyrvgsJfJgVCfYGCoUqJT3jUM3-9NiN9x2zj2Guh6NMI1fhwE1FV_YFEql1F-9Bca92iJaxjxYxQgv-FoKEyVT5Cnz4M_Q2X2QkgqB9GF1ev41H_drzSOmIoPuBteUgCL7RIYL9tiYHHXd5p4U02IDkUJkM9sCmUQwE0xByETE',
+  totalStreams: '12.4M',
+  followers: '850K',
+  monthlyListeners: '2.1M',
+  isFollowing: false,
+};
+
+const tracks = [
+  { id: 1, title: 'Midnight in Eko', artist: 'Aisha M.', duration: '3:42', streams: '2.4M', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCFYK9kkVrG10ofKu9MI9fGPNYpYYPxLncZBvjMIkaxPzuehBYqZkr9AheE7Fx9yIbB4-du2F853ofDaz4q3PDPQBDfMzBbsyTlwMKo9AjAhoEhB1FUWrcY_cswsMhyiYAcjj-u9LzjC29C3P5hMRE6nUxeXHbWhQx7Ar3on3v6lK-HcVx66x13hw1Ey8A7725kZUOt4mOZBvfj-0tDn3jUkGCr3wjhNpnQqXybe5AV98o6xYBdvtuEv54NiGOKQaqaM2YzBq-8qA4', featured: false },
+  { id: 2, title: 'Golden Hour', artist: 'Aisha M. ft. Burna Boy', duration: '4:15', streams: '1.8M', image: null, featured: true },
+  { id: 3, title: 'Silk & Gold', artist: 'Aisha M.', duration: '3:28', streams: '1.2M', image: null, featured: false },
+  { id: 4, title: 'Lagos Rain', artist: 'Aisha M.', duration: '4:02', streams: '980K', image: null, featured: false },
+];
+
+const similarArtists = [
+  { id: 1, name: 'Tomiwa', genre: 'Afrobeats', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBEKvcFHlbqY5w9ndKPjw2-eTZS6F408xVSmnI76zVdm8Tudp_uYuH7qTMAUrLQ2yAehuRDrpcL9q23ke9mdUY92hfmrj8BN7s9CUZ_yQNeJXn2S06ubKK9j8lPazkf02fenk37fwpO48fPD84LJLVtMsZqV69jnNfJL1KCeMTm9IMNFyBQ-SdM-Pxc9QvENDU4iYN6fOTqPVyB5aEgUMdFRb5arM5GdZvPGKnCvCvFQZRz-PgDp8airQ4o9FlBUvlKyg8U4PBdJII' },
+  { id: 2, name: 'Zainab', genre: 'Neo-Soul', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDDbqajHROI9Y3HckFqvKHDO-gnz9ABDULlmQqJS9dx51zBn-k77gcEm3hhjE7EjuNxEMjgqhcmGZVFXQ4D-JjbHT3PN8BjdWHo3hJs24GQrKuOrB4U4UltF4IRk4LSbJEwwFqU4hk5jzCX_LcvPRgojaQnYG7rXC8IgqwLHDKd6SHuQWvo-pJ99Je6JPvwRR6P2VCDDjEEnlFO4uOgGPPypSZ_0axU_AiNEv2HSwAihj797cRiYZJ9IUj-hD-RV_OrGmhI7pMyVhY' },
+  { id: 3, name: 'DJ K-Flex', genre: 'Producer', image: null },
+];
 
 export default function ArtistProfilePage() {
   const [following, setFollowing] = useState(artist.isFollowing);

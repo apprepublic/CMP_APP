@@ -1,13 +1,48 @@
 'use client';
+export const runtime = 'edge';
 export const dynamicParams = true;
 
 import Link from 'next/link';
 
-export async function generateStaticParams() {
-  return [{ id: 'lagos-threads' }, { id: 'tech-haven' }, { id: 'style-lab' }];
-}
-
 const store = {
+  name: 'Lagos Threads Co.',
+  verified: true,
+  category: 'Fashion & Apparel',
+  rating: 4.8,
+  reviewCount: 124,
+  description: 'Premium streetwear and accessories inspired by Lagos culture. Quality meets style.',
+  logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB48A-uZeJMsW_IaxzGFmeaoCjmCnYgfHoICi9KxLvqWa6T26r7HZn6vg0hyqRbgqfl54UxjhiYwUaGJUdpidrkhjL4C_T9F8_Kq73-RtnmXc3Rhv6iZOYOUHhRoPkEcZPxcwF4crZsCxGTn-w8gngRxddRqk-72Ayfo91p6PMvhHRyge4NbGTe0IAk3paru3Fo2Y56PFLo30Z0bzYpCJKtQ_f-EIWVKZjK9Hohi-ITjhVWHsb1f0k21KdAC4E8jOumePN9lOMmW94',
+};
+
+const featuredProducts = [
+  {
+    id: 1,
+    name: 'The Oga Heritage Agbada',
+    price: 85000,
+    coins: 8500000,
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAtGXhc26SMEih4y1YVe1GWtqCUkGfNc8GGDhv9d6wOX0UPfWZwbxpB2Lzx8J2TlTLP2jjaQMhic-Wq5smD0n21omHezdXCKYrZkMcReuPzq_Ahu8PuZu1ED2sqHcgoq42VV3U85DTAA9PM4GJzxmnXxQa2ZYQY5vT1sctSB1zGJpY7iZJ53gML9fpsbeZT_1pm8e7DLVkzTeS0EBaOzQt9seCYL5Azesgv2OTdeHhi83L68BXk8JAxCFT91GF-EcCB7FcnzAtjYdk',
+    boosted: true,
+  },
+  {
+    id: 2,
+    name: 'Lagos Nights Wristwear',
+    price: 15000,
+    coins: 1500000,
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASGUe5Rd7_d5UvGMdQoD-fv_z-arnnjiYj7w7DEIRGfwiJCrRkgQayRkoWaYpyqCfFNS9CZfTc_WQRXFmw1S9kFvoGlZsz0ERCQ4KdyhnOn92om0OkUtQFnuTIe1OFODO3PMLX7GqQnHphoDnl074QB8kF9sQhuUMxZZ6CZzzNdEIHO5fXIjRicKkfsetmiDtgV866rqB3n1IuSqT3mQIG2Vg6ptj51cHSTFzj7-AXLsV9qpgdZCuXpgzFiJJWkn-QcLFNqY074ZI',
+  },
+  {
+    id: 3,
+    name: 'Mainland Essential Tee',
+    price: 12500,
+    coins: 1250000,
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDf0FESmUmwQNaRWBL8YZOFwcIxhB4LRIgobt7Pmz8rQAq0pyjE7fn9gqfhDW3-40ITmQF09nxSKz2xt4oiXELoxa2DeucG_w4BHq9dlLjAQ-k5A_b4i3fmYrPh2-rye5lJin9F6h529f5JooRHwShGLp4MmWFx8zXOFZp9Ee34gupNjCxUeGFO6HY8t7EP6WPpI8v9bGdkWhmTuYp2be7jGm7sK1ew_FQWvnKXeHrcactF-sUFPzoHdX95R9oYyIppWI2hIhS56c',
+  },
+];
+
+const products = [
+  { id: 4, name: 'Tailored Executive Trousers - Charcoal', price: 25000, coins: 2500000, image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDQ-zvDXbetKNZM3guQybU5np0KVMsRdC_zDevKv8A7t56Sj0fkp8hIQ-ZW2HwGKHbOSvR5HCmCmU29vLIv6OzPJ6CHrY3G-1pBwuoXIzk8FMzunxqbAepjSNAn9kiXh681W1Pu_I20Dr_1VV5jwwa1_0Fb0DU5SbYDltAM-oyXjrEsQJOa1GoHoK03m-0lcQ9YEeqSphJHDBJj1VKo3SzvI6qHi6leiGTCCIASafWQn9L3zXdg0HjCookq_BMwfrjsJb4ysGApCrc' },
+  { id: 5, name: 'Artisan Leather Loafers', price: 42000, coins: 4200000, image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAUr4j2yF1ld4kxokYssK3xlsS7z1Gl_GqSET2iLWa-bXPI2JJeTwUrt5KKMmdVTqBzcuOB4-HacHB1VVpeA6_WIdAm0rnCi07PQYtFuC4FXxFr9IzzIExIELJKD0RIIWGkqlkj7iaT-1Jb-PDRc6ey5n9oP0mikI2DpgkiXS3q8h-Js1ERuDSDh4stRK9kRaE5VJHDweCHS8mrh4il98WlGNpxJIaIpO0Yuqfgu5eC8AowiW6Shsql-DO-4-sK5E9-0dqnzL5vtrw' },
+];
 
 export default function StorefrontPage() {
   return (

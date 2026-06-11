@@ -1,14 +1,23 @@
 'use client';
+export const runtime = 'edge';
 export const dynamicParams = true;
 
 import { useState } from 'react';
 import Link from 'next/link';
 
-export async function generateStaticParams() {
-  return [{ id: '1' }, { id: '2' }, { id: '3' }];
-}
-
 const mockStore = {
+  id: '1',
+  name: 'TechHaven Hub',
+  category: 'Gadgets & Gear',
+  rating: 4.8,
+  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDhH3IxIBTl7Y4Gh-nRvQQSq85DHbiZ-k5Rc0S9dwPS4m9axjy7JlEwT2_PznZbcDapxLCXQ85_TA9_gS24LXQAhiFlpK8-wNpj5jSRFHmhOPZsTNMM5L-VChLDJND3dKhbWXOfiBXlyjMAQYYw2-bSkSf_GgryZZyHVHKZbPsNtsDxY8Uhgcm1KCjPT8slfxtLe8JdoIB9tM-SOlTFrUjEy0L2kwsiwzsZw8aoN14oREM9KMoYx-7tBeKAiyfnmDelaaIfA77f6V83',
+  products: [
+    { id: '1', name: 'Quantum Smart Watch Pro', price: '$299', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4lLzO1jJYtqSZ5REFLc88mYvoWlXb_PsORhACwVVUdLWibD3olgNtzi2cPOxaxGheBIujP6LlNoM9SU_89g89WevzrF3xf2tzGmDiuhEGBsLCRjAd9m1Ct6znhJN5-QhtTogrcVvOmVrTR760KB_jeD4S6C4YOTUQAvMAXAJIDiGTXnQBzxJNwZ-q3BoHcjwggBnuLl-g8uplULCAY5W-CRwZwGdyvPGbwIErVrsbrb3s_uz0QpwSpnbbkOkvxD0dqreL0oj1llG6', featured: true },
+    { id: '2', name: 'SonicFlow Noise Cancelling Headphones', price: '$199', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBM64juZIu1pkykhkrqJMnwS1g6AuYjuFWHdPd_lKjn7JftxE13lmojhph-MYnKUcJ_qJWTSjlxMIYJI-_lcxPwWqM7YPnjWlYa73CE6uLVdmtVVr1aMgbQSMQTsncb2t1wfg_39Rozr34IcHPKG0TqRQoUO6ijOlbxjbU_ZQaVMwCxY7vWjIBp8n8aHPzCnCXMaxXvgQjmoxeW3euMoiPOMdgKUaFdS6E9aFKwrgzj5JEXTeJ_nDonHMtMdsjWrXbk64dNmD2c_hFT' },
+    { id: '3', name: 'AeroPods True Wireless', price: '$129', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCOqcVOq5EOfKgYdh_duYqYC8DGOLxwkX8Sr7v7WJl25PJj9Rjzb5lxA9sYHpgPw1lFJIF6eh3qjkeND6EC11hWzk-Qcs6SJeFqADY9FMkC3wi-u4PoIJGjZE7XglNWqjEjOGQWMx5vugOtFF4lqexVIjiENp8otBG194fCwqwupvpzznOmF90gFVUltd4kLUs4sozUuroUsrc4THc9AGb9rudkWDrbH5Adw9kTgVIj0bHZRMdQhKuL7Mhv0PA5cSyOtUlZHkJlfU7l' },
+    { id: '4', name: 'BoomBox Mini Portable Speaker', price: '$89', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCN49Br0RDnED9PEZSlrtp9XX_Krbz-7RM7StogenwSqHi9yxJHeFB1JVY0JUZemllIr7JT34BYpee7He7a8BOasaESE1QAeKD_NI6VcqWQ-GKOD01f0BQiSh1z6Mxa8EPGmmJ2eQF2Q4a3a9XUFeD1FjAJGibaAD97F9R4KT4gWWPXr_bVtsVugM6_3hydB_6I8QZ0FR7612-IN0Z5_t1ACCnqOVMY83Al0dmgp0EJNogQthFzLhMHy5MiI678TCoPsdDX4CH9jx_s' },
+  ],
+};
 
 export default function StoreFrontPage() {
   return (

@@ -1,13 +1,37 @@
 'use client';
+export const runtime = 'edge';
 export const dynamicParams = true;
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-export async function generateStaticParams() {
-  return [{ artist: 'luna-echo' }, { artist: 'dj-horizon' }, { artist: 'beat-master' }];
-}
+// Mock data for demo
+const mockArtist = {
+  id: '1',
+  name: 'Luna Echo',
+  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCUqFF9lPckikAP94ny0HaBsWkvy1MP4AoLDVurdEg-Tc0Ldyfvl0TjOjYZi3C9RnUVcVzLmLwUuwN-QoMbjM78h10T2eHfTW0DBgPJmt0Z8pA2_cBcIvsUUo3XLegqviMYbIgSaKKjy0uGx1bVvVMbBM8MUNulKpAr14V7_lZ1QbIT5FE78_wbF8qAl46v6ysKpc82r55TscXgIMwkRe1KSUhG1M1So4PH1pawTsvnvIUdMG5j8rx4JT-mu7PCyEHP5xwnAtISjZqy',
+  coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAhUxL0UWsFWGNjn8swFhtvKB0WTOt2fMRJpy7hB3GnXI9v7tF-CKMwnVz4zBgLHwmKOLvv7uiRxAOjweav5K5WcquM0iSN6da5JD_O6jtfXL1kgSbL9vyac6Hn0iwPSSkmSAAGD51Bx_VZbL2pbmP6pr8MEjvLKRuVkq6TeYaon326Zqdqb8sxrS_z6ZGGN7-jhNhSRv6G09uVgEaI4PVd5Cs6ZdVXUVVAdsTko6wQ72ldK3LjDFmK5ofvFc4nDBqWb3O6baAqXI1E',
+  monthlyStreams: '2.4M',
+  isVerified: true,
+  isFollowing: false,
+};
+
+const topTracks = [
+  { id: '1', title: 'Midnight Synthesis', duration: '3:42', cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCLfnKywWI7LcD-cyFOp7oh0bsk0QICoiK0fm9WSA86FgBjnEBBMoxP28QXxeFXy0t4_NSiNoE6aHpOBzsPZnYH_kz8mJwENrhGQnuz7IhDJLRq06VW0z2X4rJkq-JPAperZpKCsAKtpGkOB2P_BjduAw2BZPi4Cp5-RUcrPAEdSBSHeuNd8J7lSkBrp3KJAFp1lN6f8D6vQ9U9LwJ0W6d2Kad1_TdRTNiuxx7YDpGiCsYpUngDokinLwme_Tvrd731CeR0L4R1oyr_', plays: '450K' },
+  { id: '2', title: 'Neon Echoes', duration: '4:15', cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDoLX4ZDuiE5hLuCvQxN6Lt10WD1SF8NtYIf69K5QkOt_8-Qo9lexyWu7UcAtbs2q8wml4HUqDrHVAeA7XrTmVUav8WDQbpf_1dCOn-nybBYJVX2oEAukTWgLRu3V0NcP2CC7C1zT1xb2DUIaApxH1qP4Rb_m47DK4tNwofzeRGzXF0PSydgn8Cw2GDY02RgwzD4JeS6eTkq2o8V-oehq1pN2_4ZQPppwaMqA7RAWpVUP2VslvhkDHDFhUSWdbj5JKrNsXUbdLg8Zw7', plays: '380K' },
+  { id: '3', title: 'Digital Horizon', duration: '2:58', cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDctWobt1cCbQkcoiwuGb4tr7O0DFlRsJ2BiRuVAcMM3CYUoUwhZUQt2UIBNXh3BjtKr-CYGMOq0zajKVdr1-VzD6dqWCszTodiPJZbtkALOmBsI-YgIfFYdqdq13DCQxgo7gfXgNMqd-HGMtFJC51IJOuj2sD8oE7eRQpRlT_-g3d0alsMZy6tS80PTrDRBXPvkRvjM7yeiKsyuaTdFzFjsmtZl-b7hSGe24va33027Xvha4ugoNaw3p8XxPaMAH8b00dwMn3lhTOm', plays: '290K' },
+];
+
+const nowPlaying = {
+  title: 'Midnight Synthesis',
+  artist: 'Luna Echo',
+  cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBH4GNQCLvKvNKPCcazzogBucp41BK0-Z2Lpo_J82s-2xFti3MdQoFsmRCDKfXMTeVlhIgpIVGSwo6viRM_Q0lJyJIQgp1vQHhV6mSi4q_9Rcp0l308aUJ_tpTP7y06bDA1IjLKa1XYjb-bo9z0t1h1Q2XJ9Lp2x8STy8-KSOiqnr7St1GNBEDvZRueEXioY2QrXCGJooFw4bzlFgAlWfcB6syrxx3SBLcLjZIuoKFM1V1vHmB1GNweAhSqKadvNWGM2kFUxk83pQDU',
+  progress: 33,
+  currentTime: '1:24',
+  totalTime: '3:42',
+  isPlaying: true,
+};
 
 export default function ArtistProfilePage() {
   const params = useParams();
