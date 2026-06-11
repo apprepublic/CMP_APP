@@ -8,11 +8,12 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    unoptimized: true,
   },
   transpilePackages: ['@cmpapp/types', '@cmpapp/utils'],
-  output: 'standalone',
+  output: 'export',
+  trailingSlash: true,
   webpack: (config, { isServer }) => {
-    // Completely disable cache for production
     config.cache = false;
     return config;
   },

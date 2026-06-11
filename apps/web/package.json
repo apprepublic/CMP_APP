@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:static": "next build",
+    "preview": "npx serve out",
+    "deploy": "wrangler pages deploy out --project-name=cmpapp-web",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
