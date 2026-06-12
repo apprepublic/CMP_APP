@@ -10,7 +10,8 @@
     "deploy": "wrangler pages deploy out --project-name=cmpapp-web",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node -e \"try { require('caniuse-lite') } catch { require('child_process').execSync('npm install caniuse-lite --save-dev', {stdio: 'inherit'}) }\""
   },
   "dependencies": {
     "@cmpapp/types": "*",
@@ -58,6 +59,7 @@
     "eslint-config-next": "^16.2.7",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "caniuse-lite": "^1.0.30001600"
   }
 }
