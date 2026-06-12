@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
+import { NeuCard } from '@/components/ui/neu-card';
+import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { Search, ShoppingCart, Heart, Verified, Wallet } from 'lucide-react';
 
 const mockProducts = [
   {
@@ -45,41 +52,40 @@ export default function MarketplacePage() {
   const [activeCategory, setActiveCategory] = useState('All');
 
   return (
-    <div className="bg-background text-on-background min-h-screen pb-24 pt-16">
+    <PageTransition className="bg-neu-bg text-neo-text-primary min-h-screen pb-24 pt-16">
       {/* TopAppBar */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-surface shadow-sm border-b border-surface-secondary">
+      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat border-b border-neu-bg-dark">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-surface-secondary">
-            <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwxBy4t-VJFp40N6DLbW7ReAy8RanS7J7pCL6Y7OJALeEUZLCQw0UFHBN9ReDsGQslo__LuNjgWxjj1rmEYT7x-7tRsaiB4sT81Kp4YdQwwYgLQGov72AsG9drnfljIJlHP8ViUq-k7y5TatyIMY1ZFVzUhukZ0WfsuVIcD8LPN_P8V3wtbCO_MT6NmNRx4acQ5YvrE20CZ3EdN-42kP3zT4sG8PWahQG0jC2jFdS1sLXVMQURehSTTliN3p6KzY1zaONu1NoRGR6w" />
-          </div>
-          <h1 className="font-headline-md text-headline-md font-bold text-primary">CMPapp</h1>
+          <NeuIconBadge size="sm" active>
+            <img alt="User Profile" className="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwxBy4t-VJFp40N6DLbW7ReAy8RanS7J7pCL6Y7OJALeEUZLCQw0UFHBN9ReDsGQslo__LuNjgWxjj1rmEYT7x-7tRsaiB4sT81Kp4YdQwwYgLQGov72AsG9drnfljIJlHP8ViUq-k7y5TatyIMY1ZFVzUhukZ0WfsuVIcD8LPN_P8V3wtbCO_MT6NmNRx4acQ5YvrE20CZ3EdN-42kP3zT4sG8PWahQG0jC2jFdS1sLXVMQURehSTTliN3p6KzY1zaONu1NoRGR6w" />
+          </NeuIconBadge>
+          <h1 className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</h1>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/10 rounded-full border border-secondary/20">
-            <span className="font-wallet-display text-[14px] font-semibold text-secondary">₦124,500</span>
-            <span className="material-symbols-outlined text-secondary" style={{ fontSize: '18px' }}>account_balance_wallet</span>
-          </div>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container transition-colors relative">
+          <NeuCard padding="none" className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neu-bg shadow-neu-inset">
+            <span className="font-data-md text-data-md text-neo-secondary">₦124,500</span>
+            <NeuIconBadge size="sm" active className="bg-neo-secondary/20">
+              <Wallet className="w-4 h-4 text-neo-secondary" />
+            </NeuIconBadge>
+          </NeuCard>
+          <button className="w-10 h-10 flex items-center justify-center rounded-full text-neo-text-secondary hover:bg-neu-bg shadow-neu-flat transition-colors relative">
             <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full border border-surface"></span>
+            <span className="absolute top-2 right-2 w-2 h-2 bg-neo-secondary rounded-full border-2 border-neu-bg"></span>
           </button>
         </div>
       </header>
 
-      <main className="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-stack-md flex flex-col gap-stack-lg">
+      <main className="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-6 flex flex-col gap-6">
         {/* Search Section */}
-        <section className="flex flex-col gap-stack-sm">
-          <h2 className="font-headline-lg text-headline-lg text-primary">Discover Market</h2>
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-            <input
-              className="w-full pl-12 pr-4 py-4 rounded-lg bg-surface-container-lowest border border-surface-secondary text-body-lg font-body-lg text-text-main placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
-              placeholder="Search products or stores..."
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <section className="flex flex-col gap-2">
+          <h2 className="font-h2 text-h2 text-neo-primary">Discover Market</h2>
+          <Input
+            placeholder="Search products or stores..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            icon={<Search className="w-5 h-5 text-neo-text-muted" />}
+            className="pl-12"
+          />
         </section>
 
         {/* Category Chips */}
@@ -88,10 +94,10 @@ export default function MarketplacePage() {
             {categories.map((cat) => (
               <button
                 key={cat}
-                className={`snap-start shrink-0 px-5 py-2.5 rounded-full font-body-md text-body-md transition-transform hover:scale-[1.02] active:scale-95 ${
+                className={`snap-start shrink-0 px-5 py-2.5 rounded-full font-body-md text-body-md transition-all active:scale-95 ${
                   activeCategory === cat
-                    ? 'bg-primary text-on-primary shadow-[0px_4px_12px_rgba(13,27,53,0.15)]'
-                    : 'bg-surface-container-lowest text-text-main border border-surface-secondary hover:bg-surface-container'
+                    ? 'bg-neo-primary text-white shadow-neu-raised-sm'
+                    : 'bg-neu-bg text-neo-text-secondary shadow-neu-flat hover:shadow-neu-raised-sm'
                 }`}
                 onClick={() => setActiveCategory(cat)}
               >
@@ -103,64 +109,69 @@ export default function MarketplacePage() {
 
         {/* Product Grid */}
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {mockProducts.map((product) => (
-            <div
-              key={product.id}
-              className="group bg-surface-container-lowest rounded-xl border border-surface-secondary overflow-hidden shadow-[0px_4px_20px_rgba(13,27,53,0.03)] hover:shadow-[0px_8px_30px_rgba(13,27,53,0.08)] transition-all flex flex-col cursor-pointer"
-            >
-              <div className="aspect-square w-full relative bg-surface-container-low overflow-hidden">
-                <img
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  src={product.image}
-                />
-                <button className="absolute top-2 right-2 w-8 h-8 rounded-full bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center text-outline hover:text-error hover:bg-surface-container-lowest transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>favorite</span>
-                </button>
-              </div>
-              <div className="p-3 flex flex-col flex-grow gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] uppercase font-bold text-outline tracking-wider">{product.store}</span>
-                  {product.isVerified && (
-                    <span className="material-symbols-outlined text-[#1D9BF0] fill" style={{ fontSize: '14px' }}>verified</span>
-                  )}
-                </div>
-                <h3 className="font-body-sm text-body-sm text-text-main font-medium line-clamp-2 flex-grow">{product.name}</h3>
-                <div className="flex items-end justify-between mt-auto pt-2 border-t border-surface-secondary/50">
-                  <span className="font-wallet-display text-[16px] font-bold text-primary">{product.price}</span>
-                  <button className="w-8 h-8 rounded bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors">
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+          <StaggerContainer stagger={0.06}>
+            {mockProducts.map((product) => (
+              <StaggerItem key={product.id}>
+                <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+                  <NeuCard padding="none" interactive className="rounded-xl border border-neu-bg-dark overflow-hidden shadow-neu-flat flex flex-col cursor-pointer group">
+                    <div className="aspect-square w-full relative bg-neu-bg overflow-hidden">
+                      <img
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        src={product.image}
+                      />
+                      <button className="absolute top-2 right-2 w-8 h-8 rounded-full bg-neu-bg/80 backdrop-blur-sm flex items-center justify-center text-neo-text-muted hover:text-neo-error hover:bg-neu-bg transition-colors shadow-neu-raised-sm">
+                        <Heart className="w-[18px] h-[18px]" />
+                      </button>
+                    </div>
+                    <div className="p-3 flex flex-col flex-grow gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] uppercase font-bold text-neo-text-muted tracking-wider">{product.store}</span>
+                        {product.isVerified && (
+                          <NeuIconBadge size="sm" active className="bg-blue-500/20 p-0">
+                            <Verified className="w-3 h-3 text-blue-500" />
+                          </NeuIconBadge>
+                        )}
+                      </div>
+                      <h3 className="font-body-sm text-body-sm text-neo-text-primary font-medium line-clamp-2 flex-grow">{product.name}</h3>
+                      <div className="flex items-end justify-between mt-auto pt-2 border-t border-neu-bg-dark/50">
+                        <span className="font-data-lg text-data-lg font-bold text-neo-primary">{product.price}</span>
+                        <NeuIconBadge size="md" active className="bg-neo-primary shadow-neu-raised-sm cursor-pointer hover:bg-neo-primary/90 transition-colors">
+                          <ShoppingCart className="w-5 h-5 text-white" />
+                        </NeuIconBadge>
+                      </div>
+                    </div>
+                  </NeuCard>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </section>
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-primary-container shadow-[0px_-4px_20px_rgba(13,27,53,0.1)] md:hidden">
-        <Link href="/" className="flex flex-col items-center justify-center text-on-primary-fixed-variant px-3 py-1 hover:text-secondary-fixed transition-colors">
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-neu-bg shadow-neu-raised md:hidden">
+        <Link href="/" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
           <span className="material-symbols-outlined mb-1">home</span>
           <span className="font-label-caps text-label-caps">Home</span>
         </Link>
-        <Link href="/tasks" className="flex flex-col items-center justify-center text-on-primary-fixed-variant px-3 py-1 hover:text-secondary-fixed transition-colors">
+        <Link href="/tasks" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
           <span className="material-symbols-outlined mb-1">payments</span>
           <span className="font-label-caps text-label-caps">Earn</span>
         </Link>
-        <Link href="/music" className="flex flex-col items-center justify-center text-on-primary-fixed-variant px-3 py-1 hover:text-secondary-fixed transition-colors">
+        <Link href="/music" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
           <span className="material-symbols-outlined mb-1">music_note</span>
           <span className="font-label-caps text-label-caps">Music</span>
         </Link>
-        <button className="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-3 py-1 scale-90 transition-all">
+        <button className="flex flex-col items-center justify-center bg-neo-secondary text-neo-primary rounded-xl px-3 py-1 scale-90 transition-all shadow-neu-raised-sm">
           <span className="material-symbols-outlined mb-1 fill">storefront</span>
           <span className="font-label-caps text-label-caps">Market</span>
         </button>
-        <Link href="/wallet" className="flex flex-col items-center justify-center text-on-primary-fixed-variant px-3 py-1 hover:text-secondary-fixed transition-colors">
+        <Link href="/wallet" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
           <span className="material-symbols-outlined mb-1">account_balance_wallet</span>
           <span className="font-label-caps text-label-caps">Wallet</span>
         </Link>
       </nav>
-    </div>
+    </PageTransition>
   );
 }
