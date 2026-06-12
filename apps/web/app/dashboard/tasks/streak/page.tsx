@@ -7,7 +7,7 @@ import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { NeuProgress } from '@/components/ui/neu-progress';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { LocalFireDepartment, CalendarViewWeek, CalendarMonth, CheckCircle, RadioButtonUnchecked, AcUnit, MonetizationOn } from 'lucide-react';
+import { Flame, CalendarDays, CalendarRange, CheckCircle, Circle, Snowflake, Coins } from 'lucide-react';
 
 const weekDays = [
   { day: 'Mon', completed: true, reward: null },
@@ -26,8 +26,8 @@ const dailyTasks = [
 ];
 
 const milestones = [
-  { days: 7, reward: 2000, daysLeft: 2, title: '7 Day Streak', icon: CalendarViewWeek },
-  { days: 30, reward: 10000, daysLeft: 18, title: '30 Day Streak', icon: CalendarMonth, locked: true },
+  { days: 7, reward: 2000, daysLeft: 2, title: '7 Day Streak', icon: CalendarDays },
+  { days: 30, reward: 10000, daysLeft: 18, title: '30 Day Streak', icon: CalendarRange, locked: true },
 ];
 
 export default function StreakPage() {
@@ -46,7 +46,7 @@ export default function StreakPage() {
             <NeuCard padding="md" className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-neu-raised-sm">
               <div className="flex items-center gap-4">
                 <NeuIconBadge size="lg" active className="bg-neo-secondary shadow-none">
-                  <LocalFireDepartment className="w-6 h-6 text-neo-primary" />
+                  <Flame className="w-6 h-6 text-neo-primary" />
                 </NeuIconBadge>
                 <div>
                   <p className="font-label-caps text-label-caps text-white/80 uppercase">Current Streak</p>
@@ -94,12 +94,12 @@ export default function StreakPage() {
                       ) : day.current ? (
                         <>
                           <NeuIconBadge size="sm" active className="bg-neo-secondary shadow-none p-0">
-                            <LocalFireDepartment className="w-4 h-4 text-neo-primary" />
+                            <Flame className="w-4 h-4 text-neo-primary" />
                           </NeuIconBadge>
                           <div className="absolute -top-1 -right-1 w-3 h-3 bg-neo-error rounded-full border-2 border-white"></div>
                         </>
                       ) : day.milestone ? (
-                        <MonetizationOn className="w-4 h-4 text-neo-secondary/50" />
+                        <Coins className="w-4 h-4 text-neo-secondary/50" />
                       ) : (
                         <span className="font-data-md text-data-md text-neo-text-secondary text-xs">{day.reward}</span>
                       )}
@@ -163,7 +163,7 @@ export default function StreakPage() {
                       {task.completed ? (
                         <span className="material-symbols-outlined text-neo-success text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                       ) : (
-                        <RadioButtonUnchecked className="w-4 h-4 text-neo-text-muted" />
+                        <Circle className="w-4 h-4 text-neo-text-muted" />
                       )}
                     </NeuIconBadge>
                     <div className="flex-1">
@@ -188,7 +188,7 @@ export default function StreakPage() {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-h3 text-h3 text-white">Streak Freeze</h3>
                   <NeuIconBadge size="md" active className="bg-white/20 shadow-none">
-                    <AcUnit className="w-5 h-5 text-neo-secondary" />
+                    <Snowflake className="w-5 h-5 text-neo-secondary" />
                   </NeuIconBadge>
                 </div>
                 <p className="font-body-sm text-body-sm text-white/80">Missed a day? Use a freeze to protect your hard-earned streak.</p>
