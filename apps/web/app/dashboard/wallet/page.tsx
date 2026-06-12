@@ -1,11 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Landmark, Send, Receipt, ArrowUp, ArrowDown } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import WalletTopUp from '@/components/WalletTopUp';
 
 const transactions = [
   { id: 1, type: 'TASK_EARN', description: 'Completed daily task', amount: 150, date: 'Today, 14:32', icon: 'play_circle' },
@@ -16,6 +19,56 @@ const transactions = [
 ];
 
 export default function WalletPage() {
+  const [balance, setBalance] = useState(45200);
+  const [showTopUp, setShowTopUp] = useState(false);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('wallets')
+        .select('coin_balance')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) setBalance(Number(data.coin_balance));
+    };
+
+    fetchBalance();
+
+    const channel = supabase
+      .channel('wallet-balance')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'wallets',
+          filter: `user_id=eq.${supabase.auth.getUser().then(d => d.data.user?.id)}`,
+        },
+        (payload) => {
+          setBalance(Number((payload.new as any).coin_balance));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  if (showTopUp) {
+    return (
+      <PageTransition className="space-y-gutter">
+        <Button variant="ghost" onClick={() => setShowTopUp(false)} className="mb-4">
+          ← Back to Wallet
+        </Button>
+        <WalletTopUp />
+      </PageTransition>
+    );
+  }
   return (
     <PageTransition className="space-y-gutter">
       {/* Balance Hero Section */}
@@ -27,10 +80,10 @@ export default function WalletPage() {
             <NeuIconBadge size="md" active className="flex-shrink-0" style={{ background: 'var(--neo-secondary)' }}>
               <span className="material-symbols-outlined text-neo-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>toll</span>
             </NeuIconBadge>
-            <span className="font-h1 text-h1 text-neo-secondary tracking-tight">45,200</span>
+            <span className="font-h1 text-h1 text-neo-secondary tracking-tight">{balance.toLocaleString()}</span>
           </div>
           <p className="font-data-md text-data-md text-neo-text-secondary mt-2 bg-neu-bg inline-block px-3 py-1 rounded-full shadow-neu-inset border border-neo-bg-dark">
-            &asymp; &#8358;452.00 NGN
+            &asymp; &#8358;{(balance / 100).toFixed(2)} NGN
           </p>
         </div>
       </NeuCard>
@@ -39,7 +92,7 @@ export default function WalletPage() {
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StaggerContainer stagger={0.06}>
           <StaggerItem>
-            <NeuCard padding="md" interactive className="flex flex-col items-center justify-center">
+            <NeuCard padding="md" interactive className="flex flex-col items-center justify-center" onClick={() => setShowTopUp(true)}>
               <NeuIconBadge size="lg" active className="mb-2" style={{ background: 'var(--neo-secondary)' }}>
                 <Plus className="w-6 h-6 text-neo-primary" />
               </NeuIconBadge>
