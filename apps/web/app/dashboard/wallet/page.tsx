@@ -28,28 +28,32 @@ export default function WalletPage() {
       if (!user) return;
       
       const { data } = await supabase
-        .from('wallets')
+        .from('wallets' as any)
         .select('coin_balance')
         .eq('user_id', user.id)
         .single();
       
-      if (data) setBalance(Number(data.coin_balance));
+      if (data) setBalance(Number((data as any).coin_balance));
     };
 
     fetchBalance();
 
+    let userId: string | undefined;
+    supabase.auth.getUser().then(d => { userId = d.data.user?.id; });
+
     const channel = supabase
       .channel('wallet-balance')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'wallets',
-          filter: `user_id=eq.${supabase.auth.getUser().then(d => d.data.user?.id)}`,
         },
-        (payload) => {
-          setBalance(Number((payload.new as any).coin_balance));
+        (payload: any) => {
+          if (payload.new?.coin_balance !== undefined) {
+            setBalance(Number(payload.new.coin_balance));
+          }
         }
       )
       .subscribe();
