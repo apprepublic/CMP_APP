@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 export interface NeuIconBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   active?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  interactive?: boolean;
   asChild?: boolean;
   children: React.ReactNode;
 }
@@ -17,7 +18,7 @@ const sizeStyles = {
 };
 
 const NeuIconBadge = React.forwardRef<HTMLDivElement, NeuIconBadgeProps>(
-  ({ className, active = false, size = 'md', asChild = false, children, ...props }, ref) => {
+  ({ className, active = false, interactive = false, size = 'md', asChild = false, children, ...props }, ref) => {
     const Comp = asChild ? React.Fragment : 'div';
     
     return (
@@ -27,6 +28,7 @@ const NeuIconBadge = React.forwardRef<HTMLDivElement, NeuIconBadgeProps>(
             'inline-flex items-center justify-center rounded-xl transition-all duration-200',
             'bg-neu-bg',
             sizeStyles[size],
+            interactive ? 'cursor-pointer hover:shadow-neu-raised-sm' : '',
             active
               ? 'shadow-neu-inset'
               : 'shadow-neu-raised',
