@@ -119,7 +119,7 @@ export function Header() {
           <nav className="container py-4 flex flex-col gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
+              const isActive = pathname?.startsWith(item.href) ?? false;
               return (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
                   <button
