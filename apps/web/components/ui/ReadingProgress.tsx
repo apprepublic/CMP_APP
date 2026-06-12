@@ -29,9 +29,9 @@ export default function ReadingProgress({ targetId }: ReadingProgressProps) {
   }, [targetId]);
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-1 bg-surface-variant z-[100]">
+    <div className="fixed top-0 left-0 right-0 h-2 bg-neu-bg shadow-neu-inset z-[100]">
       <div
-        className="h-full bg-primary transition-all duration-150"
+        className="h-full bg-gradient-to-r from-neo-primary to-neo-secondary shadow-neu-raised-sm transition-all duration-150 rounded-r-full"
         style={{ width: `${progress}%` }}
       />
     </div>
