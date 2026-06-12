@@ -5,7 +5,7 @@ import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { NeuProgress } from '@/components/ui/neu-progress';
 import { Button } from '@/components/ui/button';
-import { Verified, PlayArrow, ContentCopy, Check } from 'lucide-react';
+import { Verified, Play, Copy, Check } from 'lucide-react';
 
 interface AdGateModalProps {
   isOpen: boolean;
@@ -83,7 +83,7 @@ export default function AdGateModal({ isOpen, onClose, reward = 50, duration = 3
           />
           <div className="absolute inset-0 bg-neo-primary/20 flex items-center justify-center">
             <NeuIconBadge size="lg" active className="bg-white/80 backdrop-blur-md shadow-neu-raised cursor-pointer hover:scale-110 transition-transform">
-              <PlayArrow className="w-8 h-8 text-neo-primary ml-0.5" />
+              <Play className="w-8 h-8 text-neo-primary ml-0.5" />
             </NeuIconBadge>
           </div>
         </div>
