@@ -48,7 +48,7 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname?.startsWith(item.href) ?? false;
             return (
               <Link key={item.href} href={item.href} className="flex items-center gap-2">
                 <NeuIconBadge size="sm" active={isActive}>
