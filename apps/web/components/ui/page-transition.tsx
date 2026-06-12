@@ -28,18 +28,20 @@ export function PageTransition({ children, className = '', delay = 0 }: PageTran
 }
 
 export function StaggerContainer({ children, className = '', stagger = 0.08 }: { children: ReactNode; className?: string; stagger?: number }) {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: stagger },
+    },
+  };
+
   return (
     <motion.div
       initial="hidden"
       animate="show"
       className={className}
-      variants={{
-        hidden: { opacity: 0 },
-        show: {
-          opacity: 1,
-          transition: { staggerChildren: stagger },
-        },
-      }}
+      {...({ variants: containerVariants } as HTMLMotionProps<"div">)}
     >
       {children}
     </motion.div>
