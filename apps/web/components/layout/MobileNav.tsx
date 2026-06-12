@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { Home, Music, Wallet, User, Plus } from 'lucide-react';
+import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -29,8 +30,8 @@ export default function MobileNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-surface-secondary z-50 safe-area-bottom">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-neu-bg shadow-neu-raised z-50 safe-area-bottom pt-2">
+      <div className="flex items-center justify-around px-2 pb-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -39,36 +40,43 @@ export default function MobileNav() {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={cn(
-                'flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors min-w-[64px]',
-                active
-                  ? 'text-primary'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              )}
+              className="flex flex-col items-center justify-center gap-1 py-1 min-w-[56px]"
             >
-              <div className={cn(
-                'relative',
-                item.label === 'Earn' && 'mb-2'
-              )}>
-                {item.label === 'Earn' ? (
-                  <div className={cn(
-                    'w-12 h-12 -mt-6 rounded-full flex items-center justify-center transition-all',
-                    active
-                      ? 'bg-primary shadow-lg shadow-primary/30'
-                      : 'bg-secondary-container'
-                  )}>
+              {item.label === 'Earn' ? (
+                <div className="-mt-5">
+                  <NeuIconBadge
+                    size="lg"
+                    active={active}
+                    className={cn(
+                      'transition-all',
+                      active && 'bg-neo-primary shadow-neu-pressed'
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(item.path);
+                    }}
+>
                     <Icon className={cn(
                       'w-6 h-6',
-                      active ? 'text-on-primary' : 'text-on-secondary-container'
+                      active ? 'text-white' : 'text-neo-primary'
                     )} />
-                  </div>
-                ) : (
-                  <Icon className="w-6 h-6" />
-                )}
-              </div>
+                  </NeuIconBadge>
+                </div>
+              ) : (
+                <NeuIconBadge
+                  size="sm"
+                  active={active}
+                  className="transition-all"
+                >
+                  <Icon className={cn(
+                    'w-4 h-4',
+                    active ? 'text-neo-primary' : 'text-neo-text-muted'
+                  )} />
+                </NeuIconBadge>
+              )}
               <span className={cn(
-                'font-body-xs text-[10px]',
-                active ? 'text-primary' : 'text-text-muted'
+                'font-label-caps text-label-caps mt-1',
+                active ? 'text-neo-primary' : 'text-neo-text-muted'
               )}>
                 {item.label}
               </span>

@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
+import { NeuCard } from '@/components/ui/neu-card';
+import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
+import { NeuProgress } from '@/components/ui/neu-progress';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ArrowRight, Lock, CheckCircle, Delete } from 'lucide-react';
 
 export default function WithdrawConfirmPage() {
   const router = useRouter();
@@ -26,7 +32,6 @@ export default function WithdrawConfirmPage() {
 
   const handleSubmit = () => {
     setIsSubmitting(true);
-    // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
@@ -35,159 +40,137 @@ export default function WithdrawConfirmPage() {
 
   if (isSuccess) {
     return (
-      <div className="space-y-gutter">
-        {/* Success Card */}
-        <div className="bg-surface-alt rounded-xl p-8 md:p-12 max-w-md w-full mx-auto flex flex-col items-center text-center shadow-sm relative overflow-hidden">
-          {/* Decorative background elements */}
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-secondary-fixed opacity-20 rounded-full blur-2xl"></div>
-          <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-primary-fixed-dim opacity-20 rounded-full blur-2xl"></div>
+      <PageTransition className="space-y-gutter">
+        <NeuCard padding="lg" className="max-w-md w-full mx-auto flex flex-col items-center text-center shadow-neu-raised relative overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-neo-secondary opacity-20 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-neo-primary opacity-20 rounded-full blur-2xl"></div>
 
-          {/* Animated Icon */}
-          <div className="w-24 h-24 bg-surface-alt rounded-full flex items-center justify-center mb-8 border-2 border-secondary-container">
-            <span className="material-symbols-outlined text-[48px] text-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>task_alt</span>
-          </div>
+          <NeuIconBadge size="lg" active className="mb-8" style={{ background: 'var(--neo-secondary)' }}>
+            <CheckCircle className="w-8 h-8 text-neo-primary" />
+          </NeuIconBadge>
 
-          {/* Headers */}
-          <h2 className="font-h2 text-h2 text-primary-container mb-2">Withdrawal Request Submitted</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mb-8">Your funds are on the way. We'll notify you once the transfer is complete.</p>
+          <h2 className="font-h2 text-h2 text-neo-primary mb-2">Withdrawal Request Submitted</h2>
+          <p className="font-body-md text-body-md text-neo-text-secondary mb-8">Your funds are on the way. We'll notify you once the transfer is complete.</p>
 
-          {/* Summary Details */}
-          <div className="w-full bg-surface-bright rounded-lg p-6 mb-8 border border-outline-variant/30">
+          {/* Summary - neu-inset readout */}
+          <div className="w-full bg-neu-bg rounded-xl p-6 mb-8 shadow-neu-inset">
             <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center pb-4 border-b border-outline-variant/50">
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Amount</span>
-                <span className="font-data-lg text-data-lg text-primary-container">NGN 150,000</span>
+              <div className="flex justify-between items-center pb-4 border-b border-neo-bg-dark">
+                <span className="font-body-sm text-body-sm text-neo-text-secondary">Amount</span>
+                <span className="font-data-lg text-data-lg text-neo-primary">NGN 150,000</span>
               </div>
-              <div className="flex justify-between items-center pb-4 border-b border-outline-variant/50">
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Reference ID</span>
-                <span className="font-data-md text-data-md text-on-surface tracking-wider">CMP-W-982X4</span>
+              <div className="flex justify-between items-center pb-4 border-b border-neo-bg-dark">
+                <span className="font-body-sm text-body-sm text-neo-text-secondary">Reference ID</span>
+                <span className="font-data-md text-data-md text-neo-text-primary tracking-wider">CMP-W-982X4</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Estimated Processing</span>
+                <span className="font-body-sm text-body-sm text-neo-text-secondary">Estimated Processing</span>
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base text-secondary">schedule</span>
-                  <span className="font-label-caps text-label-caps text-secondary-container">&lt;24 Hours</span>
+                  <span className="material-symbols-outlined text-base text-neo-secondary">schedule</span>
+                  <span className="font-label-caps text-label-caps text-neo-secondary">{'<'}24 Hours</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
           <div className="w-full flex flex-col gap-4">
-            <Link href="/dashboard/wallet" className="w-full bg-primary-container text-on-primary font-body-md text-body-md font-bold py-4 rounded-lg hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2 shadow-sm">
-              Back to Wallet
-            </Link>
-            <button className="w-full bg-transparent text-primary-container font-body-sm text-body-sm py-2 rounded-lg hover:bg-surface-variant transition-colors border border-transparent">
+            <Button size="lg" className="w-full" asChild>
+              <Link href="/dashboard/wallet">Back to Wallet</Link>
+            </Button>
+            <Button variant="ghost" size="lg" className="w-full">
               View Receipt
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
+        </NeuCard>
+      </PageTransition>
     );
   }
 
   return (
-    <div className="space-y-gutter">
+    <PageTransition className="space-y-gutter">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard/wallet/withdraw/bank" className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-outline-variant transition-colors">
-          <span className="material-symbols-outlined">arrow_back</span>
+        <Link href="/dashboard/wallet/withdraw/bank">
+          <NeuIconBadge size="md" className="cursor-pointer">
+            <ArrowLeft className="w-5 h-5 text-neo-text-primary" />
+          </NeuIconBadge>
         </Link>
         <div>
-          <h2 className="font-h3 text-h3 text-on-surface m-0">Withdraw Funds</h2>
-          <p className="text-on-surface-variant font-body-sm mt-1">Step 3 of 3: Verify PIN</p>
+          <h2 className="font-h3 text-h3 text-neo-text-primary m-0">Withdraw Funds</h2>
+          <p className="text-neo-text-secondary font-body-sm mt-1">Step 3 of 3: Verify PIN</p>
         </div>
       </div>
 
-      {/* Stepper */}
-      <div className="flex items-center justify-between mb-8 px-4 relative">
-        <div className="absolute left-[15%] right-[15%] top-1/2 h-[2px] bg-surface-variant -z-10 -translate-y-1/2"></div>
-        <div className="flex flex-col items-center gap-2 bg-surface-bright px-2">
-          <div className="w-8 h-8 rounded-full bg-success-verified text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm">
-            <span className="material-symbols-outlined text-sm">check</span>
-          </div>
-          <span className="font-label-caps text-label-caps text-success-verified">Amount</span>
-        </div>
-        <div className="flex flex-col items-center gap-2 bg-surface-bright px-2">
-          <div className="w-8 h-8 rounded-full bg-success-verified text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm">
-            <span className="material-symbols-outlined text-sm">check</span>
-          </div>
-          <span className="font-label-caps text-label-caps text-success-verified">Bank</span>
-        </div>
-        <div className="flex flex-col items-center gap-2 bg-surface-bright px-2">
-          <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm border-[1.5px] border-secondary">
-            3
-          </div>
-          <span className="font-label-caps text-label-caps text-on-surface">Confirm</span>
-        </div>
-      </div>
+      {/* Stepper Progress */}
+      <NeuProgress value={100} showLabel label="Step 3 of 3" size="md" />
 
       {/* PIN Verification Card */}
-      <div className="bg-surface-alt rounded-xl p-6 md:p-8 w-full max-w-md mx-auto shadow-sm border border-outline-variant/30 flex flex-col items-center text-center">
-        {/* Header / Progress */}
-        <div className="w-full flex justify-between items-center mb-8 text-on-surface-variant">
+      <NeuCard padding="lg" className="w-full max-w-md mx-auto flex flex-col items-center text-center">
+        <div className="w-full flex justify-between items-center mb-8 text-neo-text-secondary">
           <div className="w-6"></div>
-          <div className="font-label-caps text-label-caps text-on-primary-container tracking-wider">STEP 3 OF 3</div>
+          <div className="font-label-caps text-label-caps text-neo-primary tracking-wider">STEP 3 OF 3</div>
           <div className="w-6"></div>
         </div>
 
-        <div className="bg-primary-container text-secondary-fixed rounded-full p-4 mb-6 shadow-inner">
-          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
-        </div>
+        <NeuIconBadge size="lg" active className="mb-6" style={{ background: 'var(--neo-primary)' }}>
+          <Lock className="w-6 h-6 text-white" />
+        </NeuIconBadge>
 
-        <h1 className="font-h3 text-h3 text-on-surface mb-2">Enter Security PIN</h1>
-        <p className="font-body-sm text-body-sm text-on-surface-variant mb-8 px-4">
-          Please enter your 4-digit security PIN to authorize this withdrawal of <strong className="text-on-surface">₦50,000</strong> to GTBank.
+        <h1 className="font-h3 text-h3 text-neo-text-primary mb-2">Enter Security PIN</h1>
+        <p className="font-body-sm text-body-sm text-neo-text-secondary mb-8 px-4">
+          Please enter your 4-digit security PIN to authorize this withdrawal of <strong className="text-neo-text-primary">&#8358;50,000</strong> to GTBank.
         </p>
 
         {/* PIN Dots */}
         <div className="flex gap-4 mb-10">
           {[0, 1, 2, 3].map((index) => (
-            <div
+            <NeuIconBadge
               key={index}
-              className={`w-4 h-4 rounded-full border-2 border-primary-container bg-surface-bright transition-colors ${
-                index < pin.length ? 'filled' : ''
-              }`}
-              style={{
-                backgroundColor: index < pin.length ? '#0d1b35' : 'transparent'
-              }}
-            ></div>
+              size="sm"
+              active={index < pin.length}
+              className="transition-all duration-200"
+            >
+              <span className="w-2 h-2 rounded-full bg-neo-text-muted" />
+            </NeuIconBadge>
           ))}
         </div>
 
         {/* Number Pad */}
         <div className="grid grid-cols-3 gap-4 w-full max-w-[280px] mb-8">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <button
+            <NeuCard
               key={num}
+              padding="none"
+              interactive
+              className="h-14 flex items-center justify-center cursor-pointer"
               onClick={() => handleNumberClick(num.toString())}
-              className="h-14 rounded-lg bg-surface-bright border border-outline-variant/50 font-data-lg text-data-lg text-on-surface hover:bg-surface-variant active:bg-surface-dim transition-colors flex items-center justify-center"
             >
-              {num}
-            </button>
+              <span className="font-data-lg text-data-lg text-neo-text-primary">{num}</span>
+            </NeuCard>
           ))}
           <div className="h-14"></div>
-          <button
+          <NeuCard
+            padding="none"
+            interactive
+            className="h-14 flex items-center justify-center cursor-pointer"
             onClick={() => handleNumberClick('0')}
-            className="h-14 rounded-lg bg-surface-bright border border-outline-variant/50 font-data-lg text-data-lg text-on-surface hover:bg-surface-variant active:bg-surface-dim transition-colors flex items-center justify-center"
           >
-            0
-          </button>
+            <span className="font-data-lg text-data-lg text-neo-text-primary">0</span>
+          </NeuCard>
           <button
             onClick={handleDelete}
-            className="h-14 rounded-lg bg-transparent text-on-surface-variant hover:text-error-alert transition-colors flex items-center justify-center"
+            className="h-14 flex items-center justify-center text-neo-text-muted hover:text-neo-error transition-colors"
           >
-            <span className="material-symbols-outlined">backspace</span>
+            <Delete className="w-5 h-5" />
           </button>
         </div>
 
         {/* Action Button */}
-        <button
-          onClick={handleSubmit}
+        <Button
+          size="lg"
+          className="w-full gap-2"
           disabled={pin.length !== 4 || isSubmitting}
-          className={`w-full bg-primary-container text-on-primary font-body-md text-body-md font-bold py-4 rounded-lg transition-colors flex justify-center items-center gap-2 ${
-            pin.length !== 4 ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
+          onClick={handleSubmit}
         >
           {isSubmitting ? (
             <>
@@ -197,15 +180,15 @@ export default function WithdrawConfirmPage() {
           ) : (
             <>
               Submit Request
-              <span className="material-symbols-outlined">arrow_forward</span>
+              <ArrowRight className="w-5 h-5" />
             </>
           )}
-        </button>
+        </Button>
 
-        <button className="mt-4 font-body-sm text-body-sm text-primary-container hover:underline decoration-secondary-fixed underline-offset-4">
+        <button className="mt-4 font-body-sm text-body-sm text-neo-primary hover:underline underline-offset-4">
           Forgot PIN?
         </button>
-      </div>
-    </div>
+      </NeuCard>
+    </PageTransition>
   );
 }

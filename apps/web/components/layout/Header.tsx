@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { useUserStore } from '@/stores/userStore';
 import { cn } from '@/lib/utils';
 import {
@@ -33,14 +34,14 @@ export function Header() {
   const { user, isAuthenticated } = useUserStore();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full bg-neu-bg shadow-neu-flat">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">C</span>
-          </div>
-          <span className="text-xl font-bold">CMPapp</span>
+          <NeuIconBadge size="sm" active className="bg-neo-primary shadow-none">
+            <span className="text-lg font-bold text-white">C</span>
+          </NeuIconBadge>
+          <span className="text-xl font-bold text-neo-text-primary">CMPapp</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -49,15 +50,16 @@ export function Header() {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className={cn('gap-2', isActive && 'bg-primary/10')}
-                >
-                  <Icon className="h-4 w-4" />
+              <Link key={item.href} href={item.href} className="flex items-center gap-2">
+                <NeuIconBadge size="sm" active={isActive}>
+                  <Icon className={cn('h-4 w-4', isActive ? 'text-neo-primary' : 'text-neo-text-secondary')} />
+                </NeuIconBadge>
+                <span className={cn(
+                  'font-body-sm text-body-sm',
+                  isActive ? 'text-neo-primary font-semibold' : 'text-neo-text-secondary'
+                )}>
                   {item.label}
-                </Button>
+                </span>
               </Link>
             );
           })}
@@ -68,25 +70,25 @@ export function Header() {
           {isAuthenticated && user ? (
             <>
               <Link href="/wallet" className="hidden sm:flex">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Wallet className="h-4 w-4 text-yellow-600" />
-                  <span className="font-semibold">
+                <Button variant="neumorphic" size="sm" className="gap-2">
+                  <Wallet className="h-4 w-4 text-neo-secondary" />
+                  <span className="font-semibold text-neo-text-primary">
                     {new Intl.NumberFormat('en-NG').format(user.wallet?.coinBalance || 0)}
                   </span>
                 </Button>
               </Link>
               <Link href="/profile">
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <span className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                <NeuIconBadge size="sm">
+                  <span className="h-6 w-6 rounded-full bg-neo-primary flex items-center justify-center text-white text-sm font-bold">
                     {user.displayName?.[0]?.toUpperCase() || 'U'}
                   </span>
-                </Button>
+                </NeuIconBadge>
               </Link>
             </>
           ) : (
             <div className="flex gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 text-neo-text-secondary">
                   <LogIn className="h-4 w-4" />
                   Login
                 </Button>
@@ -101,42 +103,54 @@ export function Header() {
           )}
 
           {/* Mobile menu toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
+          <NeuIconBadge
+            size="sm"
+            className="md:hidden cursor-pointer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+            {mobileMenuOpen ? <X className="h-5 w-5 text-neo-text-primary" /> : <Menu className="h-5 w-5 text-neo-text-primary" />}
+          </NeuIconBadge>
         </div>
       </div>
 
       {/* Mobile Nav */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t">
+        <div className="md:hidden border-t border-neu-bg-dark bg-neu-bg">
           <nav className="container py-4 flex flex-col gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
               return (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
-                  <Button
-                    variant={isActive ? 'secondary' : 'ghost'}
-                    className={cn('w-full justify-start gap-2', isActive && 'bg-primary/10')}
+                  <button
+                    className={cn(
+                      'w-full flex items-center gap-3 py-3 px-4 rounded-xl transition-all',
+                      isActive ? 'shadow-neu-inset text-neo-primary' : 'shadow-neu-flat text-neo-text-secondary'
+                    )}
                   >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Button>
+                    <NeuIconBadge size="sm" active={isActive}>
+                      <Icon className="h-4 w-4" />
+                    </NeuIconBadge>
+                    <span className={cn(
+                      'font-body-md text-body-md',
+                      isActive && 'font-semibold'
+                    )}>
+                      {item.label}
+                    </span>
+                  </button>
                 </Link>
               );
             })}
             {isAuthenticated && (
               <Link href="/wallet" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Wallet className="h-4 w-4 text-yellow-600" />
-                  Wallet ({new Intl.NumberFormat('en-NG').format(user?.wallet?.coinBalance || 0)})
-                </Button>
+                <button className="w-full flex items-center gap-3 py-3 px-4 rounded-xl shadow-neu-flat text-neo-text-secondary">
+                  <NeuIconBadge size="sm">
+                    <Wallet className="h-4 w-4 text-neo-secondary" />
+                  </NeuIconBadge>
+                  <span className="font-body-md text-body-md">
+                    Wallet ({new Intl.NumberFormat('en-NG').format(user?.wallet?.coinBalance || 0)})
+                  </span>
+                </button>
               </Link>
             )}
           </nav>

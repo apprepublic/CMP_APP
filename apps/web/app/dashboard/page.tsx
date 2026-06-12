@@ -1,6 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
+import { NeuCard } from '@/components/ui/neu-card';
+import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
+import { NeuProgress } from '@/components/ui/neu-progress';
+import { Button } from '@/components/ui/button';
+import { Wallet, Flame, ClipboardList, ArrowRight, Bell, Coins } from 'lucide-react';
 
 const mockUser = {
   displayName: 'Alex',
@@ -31,181 +37,195 @@ const quickEarnTasks = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-12">
-      {/* Desktop Header Area (Hero background) */}
-      <div className="hidden md:block h-64 bg-primary-container w-full relative overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+    <PageTransition className="space-y-12">
+      {/* Desktop Header Area */}
+      <NeuCard padding="none" className="hidden md:block h-64 w-full relative overflow-hidden flex-shrink-0 shadow-neu-raised">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-neo-secondary via-transparent to-transparent"></div>
         <div className="absolute top-0 right-0 p-8 flex items-center gap-6 z-10">
-          <div className="flex items-center gap-2 bg-surface-container-low/10 border-[1.5px] border-secondary-fixed rounded-full px-4 py-2 backdrop-blur-sm">
-            <span className="material-symbols-outlined text-secondary-fixed">monetization_on</span>
-            <span className="font-data-md text-data-md text-secondary-fixed text-lg">{mockUser.coinBalance.toLocaleString()} Coins</span>
-          </div>
-          <button className="text-on-primary hover:text-secondary-fixed transition-colors relative">
-            <span className="material-symbols-outlined text-2xl">notifications</span>
-            <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
-          </button>
-          <button className="w-10 h-10 rounded-full border-2 border-outline overflow-hidden hover:border-secondary transition-colors">
-            <img alt="User Profile" className="w-full h-full object-cover" src={mockUser.avatar} />
-          </button>
+          <NeuIconBadge size="md" className="flex items-center gap-2 px-4 py-2 rounded-full">
+            <span className="material-symbols-outlined text-neo-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+            <span className="font-data-md text-data-md text-neo-secondary">{mockUser.coinBalance.toLocaleString()} Coins</span>
+          </NeuIconBadge>
+          <NeuIconBadge size="md" active className="cursor-pointer relative">
+            <Bell className="w-5 h-5 text-neo-text-primary" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-neo-error rounded-full"></span>
+          </NeuIconBadge>
+          <NeuIconBadge size="md" className="cursor-pointer overflow-hidden p-0">
+            <img alt="User Profile" className="w-full h-full object-cover rounded-xl" src={mockUser.avatar} />
+          </NeuIconBadge>
         </div>
         <div className="absolute bottom-12 left-10 z-10">
-          <h2 className="font-h1 text-h1 text-on-primary mb-2">Welcome Back, {mockUser.displayName}.</h2>
-          <p className="font-body-lg text-body-lg text-on-primary-container">Let's grow your creative enterprise today.</p>
+          <h2 className="font-h1 text-h1 text-neo-text-primary mb-2">Welcome Back, {mockUser.displayName}.</h2>
+          <p className="font-body-lg text-body-lg text-neo-text-secondary">Let's grow your creative enterprise today.</p>
         </div>
-      </div>
+      </NeuCard>
 
-      {/* Mobile Welcome (visible only on mobile) */}
+      {/* Mobile Welcome */}
       <div className="md:hidden mb-6 mt-4">
-        <h2 className="font-h1-mobile text-h1-mobile text-on-surface">Hi, {mockUser.displayName}</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant">Here is your daily summary.</p>
+        <h2 className="font-h1-mobile text-h1-mobile text-neo-text-primary">Hi, {mockUser.displayName}</h2>
+        <p className="font-body-md text-body-md text-neo-text-secondary">Here is your daily summary.</p>
       </div>
 
       {/* Power Row (Quick Stats) */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Total Balance */}
-        <div className="bg-surface-alt rounded-xl p-6 relative overflow-hidden group hover:border-secondary transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary-container/5 rounded-full blur-xl group-hover:bg-secondary-fixed/10 transition-colors"></div>
-          <div className="flex justify-between items-start mb-4">
-            <span className="font-label-caps text-label-caps text-on-surface-variant">Total Balance</span>
-            <span className="material-symbols-outlined text-secondary">account_balance_wallet</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="font-data-lg text-data-lg text-h2 text-on-background">{mockUser.coinBalance.toLocaleString()}</h3>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Coins</span>
-          </div>
-          <div className="mt-4 flex items-center gap-1 text-success-verified font-body-sm text-body-sm">
-            <span className="material-symbols-outlined text-sm">trending_up</span>
-            <span>+450 this week</span>
-          </div>
-        </div>
+        <StaggerContainer stagger={0.1}>
+          <StaggerItem>
+            <NeuCard padding="md" interactive>
+              <div className="flex justify-between items-start mb-4">
+                <span className="font-label-caps text-label-caps text-neo-text-secondary">Total Balance</span>
+                <NeuIconBadge size="md">
+                  <Wallet className="w-5 h-5 text-neo-secondary" />
+                </NeuIconBadge>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{mockUser.coinBalance.toLocaleString()}</h3>
+                <span className="font-body-sm text-body-sm text-neo-text-secondary">Coins</span>
+              </div>
+              <div className="mt-4 flex items-center gap-1 text-neo-success font-body-sm text-body-sm">
+                <span className="material-symbols-outlined text-sm">trending_up</span>
+                <span>+450 this week</span>
+              </div>
+            </NeuCard>
+          </StaggerItem>
 
-        {/* Current Streak */}
-        <div className="bg-surface-alt rounded-xl p-6 relative overflow-hidden group hover:border-secondary transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-          <div className="flex justify-between items-start mb-4">
-            <span className="font-label-caps text-label-caps text-on-surface-variant">Current Streak</span>
-            <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="font-data-lg text-data-lg text-h2 text-on-background">{mockUser.currentStreak}</h3>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Days</span>
-          </div>
-          <div className="mt-4 w-full bg-surface-variant rounded-full h-2">
-            <div className="bg-secondary h-2 rounded-full" style={{ width: '80%' }}></div>
-          </div>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-2 text-xs">2 days to next milestone</p>
-        </div>
+          <StaggerItem>
+            <NeuCard padding="md" interactive>
+              <div className="flex justify-between items-start mb-4">
+                <span className="font-label-caps text-label-caps text-neo-text-secondary">Current Streak</span>
+                <NeuIconBadge size="md" active>
+                  <Flame className="w-5 h-5 text-neo-secondary" />
+                </NeuIconBadge>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{mockUser.currentStreak}</h3>
+                <span className="font-body-sm text-body-sm text-neo-text-secondary">Days</span>
+              </div>
+              <div className="mt-4">
+                <NeuProgress value={80} showLabel size="sm" />
+              </div>
+              <p className="font-body-sm text-body-sm text-neo-text-secondary mt-2 text-xs">2 days to next milestone</p>
+            </NeuCard>
+          </StaggerItem>
 
-        {/* Tasks Remaining */}
-        <div className="bg-surface-alt rounded-xl p-6 relative overflow-hidden group hover:border-secondary transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-          <div className="flex justify-between items-start mb-4">
-            <span className="font-label-caps text-label-caps text-on-surface-variant">Tasks Remaining</span>
-            <span className="material-symbols-outlined text-on-primary-fixed-variant">checklist</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="font-data-lg text-data-lg text-h2 text-on-background">{mockUser.tasksRemaining}</h3>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Tasks</span>
-          </div>
-          <Link className="mt-4 inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-secondary font-medium transition-colors" href="/dashboard/tasks">
-            Complete now <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </Link>
-        </div>
+          <StaggerItem>
+            <NeuCard padding="md" interactive>
+              <div className="flex justify-between items-start mb-4">
+                <span className="font-label-caps text-label-caps text-neo-text-secondary">Tasks Remaining</span>
+                <NeuIconBadge size="md">
+                  <ClipboardList className="w-5 h-5 text-neo-primary" />
+                </NeuIconBadge>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{mockUser.tasksRemaining}</h3>
+                <span className="font-body-sm text-body-sm text-neo-text-secondary">Tasks</span>
+              </div>
+              <Link className="mt-4 inline-flex items-center gap-1 font-body-sm text-body-sm text-neo-primary hover:text-neo-secondary font-medium transition-colors" href="/dashboard/tasks">
+                Complete now <ArrowRight className="w-4 h-4" />
+              </Link>
+            </NeuCard>
+          </StaggerItem>
+        </StaggerContainer>
       </section>
 
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Featured & Content */}
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-10">
-          {/* Top Artists (Horizontal Scroll) */}
+          {/* Top Artists */}
           <section>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-h3 text-h3 text-on-background">Top Artists of the Week</h3>
-              <Link className="font-body-sm text-body-sm text-secondary hover:underline" href="/dashboard/music">View All</Link>
+              <h3 className="font-h3 text-h3 text-neo-text-primary">Top Artists of the Week</h3>
+              <Link className="font-body-sm text-body-sm text-neo-primary hover:underline" href="/dashboard/music">View All</Link>
             </div>
             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x">
               {topArtists.map((artist) => (
-                <div key={artist.id} className="min-w-[160px] bg-surface-alt rounded-xl p-4 flex flex-col items-center gap-3 snap-start hover:-translate-y-1 transition-transform cursor-pointer border border-transparent hover:border-outline-variant">
-                  <img alt={artist.name} className="w-20 h-20 rounded-full object-cover border-2 border-surface-container-highest" src={artist.image} />
+                <NeuCard key={artist.id} padding="md" interactive className="min-w-[160px] flex flex-col items-center gap-3 snap-start">
+                  <img alt={artist.name} className="w-20 h-20 rounded-full object-cover shadow-neu-raised-sm" src={artist.image} />
                   <div className="text-center">
-                    <h4 className="font-body-md text-body-md font-semibold text-on-background">{artist.name}</h4>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">{artist.genre}</p>
+                    <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{artist.name}</h4>
+                    <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{artist.genre}</p>
                   </div>
-                </div>
+                </NeuCard>
               ))}
             </div>
           </section>
 
-          {/* Featured Business Stores (Bento Style) */}
+          {/* Featured Business Stores */}
           <section>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-h3 text-h3 text-on-background">Featured Stores</h3>
+              <h3 className="font-h3 text-h3 text-neo-text-primary">Featured Stores</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Large Bento Item */}
-              <div className="sm:col-span-2 h-48 rounded-xl overflow-hidden relative group cursor-pointer">
+              <div className="sm:col-span-2 h-48 rounded-2xl overflow-hidden relative group cursor-pointer shadow-neu-raised">
                 <img alt="Main Store" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={featuredStores[0].image} />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent flex flex-col justify-end p-6">
-                  <span className="bg-secondary text-primary font-label-caps text-label-caps text-[10px] px-2 py-1 rounded w-fit mb-2">{featuredStores[0].badge}</span>
-                  <h4 className="font-h3 text-h3 text-on-primary">{featuredStores[0].name}</h4>
-                  <p className="font-body-sm text-body-sm text-surface-dim mt-1">{featuredStores[0].category}. Earn 5% cashback.</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-neo-primary/90 to-transparent flex flex-col justify-end p-6">
+                  <span className="neo-badge-secondary px-2 py-1 rounded w-fit mb-2 font-label-caps text-label-caps text-[10px]">{featuredStores[0].badge}</span>
+                  <h4 className="font-h3 text-h3 text-white">{featuredStores[0].name}</h4>
+                  <p className="font-body-sm text-body-sm text-white/70 mt-1">{featuredStores[0].category}. Earn 5% cashback.</p>
                 </div>
               </div>
 
-              {/* Small Bento Items */}
-              <div className="h-32 rounded-xl overflow-hidden relative group cursor-pointer bg-surface-alt">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-container to-primary/80 opacity-90 z-0"></div>
+              <NeuCard padding="none" interactive className="h-32 overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-neo-primary/20 to-neo-primary/5 z-0"></div>
                 <div className="relative z-10 p-4 flex flex-col h-full justify-between">
-                  <span className="material-symbols-outlined text-secondary">headphones</span>
+                  <NeuIconBadge size="sm">
+                    <span className="material-symbols-outlined text-neo-secondary">headphones</span>
+                  </NeuIconBadge>
                   <div>
-                    <h4 className="font-body-md text-body-md font-semibold text-on-primary">{featuredStores[1].name}</h4>
-                    <p className="font-body-sm text-body-sm text-surface-dim text-xs">{featuredStores[1].category}</p>
+                    <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{featuredStores[1].name}</h4>
+                    <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{featuredStores[1].category}</p>
                   </div>
                 </div>
-              </div>
+              </NeuCard>
 
-              <div className="h-32 rounded-xl overflow-hidden relative group cursor-pointer bg-surface-alt border border-outline-variant hover:border-secondary transition-colors">
+              <NeuCard padding="none" interactive className="h-32 overflow-hidden relative">
                 <div className="p-4 flex flex-col h-full justify-between">
-                  <span className="material-symbols-outlined text-primary">brush</span>
+                  <NeuIconBadge size="sm">
+                    <span className="material-symbols-outlined text-neo-primary">brush</span>
+                  </NeuIconBadge>
                   <div>
-                    <h4 className="font-body-md text-body-md font-semibold text-on-background">{featuredStores[2].name}</h4>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">{featuredStores[2].category}</p>
+                    <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{featuredStores[2].name}</h4>
+                    <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{featuredStores[2].category}</p>
                   </div>
                 </div>
-              </div>
+              </NeuCard>
             </div>
           </section>
         </div>
 
-        {/* Right Column: Daily Tasks (Sidebar on Desktop) */}
+        {/* Right Column: Daily Tasks */}
         <div className="lg:col-span-1">
-          <section className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 sticky top-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]" id="daily-tasks">
-            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-outline-variant/20">
-              <span className="material-symbols-outlined text-secondary">task_alt</span>
-              <h3 className="font-h3 text-h3 text-on-background text-lg">Daily Quick Earn</h3>
+          <NeuCard padding="md" className="sticky top-6" id="daily-tasks">
+            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-neo-bg-dark">
+              <NeuIconBadge size="sm" active>
+                <span className="material-symbols-outlined text-neo-secondary text-sm">task_alt</span>
+              </NeuIconBadge>
+              <h3 className="font-h3 text-h3 text-neo-text-primary text-lg">Daily Quick Earn</h3>
             </div>
             <div className="space-y-4">
               {quickEarnTasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-alt transition-colors group">
+                <NeuCard key={task.id} padding="sm" interactive className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined text-sm">{task.icon}</span>
-                    </div>
+                    <NeuIconBadge size="md" active>
+                      <span className="material-symbols-outlined text-neo-primary text-sm">{task.icon}</span>
+                    </NeuIconBadge>
                     <div>
-                      <h4 className="font-body-md text-body-md font-medium text-on-background">{task.title}</h4>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">+{task.reward} Coins</p>
+                      <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">{task.title}</h4>
+                      <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">+{task.reward} Coins</p>
                     </div>
                   </div>
-                  <button className="bg-secondary hover:bg-secondary-fixed text-primary font-label-caps text-label-caps px-4 py-2 rounded-lg transition-colors">
+                  <Button variant="secondary" size="sm">
                     Start
-                  </button>
-                </div>
+                  </Button>
+                </NeuCard>
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-outline-variant/20 text-center">
-              <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">Completing all tasks grants a bonus multiplier.</p>
+            <div className="mt-6 pt-4 border-t border-neo-bg-dark text-center">
+              <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">Completing all tasks grants a bonus multiplier.</p>
             </div>
-          </section>
+          </NeuCard>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
