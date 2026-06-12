@@ -6,7 +6,7 @@ import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Play, Download, Heart, PersonAdd, PersonRemove, Music, Users, TrendingUp, PlayCircle } from 'lucide-react';
+import { Play, Download, Heart, UserPlus, UserMinus, Music, Users, TrendingUp, PlayCircle } from 'lucide-react';
 
 const artist = {
   name: 'Aisha M',
@@ -65,12 +65,12 @@ export default function ArtistProfileClient() {
             >
               {following ? (
                 <>
-                  <PersonRemove className="w-5 h-5" />
+                  <UserMinus className="w-5 h-5" />
                   Following
                 </>
               ) : (
                 <>
-                  <PersonAdd className="w-5 h-5" />
+                  <UserPlus className="w-5 h-5" />
                   Follow
                 </>
               )}

@@ -8,7 +8,7 @@ import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Play, SkipBack, SkipForward, Pause, Shuffle, Repeat, Heart, Volume2, Download, MoreVertical, PersonAdd, PersonRemove, Verified, MapPin } from 'lucide-react';
+import { Play, SkipBack, SkipForward, Pause, Shuffle, Repeat, Heart, Volume2, Download, MoreVertical, UserPlus, UserMinus, Verified, MapPin } from 'lucide-react';
 
 const mockArtist = {
   name: 'Luna Echo',
@@ -80,12 +80,12 @@ export default function ArtistProfilePage() {
                 >
                   {isFollowing ? (
                     <>
-                      <PersonRemove className="w-5 h-5" />
+                      <UserMinus className="w-5 h-5" />
                       Following
                     </>
                   ) : (
                     <>
-                      <PersonAdd className="w-5 h-5" />
+                      <UserPlus className="w-5 h-5" />
                       Follow
                     </>
                   )}

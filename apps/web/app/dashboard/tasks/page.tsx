@@ -6,7 +6,7 @@ import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { QuickReply, Share, Poll, Article, OndemandVideo, StarRate, LockOpen, ArrowForward } from 'lucide-react';
+import { MessageSquare, Share, BarChart3, FileText, Video, Star, Unlock, ArrowRight } from 'lucide-react';
 
 const filterTabs = ['All', 'News', 'Social', 'Surveys', 'Voting'];
 
@@ -16,7 +16,7 @@ const tasks = [
     title: 'Review New Audio Interface',
     description: 'Test and provide feedback on the upcoming CMPapp creator tools. Ad-Gated task.',
     reward: 250,
-    icon: QuickReply,
+    icon: MessageSquare,
     isPremium: true,
   },
   {
@@ -32,7 +32,7 @@ const tasks = [
     title: 'Creator Economy Survey',
     description: '5-minute survey about your monthly creative expenses and tool preferences.',
     reward: 100,
-    icon: Poll,
+    icon: BarChart3,
     isPremium: false,
   },
   {
@@ -40,7 +40,7 @@ const tasks = [
     title: 'Read Daily News',
     description: 'Stay updated with the latest trends in the Nigerian digital art scene.',
     reward: 25,
-    icon: Article,
+    icon: FileText,
     isPremium: false,
   },
   {
@@ -48,7 +48,7 @@ const tasks = [
     title: 'Watch Brand Promo',
     description: 'Watch a 30-second promotional video from our partner brand.',
     reward: 75,
-    icon: OndemandVideo,
+    icon: Video,
     isPremium: false,
   },
   {
@@ -56,7 +56,7 @@ const tasks = [
     title: 'App Store Review',
     description: 'Leave a review for CMPapp on the App Store and earn bonus coins.',
     reward: 200,
-    icon: StarRate,
+    icon: Star,
     isPremium: true,
   },
 ];
@@ -129,9 +129,9 @@ export default function TasksPage() {
                     >
                       <span>Start Task</span>
                       {task.isPremium ? (
-                        <LockOpen className="w-5 h-5" />
+                        <Unlock className="w-5 h-5" />
                       ) : (
-                        <ArrowForward className="w-5 h-5" />
+                        <ArrowRight className="w-5 h-5" />
                       )}
                     </Button>
                   </NeuCard>

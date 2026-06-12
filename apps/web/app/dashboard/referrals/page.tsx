@@ -6,7 +6,7 @@ import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Users, CheckCircle, AccountBalance, TrendingUp, ContentCopy, Check } from 'lucide-react';
+import { Users, CheckCircle, Landmark, TrendingUp, Copy, Check } from 'lucide-react';
 
 const referralStats = {
   totalReferrals: 124,
@@ -62,7 +62,7 @@ export default function ReferralsPage() {
                 {copied ? (
                   <Check className="w-5 h-5 text-neo-success" />
                 ) : (
-                  <ContentCopy className="w-5 h-5" />
+                  <Copy className="w-5 h-5" />
                 )}
               </button>
             </div>
@@ -114,11 +114,11 @@ export default function ReferralsPage() {
               <StaggerItem>
                 <NeuCard padding="md" className="col-span-2 shadow-neu-flat relative overflow-hidden border-2 border-neo-secondary/30">
                   <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4">
-                    <AccountBalance className="w-[120px] h-[120px] text-neo-text-muted" />
+                    <Landmark className="w-[120px] h-[120px] text-neo-text-muted" />
                   </div>
                   <div className="flex items-center gap-2 text-neo-secondary mb-2 relative z-10">
                     <NeuIconBadge size="sm" active className="bg-neo-secondary/20">
-                      <AccountBalance className="w-4 h-4 text-neo-secondary" />
+                      <Landmark className="w-4 h-4 text-neo-secondary" />
                     </NeuIconBadge>
                     <span className="font-label-caps text-label-caps">Total Earned</span>
                   </div>

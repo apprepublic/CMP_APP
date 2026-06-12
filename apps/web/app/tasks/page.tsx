@@ -7,7 +7,7 @@ import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { PlayCircle, Newspaper, Share, Assignment, HowToVote } from 'lucide-react';
+import { PlayCircle, Newspaper, Share, ClipboardList, Vote } from 'lucide-react';
 
 const tasks = [
   {
@@ -37,14 +37,14 @@ const tasks = [
     title: 'User Feedback',
     description: 'Complete a 2-minute survey about the app.',
     reward: 250,
-    icon: Assignment,
+    icon: ClipboardList,
   },
   {
     id: '4',
     title: 'Feature Vote',
     description: 'Help us decide what to build next.',
     reward: 75,
-    icon: HowToVote,
+    icon: Vote,
   },
 ];
 
