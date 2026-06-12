@@ -60,6 +60,7 @@
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
-    "caniuse-lite": "^1.0.30001600"
+    "caniuse-lite": "^1.0.30001600",
+    "@next/swc-linux-x64-gnu": "^14.2.35"
   }
 }
