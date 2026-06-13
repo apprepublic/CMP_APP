@@ -11,42 +11,6 @@ import { Headphones, ClipboardCheck, TrendingUp, ArrowRight, Coins, Users, Check
 export default function LandingPage() {
   return (
     <PageTransition className="min-h-screen bg-neu-bg">
-      {/* Top Navigation Shell */}
-      <nav className="fixed top-0 w-full z-50 bg-neu-bg shadow-neu-flat h-20 flex justify-between items-center px-gutter">
-        <div className="font-h3 text-h3 font-bold text-neo-text-primary">CMPapp</div>
-        <div className="hidden md:flex items-center space-x-8">
-          <Link className="font-body-md text-body-md text-neo-secondary border-b-2 border-neo-secondary pb-1" href="/dashboard">
-            Dashboard
-          </Link>
-          <Link className="font-body-md text-body-md text-neo-text-secondary hover:text-neo-primary transition-colors" href="/tasks">
-            Earn
-          </Link>
-          <Link className="font-body-md text-body-md text-neo-text-secondary hover:text-neo-primary transition-colors" href="/music">
-            Music
-          </Link>
-          <Link className="font-body-md text-body-md text-neo-text-secondary hover:text-neo-primary transition-colors" href="/marketplace">
-            Market
-          </Link>
-          <Link className="font-body-md text-body-md text-neo-text-secondary hover:text-neo-primary transition-colors" href="/wallet">
-            Wallet
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <NeuIconBadge size="md" className="flex items-center gap-2 px-4 py-2 rounded-full">
-            <span className="material-symbols-outlined text-neo-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            <span className="font-data-md text-data-md text-neo-secondary">500</span>
-          </NeuIconBadge>
-          <NeuIconBadge size="sm" className="cursor-pointer">
-            <span className="material-symbols-outlined text-neo-text-primary">notifications</span>
-          </NeuIconBadge>
-          <Link href="/login">
-            <NeuIconBadge size="sm" className="cursor-pointer">
-              <span className="material-symbols-outlined text-neo-text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>account_circle</span>
-            </NeuIconBadge>
-          </Link>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="relative min-h-screen pt-20 flex flex-col items-center justify-center overflow-hidden bg-neu-bg">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-neo-secondary via-transparent to-transparent"></div>

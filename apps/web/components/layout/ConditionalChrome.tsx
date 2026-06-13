@@ -25,9 +25,7 @@ const selfChromedPrefixes = [
 export function ConditionalChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '/';
 
-  const isLanding = pathname === '/';
   const hasOwnChrome =
-    isLanding ||
     selfChromedPrefixes.some(
       (p) => pathname === p || pathname.startsWith(p + '/')
     );
