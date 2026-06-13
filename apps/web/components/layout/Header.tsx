@@ -20,7 +20,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-const navItems = [
+const publicNavItems = [
+  { href: '/', label: 'Home', icon: Coins },
+  { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+  { href: '/contests', label: 'Contests', icon: Trophy },
+];
+
+const authenticatedNavItems = [
   { href: '/tasks', label: 'Earn', icon: Coins },
   { href: '/music', label: 'Music', icon: Music },
   { href: '/marketplace', label: 'Shop', icon: ShoppingBag },
@@ -32,6 +38,8 @@ export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated } = useUserStore();
+
+  const navItems = isAuthenticated ? authenticatedNavItems : publicNavItems;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-neu-bg shadow-neu-flat">
