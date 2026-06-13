@@ -26,7 +26,7 @@ export function subscribeToChannel<T>(
         schema: 'public',
         table,
       },
-      (payload) => callback(payload.new as T)
+      (payload) => callback(payload?.new as T)
     )
     .subscribe();
 }
