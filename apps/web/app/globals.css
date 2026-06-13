@@ -1,8 +1,10 @@
+/* IMPORTANT: @import must come BEFORE the @tailwind directives, or the
+   browser drops it and Montserrat / JetBrains Mono never load. */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
 
 @layer base {
   :root {
@@ -386,6 +388,9 @@
   .margin-mobile { margin: 16px; }
   .gutter { gap: 24px; }
   .margin-desktop { margin: 40px; }
+
+  /* Safe-area inset for fixed bottom navigation (added) */
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
   /* Hide scrollbar */
   .hide-scrollbar::-webkit-scrollbar { display: none; }

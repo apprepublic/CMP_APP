@@ -16,7 +16,7 @@ const buttonVariants = cva(
         destructive:
           'text-white bg-gradient-to-br from-neo-error to-red-600 shadow-neu-raised hover:shadow-neu-raised-sm',
         outline:
-          'bg-neu-bg text-neo-text-primary border-2 border-neo-bg-dark shadow-neu-flat hover:shadow-neu-raised',
+          'bg-neu-bg text-neo-text-primary border-2 border-neo-base-dark shadow-neu-flat hover:shadow-neu-raised',
         secondary:
           'text-neo-text-primary bg-gradient-to-br from-neo-secondary to-amber-500 shadow-neu-raised hover:shadow-neu-raised-sm',
         ghost:
