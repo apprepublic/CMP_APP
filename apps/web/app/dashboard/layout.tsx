@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Header } from '@/components/layout/Header';
 
 const navItems = [
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -74,32 +75,10 @@ export default function DashboardLayout({
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-h-screen lg:ml-64 w-full relative">
         {/* TopNavBar */}
-        <header className="fixed top-0 w-full z-50 bg-primary shadow-md flex justify-between items-center px-gutter h-20 w-full">
-          <div className="flex items-center space-x-8">
-            <h1 className="font-h3 text-h3 font-bold text-on-primary">CMPapp</h1>
-            <nav className="hidden md:flex space-x-6 items-center pt-2">
-              <Link className="text-on-primary-container font-body-md text-body-md hover:text-secondary transition-colors pb-1" href="/dashboard">Dashboard</Link>
-              <Link className="text-on-primary-container font-body-md text-body-md hover:text-secondary transition-colors pb-1" href="/dashboard/tasks">Earn</Link>
-              <Link className="text-on-primary-container font-body-md text-body-md hover:text-secondary transition-colors pb-1" href="/dashboard/music">Music</Link>
-              <Link className="text-on-primary-container font-body-md text-body-md hover:text-secondary transition-colors pb-1" href="/dashboard/marketplace">Market</Link>
-              <Link className="text-secondary-fixed border-b-2 border-secondary-fixed pb-1 font-body-md text-body-md" href="/dashboard/wallet">Wallet</Link>
-            </nav>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="flex items-center bg-secondary-container text-on-secondary-container px-4 py-2 rounded-lg font-data-md text-data-md scale-95 active:duration-100 hover:bg-secondary-fixed transition-colors">
-              🪙 500
-            </button>
-            <button className="text-on-primary-container hover:text-secondary transition-colors scale-95 active:duration-100">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <Link href="/profile" className="text-on-primary-container hover:text-secondary transition-colors scale-95 active:duration-100">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>account_circle</span>
-            </Link>
-          </div>
-        </header>
+        <Header />
 
         {/* Page Canvas */}
-        <main className="flex-1 pt-28 pb-12 px-margin-mobile lg:px-gutter max-w-container-max mx-auto w-full space-y-gutter">
+        <main className="flex-1 pt-24 pb-12 px-margin-mobile lg:px-gutter max-w-container-max mx-auto w-full space-y-gutter">
           {children}
         </main>
       </div>

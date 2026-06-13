@@ -31,11 +31,9 @@ export function ConditionalChrome({ children }: { children: React.ReactNode }) {
     );
 
   if (hasOwnChrome) {
-    // Page supplies its own header/footer — render content only.
     return <div className="min-h-screen flex flex-col">{children}</div>;
   }
 
-  // Routes without their own nav (e.g. /contests) get the global chrome.
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
