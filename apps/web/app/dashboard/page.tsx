@@ -6,36 +6,21 @@ import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { NeuProgress } from '@/components/ui/neu-progress';
 import { Button } from '@/components/ui/button';
-import { Wallet, Flame, ClipboardList, ArrowRight, Bell, Coins } from 'lucide-react';
-
-const mockUser = {
-  displayName: 'Alex',
-  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCw0imHdTAzGrvSMK1sdAcs0uhyqcz3mlOWN76mUYhFUP4B7T8KqTzKVvLlpUdRdnVzYz1UZK0aH3Bdp8be4B8NRrDDB1C-SxT0klW4sTc7T_N7eRAxsf9lWB4ORCDjIilWvZfA1kYo4ZSOM86vvqQ9cxdP0Eb7cRMP0qpugl4zkqRKtVUE-QqC8t7MvDMOhm6R6OJbuwKjqesTfes3nMeGDJCB_SzAC1evn2N53QEEx0lbWHL0FBAa1Dl14_puH4eYGVziXO4iGKk',
-  coinBalance: 12450,
-  currentStreak: 12,
-  tasksRemaining: 5,
-};
-
-const topArtists = [
-  { id: 1, name: 'Aisha M.', genre: 'Afrobeat', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBOLiUUYH8rhyvHruWQ5qNAxD3E7ap5R7jKvKuBZiFKb6KVHvlBMC1C-Fj9LZQ-a_1MVDtyIIFkwkThDy885xLgFME-3S9MuLExPVx6NMh02uzFI9Ab-Bdr5Rpv3CNbkgLAr7RltNhRo-Z3odWT64yNyZLSU-h-u0wDBO8d3VOZWvtNBhIrWjuokIpY2x4-03muDi9zF-gU73Pq15A3btcFWZ8Tc2VUpGR3auSE5DogyhqLmEbyQCrjYGZieRoxmFX5WDGtOPrD0Lw' },
-  { id: 2, name: 'DJ Tunde', genre: 'Electronic', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCXzWWBIPnUl7GRkr6AZjYbag-0V9VQEo1gCldL0cY86AZCAJvzEjcoXxB9CpIcjiAGjykXhmtgcIPBKs59dIPs8juP3wgqG99q4O8Lng3glBlm98KbDWWwHUZTz2z_v86dGshiISJUSDlg-fr4l-kDvHqhMqLKE2c5go5uONJmqFX0hZO0Aq8l_FFkFrwFxjCHmRL1u9zGTqtiKKqtz3B0QxUxhAFMI3i7NoTqAaFL6Q8_3VZJX8Sf9cSzOLgX3giIf9MH2IUZ1rE' },
-  { id: 3, name: 'Chioma K.', genre: 'Soul', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA4T_fWKjmUQnFq5HNcynE3Pzw3sOap9AVg1oCepRdDKQchl1ddjDA_Q3KjtFsOcHHhMbq5DkywbCQGBHI0nocgskpqbS3BnqJ8QjBr7IQlsKGTp7hnJBrOSure4rt9vHuiHxeblg6glBSlNQvd2PDdwLWpcloFfPuMy8zCyWbsc8SaBZLNsopGRzJr79uA7FUYC4a6pJZyBKTtv3DaWXzxA43T7NZ4R8HqWNlTkClUDYsGTEFlFI1r1PAgKZiKy_b_Kl9R1fmf_Dk' },
-  { id: 4, name: 'Eze Beats', genre: 'Producer', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC3Vnh4W1X-q0mqfDOXVCzrcN1ssAW8v-Y_plKQ_8xmO1IBwpLgTzTxR7CHl5Ksf1gDSDCnRt-kEtNSq07so4e1IVRrg6kkc3GiHRYGiIlmP6VU9pwlan_ELL27Y2EbneaKjnTe1Lk2IESKVZ9u8YtMl1qZsWzeAxY5HR6SATjVtkc9hPXXLplay40xDUOpSwO8id96vIZKNRqZbHT6AF6-Cpn2-PToC4muYr_d26Bzb0d6eHDwvtnE-5A139VSNbCgb4CXYL0hCYg' },
-];
-
-const featuredStores = [
-  { id: 1, name: 'Lagos Threads Co.', category: 'Fashion', badge: 'HOT DEAL', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCIuvh94i6PnfXUwM7XTdoqJiDVLEVYUTfqxE9H7qc0DuJUTdfgXsFXFOLMKieWR_bZiN-jAUTLrbN4AjPeYF-IwSDko5aiTChqGQQbPhdWk7__k8CFf91KQv7rXicNjHnORQ74SWcUtJJMxY-p_nvBSTSyMr9g0RmlFsPnA_8o3ZI2K1v_cY5nnR0FHOVr95sqKBCCxC-WUuftXTmA-tvOhTDiRTIsRAKJuV7MF3-bNVG7k5j9cTdqO3VrL-CRpv9mK8SVVPxaeeg' },
-  { id: 2, name: 'SoundGear HQ', category: 'Audio Equipment', icon: 'headphones' },
-  { id: 3, name: 'Canvas & Co', category: 'Art Supplies', icon: 'brush' },
-];
-
-const quickEarnTasks = [
-  { id: 1, title: 'Read Industry News', description: 'Stay updated with trends', reward: 50, icon: 'article' },
-  { id: 2, title: 'Watch Sponsor Ad', description: 'View 30s promotional video', reward: 100, icon: 'play_circle' },
-  { id: 3, title: 'Share Profile', description: 'Share on social media', reward: 25, icon: 'share' },
-];
+import { Wallet, Flame, ClipboardList, ArrowRight, Bell } from 'lucide-react';
+import { useFeaturedSongs, useStores, useTasks } from '@/lib/hooks';
+import { useUserStore } from '@/stores/userStore';
 
 export default function DashboardPage() {
+  const { data: songs = [], isLoading: songsLoading } = useFeaturedSongs();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+  const { user } = useUserStore();
+
+  // Placeholder until auth is fully wired
+  const displayName = user?.displayName || '—';
+  const coinBalance = user?.wallet?.coinBalance ?? null;
+  const avatarUrl = user?.avatarUrl;
+
   return (
     <PageTransition className="space-y-12">
       {/* Desktop Header Area */}
@@ -44,25 +29,34 @@ export default function DashboardPage() {
         <div className="absolute top-0 right-0 p-8 flex items-center gap-6 z-10">
           <NeuIconBadge size="md" className="flex items-center gap-2 px-4 py-2 rounded-full">
             <span className="material-symbols-outlined text-neo-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            <span className="font-data-md text-data-md text-neo-secondary">{mockUser.coinBalance.toLocaleString()} Coins</span>
+            <span className="font-data-md text-data-md text-neo-secondary">
+              {coinBalance !== null ? `${coinBalance.toLocaleString()} Coins` : '—'}
+            </span>
           </NeuIconBadge>
           <NeuIconBadge size="md" active className="cursor-pointer relative">
             <Bell className="w-5 h-5 text-neo-text-primary" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-neo-error rounded-full"></span>
           </NeuIconBadge>
           <NeuIconBadge size="md" className="cursor-pointer overflow-hidden p-0">
-            <img alt="User Profile" className="w-full h-full object-cover rounded-xl" src={mockUser.avatar} />
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="User Profile" className="w-full h-full object-cover rounded-xl" src={avatarUrl} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neo-primary to-neo-secondary">
+                <span className="font-h2 text-h2 text-white font-bold">{displayName?.[0]?.toUpperCase() || 'U'}</span>
+              </div>
+            )}
           </NeuIconBadge>
         </div>
         <div className="absolute bottom-12 left-10 z-10">
-          <h2 className="font-h1 text-h1 text-neo-text-primary mb-2">Welcome Back, {mockUser.displayName}.</h2>
+          <h2 className="font-h1 text-h1 text-neo-text-primary mb-2">Welcome Back, {displayName}.</h2>
           <p className="font-body-lg text-body-lg text-neo-text-secondary">Let's grow your creative enterprise today.</p>
         </div>
       </NeuCard>
 
       {/* Mobile Welcome */}
       <div className="md:hidden mb-6 mt-4">
-        <h2 className="font-h1-mobile text-h1-mobile text-neo-text-primary">Hi, {mockUser.displayName}</h2>
+        <h2 className="font-h1-mobile text-h1-mobile text-neo-text-primary">Hi, {displayName}</h2>
         <p className="font-body-md text-body-md text-neo-text-secondary">Here is your daily summary.</p>
       </div>
 
@@ -77,14 +71,20 @@ export default function DashboardPage() {
                   <Wallet className="w-5 h-5 text-neo-secondary" />
                 </NeuIconBadge>
               </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{mockUser.coinBalance.toLocaleString()}</h3>
-                <span className="font-body-sm text-body-sm text-neo-text-secondary">Coins</span>
-              </div>
-              <div className="mt-4 flex items-center gap-1 text-neo-success font-body-sm text-body-sm">
-                <span className="material-symbols-outlined text-sm">trending_up</span>
-                <span>+450 this week</span>
-              </div>
+              {coinBalance !== null ? (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{coinBalance.toLocaleString()}</h3>
+                    <span className="font-body-sm text-body-sm text-neo-text-secondary">Coins</span>
+                  </div>
+                  <div className="mt-4 flex items-center gap-1 text-neo-success font-body-sm text-body-sm">
+                    <span className="material-symbols-outlined text-sm">trending_up</span>
+                    <span>+450 this week</span>
+                  </div>
+                </>
+              ) : (
+                <div className="h-8 w-32 neo-skeleton rounded" />
+              )}
             </NeuCard>
           </StaggerItem>
 
@@ -97,13 +97,13 @@ export default function DashboardPage() {
                 </NeuIconBadge>
               </div>
               <div className="flex items-baseline gap-2">
-                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{mockUser.currentStreak}</h3>
+                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">—</h3>
                 <span className="font-body-sm text-body-sm text-neo-text-secondary">Days</span>
               </div>
               <div className="mt-4">
-                <NeuProgress value={80} showLabel size="sm" />
+                <NeuProgress value={0} showLabel size="sm" />
               </div>
-              <p className="font-body-sm text-body-sm text-neo-text-secondary mt-2 text-xs">2 days to next milestone</p>
+              <p className="font-body-sm text-body-sm text-neo-text-secondary mt-2 text-xs">Start completing tasks to build your streak</p>
             </NeuCard>
           </StaggerItem>
 
@@ -115,13 +115,19 @@ export default function DashboardPage() {
                   <ClipboardList className="w-5 h-5 text-neo-primary" />
                 </NeuIconBadge>
               </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{mockUser.tasksRemaining}</h3>
-                <span className="font-body-sm text-body-sm text-neo-text-secondary">Tasks</span>
-              </div>
-              <Link className="mt-4 inline-flex items-center gap-1 font-body-sm text-body-sm text-neo-primary hover:text-neo-secondary font-medium transition-colors" href="/dashboard/tasks">
-                Complete now <ArrowRight className="w-4 h-4" />
-              </Link>
+              {tasksLoading ? (
+                <div className="h-6 w-20 neo-skeleton rounded" />
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{tasks.length}</h3>
+                    <span className="font-body-sm text-body-sm text-neo-text-secondary">Tasks</span>
+                  </div>
+                  <Link className="mt-4 inline-flex items-center gap-1 font-body-sm text-body-sm text-neo-primary hover:text-neo-secondary font-medium transition-colors" href="/dashboard/tasks">
+                    Complete now <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              )}
             </NeuCard>
           </StaggerItem>
         </StaggerContainer>
@@ -131,65 +137,88 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-10">
-          {/* Top Artists */}
+          {/* Top Artists (from featured songs) */}
           <section>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-h3 text-h3 text-neo-text-primary">Top Artists of the Week</h3>
+              <h3 className="font-h3 text-h3 text-neo-text-primary">Featured Artists</h3>
               <Link className="font-body-sm text-body-sm text-neo-primary hover:underline" href="/dashboard/music">View All</Link>
             </div>
-            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x">
-              {topArtists.map((artist) => (
-                <NeuCard key={artist.id} padding="md" interactive className="min-w-[160px] flex flex-col items-center gap-3 snap-start">
-                  <img alt={artist.name} className="w-20 h-20 rounded-full object-cover shadow-neu-raised-sm" src={artist.image} />
-                  <div className="text-center">
-                    <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{artist.name}</h4>
-                    <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{artist.genre}</p>
-                  </div>
-                </NeuCard>
-              ))}
-            </div>
+            {songsLoading ? (
+              <div className="flex gap-4 overflow-x-auto">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex-none w-32 h-32 rounded-full neo-skeleton" />
+                ))}
+              </div>
+            ) : songs.length === 0 ? (
+              <NeuCard padding="md" className="text-center py-8 text-neo-text-secondary">
+                No featured artists yet.
+              </NeuCard>
+            ) : (
+              <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x">
+                {songs.slice(0, 4).map((song, i) => (
+                  <NeuCard key={song.id || i} padding="md" interactive className="min-w-[160px] flex flex-col items-center gap-3 snap-start">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-neo-primary/20 to-neo-secondary/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[32px] text-neo-text-muted">music_note</span>
+                    </div>
+                    <div className="text-center">
+                      <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{song.artist?.stage_name || 'Unknown Artist'}</h4>
+                      <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{song.genre || 'Music'}</p>
+                    </div>
+                  </NeuCard>
+                ))}
+              </div>
+            )}
           </section>
 
-          {/* Featured Business Stores */}
+          {/* Featured Stores */}
           <section>
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-h3 text-h3 text-neo-text-primary">Featured Stores</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2 h-48 rounded-2xl overflow-hidden relative group cursor-pointer shadow-neu-raised">
-                <img alt="Main Store" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={featuredStores[0].image} />
-                <div className="absolute inset-0 bg-gradient-to-t from-neo-primary/90 to-transparent flex flex-col justify-end p-6">
-                  <span className="neo-badge-secondary px-2 py-1 rounded w-fit mb-2 font-label-caps text-label-caps text-[10px]">{featuredStores[0].badge}</span>
-                  <h4 className="font-h3 text-h3 text-white">{featuredStores[0].name}</h4>
-                  <p className="font-body-sm text-body-sm text-white/70 mt-1">{featuredStores[0].category}. Earn 5% cashback.</p>
-                </div>
+            {storesLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-32 rounded-2xl neo-skeleton" />
+                ))}
               </div>
-
-              <NeuCard padding="none" interactive className="h-32 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-neo-primary/20 to-neo-primary/5 z-0"></div>
-                <div className="relative z-10 p-4 flex flex-col h-full justify-between">
-                  <NeuIconBadge size="sm">
-                    <span className="material-symbols-outlined text-neo-secondary">headphones</span>
-                  </NeuIconBadge>
-                  <div>
-                    <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{featuredStores[1].name}</h4>
-                    <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{featuredStores[1].category}</p>
-                  </div>
-                </div>
+            ) : stores.length === 0 ? (
+              <NeuCard padding="md" className="text-center py-8 text-neo-text-secondary">
+                No featured stores yet.
               </NeuCard>
-
-              <NeuCard padding="none" interactive className="h-32 overflow-hidden relative">
-                <div className="p-4 flex flex-col h-full justify-between">
-                  <NeuIconBadge size="sm">
-                    <span className="material-symbols-outlined text-neo-primary">brush</span>
-                  </NeuIconBadge>
-                  <div>
-                    <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{featuredStores[2].name}</h4>
-                    <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{featuredStores[2].category}</p>
-                  </div>
-                </div>
-              </NeuCard>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {stores.slice(0, 3).map((store, i) => (
+                  <NeuCard
+                    key={store.id}
+                    padding="none"
+                    interactive
+                    className={`overflow-hidden relative ${i === 0 ? 'sm:col-span-2 h-48' : 'h-32'}`}
+                  >
+                    <Link href={`/dashboard/marketplace/store/${store.slug}`} className="absolute inset-0 z-10" />
+                    {i === 0 ? (
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-br from-neo-primary/20 to-neo-secondary/20" />
+                        <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                          <span className="neo-badge-secondary px-2 py-1 rounded w-fit mb-2 font-label-caps text-label-caps text-[10px]">FEATURED</span>
+                          <h4 className="font-h3 text-h3 text-neo-text-primary">{store.name}</h4>
+                          <p className="font-body-sm text-body-sm text-neo-text-secondary mt-1">{store.description || 'Explore our featured store'}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-4 flex flex-col h-full justify-between">
+                        <NeuIconBadge size="sm">
+                          <span className="material-symbols-outlined text-neo-secondary">storefront</span>
+                        </NeuIconBadge>
+                        <div>
+                          <h4 className="font-body-md text-body-md font-semibold text-neo-text-primary">{store.name}</h4>
+                          <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">{store.description || 'Store'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </NeuCard>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 
@@ -202,24 +231,39 @@ export default function DashboardPage() {
               </NeuIconBadge>
               <h3 className="font-h3 text-h3 text-neo-text-primary text-lg">Daily Quick Earn</h3>
             </div>
-            <div className="space-y-4">
-              {quickEarnTasks.map((task) => (
-                <NeuCard key={task.id} padding="sm" interactive className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <NeuIconBadge size="md" active>
-                      <span className="material-symbols-outlined text-neo-primary text-sm">{task.icon}</span>
-                    </NeuIconBadge>
-                    <div>
-                      <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">{task.title}</h4>
-                      <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">+{task.reward} Coins</p>
+            {tasksLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-16 neo-skeleton rounded" />
+                ))}
+              </div>
+            ) : tasks.length === 0 ? (
+              <div className="text-center py-8 text-neo-text-secondary">
+                <span className="material-symbols-outlined text-[32px] mb-2">task_alt</span>
+                <p>No tasks available yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tasks.slice(0, 3).map((task) => (
+                  <NeuCard key={task.id} padding="sm" interactive className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <NeuIconBadge size="md" active>
+                        <span className="material-symbols-outlined text-neo-primary text-sm">
+                          {task.category === 'CONTENT' ? 'newspaper' : task.category === 'ENGAGEMENT' ? 'play_circle' : 'task'}
+                        </span>
+                      </NeuIconBadge>
+                      <div>
+                        <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">{task.title}</h4>
+                        <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">+{task.coin_reward} Coins</p>
+                      </div>
                     </div>
-                  </div>
-                  <Button variant="secondary" size="sm">
-                    Start
-                  </Button>
-                </NeuCard>
-              ))}
-            </div>
+                    <Button variant="secondary" size="sm" asChild>
+                      <Link href="/dashboard/tasks">Start</Link>
+                    </Button>
+                  </NeuCard>
+                ))}
+              </div>
+            )}
             <div className="mt-6 pt-4 border-t border-neo-bg-dark text-center">
               <p className="font-body-sm text-body-sm text-neo-text-secondary text-xs">Completing all tasks grants a bonus multiplier.</p>
             </div>
