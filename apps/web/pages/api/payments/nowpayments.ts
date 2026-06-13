@@ -55,7 +55,7 @@ export default async function handler(
       price_amount: amount,
       price_currency: currency.toUpperCase(),
       pay_currency: pay_currency || null, // null means user chooses on checkout
-      ipn_callback_url: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/webhooks/nowpayments`,
+      ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://cmpapp.ng'}/api/webhooks/nowpayments`,
       order_id: orderId,
       order_description: description || `Wallet top-up for order ${orderId}`,
     };
