@@ -3,9 +3,9 @@ export const dynamicParams = true;
 import ArtistProfileClient from './ArtistProfileClient';
 
 export async function generateStaticParams() {
-  return [{ artist: '1' }, { artist: '2' }, { artist: '3' }];
+  return [{ artist: 'aisha-m' }];
 }
 
-export default function ArtistPage() {
-  return <ArtistProfileClient />;
+export default function ArtistPage({ params }: { params: Promise<{ artist: string }> }) {
+  return <ArtistProfileClient slug={(await params).artist} />;
 }
