@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Button } from '@/components/ui/button';
-import { Mail, ArrowRight, LockReset } from 'lucide-react';
+import { Mail, ArrowRight, Lock } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
             {/* Logo/Brand */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-secondary-container mb-4">
-                <LockReset className="text-secondary-container w-8 h-8" />
+                <Lock className="text-secondary-container w-8 h-8" />
               </div>
               <h1 className="font-h2 text-h1-mobile md:text-h2 text-white mb-2">Recover Access</h1>
               <p className="font-body-md text-body-md text-white/70">
