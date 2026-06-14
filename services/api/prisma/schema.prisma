@@ -146,6 +146,7 @@ model User {
   streakRecord  StreakRecord?
   kycRecord     KycRecord? @relation("KycUserRelation")
   kycReviews    KycRecord[] @relation("KycReviewerRelation")
+  verification  UserVerification?
 
   tasks         TaskCompletion[]
   articles      Article[]
@@ -160,6 +161,21 @@ model User {
   @@index([phone])
   @@index([email])
   @@index([referralCode])
+}
+
+model UserVerification {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  emailOtp        String?
+  emailOtpExpires DateTime?
+  phoneOtp        String?
+  phoneOtpExpires DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model KycRecord {

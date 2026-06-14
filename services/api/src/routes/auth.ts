@@ -2,10 +2,12 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
 import { generateTokens } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { generateReferralCode, generateOTP, isValidNigerianPhone, normalizePhoneNumber, isValidEmail } from '@cmpapp/utils';
+import { sendVerificationEmail, sendWelcomeEmail } from '../lib/resend.js';
 
 const router = Router();
 
@@ -106,19 +108,36 @@ router.post('/register', async (req: Request, res: Response) => {
   // Generate tokens
   const tokens = generateTokens(user.id, user.role);
 
-  // TODO: Send OTP via Termii for phone verification
+  // Generate 6-digit OTP for email verification
+  const emailOtp = generateOTP();
+  const emailOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  // Store OTP in database
+  await prisma.userVerification.create({
+    data: {
+      userId: user.id,
+      emailOtp,
+      emailOtpExpires,
+    },
+  });
+
+  // Send verification email
+  if (user.email) {
+    await sendVerificationEmail(user.email, emailOtp, user.displayName || user.username);
+  }
 
   res.status(201).json({
-    message: 'Registration successful',
+    message: 'Registration successful. Please check your email to verify your account.',
     user: {
       id: user.id,
       email: user.email,
       phone: user.phone,
       displayName: user.displayName,
       username: user.username,
-      role: user.role
+      role: user.role,
+      isEmailVerified: false,
     },
-    ...tokens
+    ...tokens,
   });
 });
 
@@ -155,7 +174,9 @@ router.post('/login', async (req: Request, res: Response) => {
       displayName: user.displayName,
       username: user.username,
       role: user.role,
-      kycStatus: user.kycStatus
+      kycStatus: user.kycStatus,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
     },
     ...tokens
   });
@@ -238,6 +259,102 @@ router.post('/otp/verify', async (req: Request, res: Response) => {
   });
 
   res.json({ message: 'Phone verified successfully' });
+});
+
+// Verify Email with OTP
+router.post('/verify-email', async (req: Request, res: Response) => {
+  const { otp, email } = z.object({
+    otp: z.string().length(6),
+    email: z.string().email(),
+  }).parse(req.body);
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      verification: true,
+    },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (!user.verification || !user.verification.emailOtp) {
+    throw new AppError('No verification OTP found. Please request a new one.', 400);
+  }
+
+  // Check if OTP is expired
+  if (new Date() > user.verification.emailOtpExpires) {
+    throw new AppError('Verification code has expired. Please request a new one.', 400);
+  }
+
+  // Verify OTP
+  if (user.verification.emailOtp !== otp) {
+    throw new AppError('Invalid verification code', 401);
+  }
+
+  // Mark email as verified
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerified: true },
+  });
+
+  // Clean up verification record
+  await prisma.userVerification.delete({
+    where: { userId: user.id },
+  });
+
+  // Send welcome email
+  await sendWelcomeEmail(user.email, user.displayName || user.username);
+
+  res.json({ 
+    message: 'Email verified successfully',
+    isEmailVerified: true,
+  });
+});
+
+// Resend verification email
+router.post('/resend-verification', async (req: Request, res: Response) => {
+  const { email } = z.object({
+    email: z.string().email(),
+  }).parse(req.body);
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (user.emailVerified) {
+    throw new AppError('Email is already verified', 400);
+  }
+
+  // Generate new OTP
+  const emailOtp = generateOTP();
+  const emailOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+  // Upsert verification record
+  await prisma.userVerification.upsert({
+    where: { userId: user.id },
+    update: {
+      emailOtp,
+      emailOtpExpires,
+    },
+    create: {
+      userId: user.id,
+      emailOtp,
+      emailOtpExpires,
+    },
+  });
+
+  // Send verification email
+  await sendVerificationEmail(user.email, emailOtp, user.displayName || user.username);
+
+  res.json({ 
+    message: 'Verification email sent successfully',
+  });
 });
 
 // Google OAuth

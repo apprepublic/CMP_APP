@@ -255,6 +255,21 @@ class ApiService {
     });
   }
 
+  // Email Verification
+  async verifyEmail(otp: string, email: string) {
+    return this.request<{ message: string; isEmailVerified: boolean }>('/api/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ otp, email }),
+    });
+  }
+
+  async resendVerification(email: string) {
+    return this.request<{ message: string }>('/api/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
   // Articles
   async getArticles(page = 1, limit = 20, category?: string, search?: string) {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
