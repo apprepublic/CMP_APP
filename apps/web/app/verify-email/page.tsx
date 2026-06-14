@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
@@ -14,15 +14,22 @@ import { useUserStore } from '@/stores/userStore';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user } = useUserStore();
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [email, setEmail] = useState<string>('');
 
-  const prefillOtp = searchParams.get('otp');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlOtp = params.get('otp');
+    const urlEmail = params.get('email');
+    if (urlOtp) setOtp(urlOtp);
+    if (urlEmail) setEmail(urlEmail);
+    else if (user?.email) setEmail(user.email);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +43,6 @@ export default function VerifyEmailPage() {
     setIsLoading(true);
 
     try {
-      const email = user?.email || searchParams.get('email');
       if (!email) {
         throw new Error('Email not found. Please login again.');
       }
@@ -59,7 +65,6 @@ export default function VerifyEmailPage() {
     setIsResending(true);
 
     try {
-      const email = user?.email || searchParams.get('email');
       if (!email) {
         throw new Error('Email not found. Please login again.');
       }
@@ -132,7 +137,7 @@ export default function VerifyEmailPage() {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={6}
-                value={otp || prefillOtp || ''}
+                value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
                 disabled={isLoading}
