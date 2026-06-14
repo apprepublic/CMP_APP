@@ -39,17 +39,26 @@ class ApiService {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${authToken}`;
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...fetchOptions,
-      headers,
-    });
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || 'Request failed');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || 'Request failed');
+      }
+
+      return response.json();
+    } catch (error: any) {
+      // Network errors (CORS, connection refused, etc.)
+      if (error.message === 'Failed to fetch') {
+        console.error('Network error - check if API is running at:', API_URL);
+        throw new Error('Unable to connect to server. Please try again later.');
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   // Auth

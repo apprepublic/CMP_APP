@@ -53,32 +53,32 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Sign up with Supabase
       const { data: authData, error: supabaseError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            phone: formData.phone || undefined,
+          },
+        },
       });
 
       if (supabaseError) throw supabaseError;
 
-      // Register with API
-      const { user, accessToken, refreshToken } = await api.register({
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
-        username: formData.email.split('@')[0],
-        referralCode: formData.referralCode || undefined,
-      });
-
-      api.setToken(accessToken);
-      
-      // Store refresh token
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('refreshToken', refreshToken);
+      try {
+        await api.register({
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+          username: formData.email.split('@')[0],
+          referralCode: formData.referralCode || undefined,
+        });
+      } catch {
+        // API server may be down — Supabase auth is the source of truth
       }
 
-      // Update user store
       await register({
         email: formData.email,
         phone: formData.phone,
@@ -88,7 +88,6 @@ export default function RegisterPage() {
         referralCode: formData.referralCode || undefined,
       });
 
-      // Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');

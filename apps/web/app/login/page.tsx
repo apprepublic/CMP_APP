@@ -29,7 +29,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Sign in with Supabase
       const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -38,19 +37,18 @@ export default function LoginPage() {
       if (supabaseError) throw supabaseError;
 
       if (data.user) {
-        // Get user profile from API and store token
-        const { user: userProfile, accessToken, refreshToken } = await api.login({ email, password });
-        api.setToken(accessToken);
-        
-        // Store refresh token
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('refreshToken', refreshToken);
+        try {
+          const { user: userProfile, accessToken, refreshToken } = await api.login({ email, password });
+          api.setToken(accessToken);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('refreshToken', refreshToken);
+          }
+        } catch {
+          // API server may be down — Supabase auth is the source of truth
         }
 
-        // Update user store
         await login({ email, password });
         
-        // Redirect to dashboard
         router.push('/dashboard');
       }
     } catch (err: any) {
