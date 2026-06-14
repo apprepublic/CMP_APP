@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { NeuCard } from '@/components/ui/neu-card';
-import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Mail, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -70,7 +67,6 @@ export default function VerifyEmailPage() {
       }
 
       await api.resendVerification(email);
-      // Show success message via error state (green)
       setError('VERIFICATION_SENT');
     } catch (err: any) {
       setError(err.message || 'Failed to resend verification email');
@@ -81,125 +77,138 @@ export default function VerifyEmailPage() {
 
   if (success) {
     return (
-      <PageTransition className="min-h-screen bg-neu-bg flex items-center justify-center p-8">
-        <NeuCard padding="lg" className="w-full max-w-md text-center">
+      <PageTransition className="min-h-screen bg-primary-container flex items-center justify-center relative overflow-hidden bg-pattern">
+        <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0">
           <StaggerContainer stagger={0.1}>
             <StaggerItem>
-              <NeuIconBadge size="lg" active className="mx-auto mb-6 bg-neo-success/20">
-                <CheckCircle className="w-12 h-12 text-neo-success" />
-              </NeuIconBadge>
-              <h2 className="font-h3 text-h3 text-neo-text-primary mb-4">Email Verified!</h2>
-              <p className="font-body-md text-body-md text-neo-text-secondary mb-6">
-                Your email has been successfully verified. Redirecting to dashboard...
-              </p>
+              <div className="glass-card rounded-xl p-8 w-full text-center">
+                <div className="w-20 h-20 bg-success-verified/20 rounded-full flex items-center justify-center mb-6 mx-auto border border-success-verified/30">
+                  <CheckCircle className="w-10 h-10 text-success-verified" />
+                </div>
+                <h2 className="font-h3 text-h3 text-white mb-4">Email Verified!</h2>
+                <p className="font-body-md text-body-md text-white/70 mb-6">
+                  Your email has been successfully verified. Redirecting to dashboard...
+                </p>
+              </div>
             </StaggerItem>
           </StaggerContainer>
-        </NeuCard>
+        </div>
       </PageTransition>
     );
   }
 
   return (
-    <PageTransition className="min-h-screen bg-neu-bg flex items-center justify-center p-8">
-      <NeuCard padding="lg" className="w-full max-w-md">
+    <PageTransition className="min-h-screen bg-primary-container flex items-center justify-center relative overflow-hidden bg-pattern">
+      {/* Abstract 3D Shapes (Decorative) */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#B8860B]/20 to-transparent blur-[100px]"></div>
+        <div className="absolute bottom-[10%] -right-[5%] w-[30%] h-[50%] rounded-full bg-gradient-to-tl from-primary to-[#B8860B]/10 blur-[80px]"></div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0">
         <StaggerContainer stagger={0.1}>
           <StaggerItem>
             <div className="text-center mb-8">
-              <NeuIconBadge size="lg" active className="mx-auto mb-4" style={{ background: 'var(--neo-secondary)' }}>
-                <Mail className="w-8 h-8 text-neo-primary" />
-              </NeuIconBadge>
-              <h2 className="font-h3 text-h3 text-neo-text-primary mb-2">Verify Your Email</h2>
-              <p className="font-body-md text-body-md text-neo-text-secondary">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-secondary-container mb-4">
+                <Mail className="text-secondary-container w-8 h-8" />
+              </div>
+              <h2 className="font-h3 text-h3 text-white mb-2">Verify Your Email</h2>
+              <p className="font-body-md text-body-md text-white/70">
                 Enter the 6-digit code sent to your email
               </p>
             </div>
           </StaggerItem>
 
           <StaggerItem>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && error !== 'VERIFICATION_SENT' && (
-                <div className="p-3 rounded-lg bg-neo-error/10 text-neo-error text-sm font-body-sm flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-              )}
-              
-              {error === 'VERIFICATION_SENT' && (
-                <div className="p-3 rounded-lg bg-neo-success/10 text-neo-success text-sm font-body-sm flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Verification email sent! Please check your inbox.</span>
-                </div>
-              )}
-
-              <Input
-                label="Verification Code"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                disabled={isLoading}
-                icon={<Mail className="w-5 h-5" />}
-              />
-
-              <Button
-                type="submit"
-                disabled={isLoading || otp.length !== 6}
-                className="w-full"
-                size="lg"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Verifying...
-                  </>
-                ) : (
-                  'Verify Email'
+            <div className="glass-card rounded-xl p-6 md:p-8 w-full">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && error !== 'VERIFICATION_SENT' && (
+                  <div className="p-3 rounded-lg bg-error-alert/20 border border-error-alert/30 text-error text-sm font-body-sm flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
                 )}
-              </Button>
-            </form>
-          </StaggerItem>
-
-          <StaggerItem>
-            <div className="mt-6 text-center">
-              <p className="font-body-sm text-body-sm text-neo-text-secondary mb-3">
-                Didn't receive the code?
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleResend}
-                disabled={isResending}
-                className="w-full"
-              >
-                {isResending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Sending...
-                  </>
-                ) : (
-                  'Resend Verification Email'
+                
+                {error === 'VERIFICATION_SENT' && (
+                  <div className="p-3 rounded-lg bg-success-verified/20 border border-success-verified/30 text-success-verified text-sm font-body-sm flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Verification email sent! Please check your inbox.</span>
+                  </div>
                 )}
-              </Button>
-            </div>
-          </StaggerItem>
 
-          <StaggerItem>
-            <div className="mt-6 pt-6 border-t border-neo-bg-dark">
-              <Link
-                href="/dashboard"
-                className="flex items-center justify-center gap-2 text-neo-primary hover:underline font-body-sm"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
-              </Link>
+                <div>
+                  <label className="block font-label-caps text-label-caps text-white/70 mb-2 uppercase" htmlFor="otp">
+                    Verification Code
+                  </label>
+                  <div className="relative gold-glow rounded-lg transition-shadow duration-200">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
+                    <input
+                      className="block w-full pl-10 pr-3 py-3 bg-[#0a1529] border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-0 focus:border-transparent transition-colors text-center font-data-lg text-data-lg tracking-widest"
+                      id="otp"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading || otp.length !== 6}
+                  className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify Email'
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="font-body-sm text-body-sm text-white/70 mb-3">
+                  Didn't receive the code?
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResend}
+                  disabled={isResending}
+                  className="w-full text-white/70 hover:text-secondary-fixed"
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Resend Verification Email'
+                  )}
+                </Button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-center gap-2 text-secondary-fixed hover:underline font-body-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Dashboard
+                </Link>
+              </div>
             </div>
           </StaggerItem>
         </StaggerContainer>
-      </NeuCard>
+      </div>
     </PageTransition>
   );
 }

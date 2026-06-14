@@ -147,8 +147,8 @@ export default function LandingPage() {
         <div className="hidden md:block absolute inset-0 z-10 opacity-100 flex items-center justify-center pointer-events-none overflow-hidden">
           <img
             alt="Hero visual"
-            className="max-w-full max-h-full w-auto h-auto object-contain"
-            src="/hero.png"
+            className="max-w-[120%] max-h-[120%] w-auto h-auto object-contain"
+            src="/auth.jpg"
           />
         </div>
         
