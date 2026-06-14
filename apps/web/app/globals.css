@@ -8,68 +8,152 @@
 
 @layer base {
   :root {
-    /* Neumorphic Base Colors */
-    --neo-base: #f0f0f3;
-    --neo-base-light: #ffffff;
-    --neo-base-dark: #e0e0e3;
+    /* Material Design 3 Color System - Premium Black & Gold */
+    --primary: #000000;
+    --primary-container: #0d1b35;
+    --on-primary: #ffffff;
+    --on-primary-container: #7784a3;
+    --on-primary-fixed: #0d1b35;
+    --on-primary-fixed-variant: #3a4763;
+    --primary-fixed: #d8e2ff;
+    --primary-fixed-dim: #b9c6e8;
     
-    /* Neumorphic Design Tokens (additive) */
-    --neu-bg-light: #f0f0f3;
-    --neu-bg-dark: #1e1e24;
+    --secondary: #7b5800;
+    --secondary-container: #fdc34d;
+    --on-secondary: #ffffff;
+    --on-secondary-container: #715000;
+    --on-secondary-fixed: #271900;
+    --on-secondary-fixed-variant: #5d4200;
+    --secondary-fixed: #ffdea6;
+    --secondary-fixed-dim: #f7bd48;
+    
+    --tertiary: #010100;
+    --tertiary-container: #261a00;
+    --on-tertiary: #ffffff;
+    --on-tertiary-container: #a37f2a;
+    --on-tertiary-fixed: #261a00;
+    --on-tertiary-fixed-variant: #5c4300;
+    --tertiary-fixed: #ffdfa0;
+    --tertiary-fixed-dim: #ecc165;
+    
+    /* Surface Colors */
+    --surface: #f9f9f6;
+    --surface-bright: #f9f9f6;
+    --surface-dim: #dadad7;
+    --surface-alt: #F0EDE8;
+    --surface-container: #eeeeeb;
+    --surface-container-low: #f4f4f1;
+    --surface-container-lowest: #ffffff;
+    --surface-container-high: #e8e8e5;
+    --surface-container-highest: #e2e3e0;
+    --surface-variant: #e2e3e0;
+    --on-surface: #1a1c1b;
+    --on-surface-variant: #45474d;
+    --inverse-surface: #2f312f;
+    --inverse-on-surface: #f1f1ee;
+    
+    /* Background */
+    --background: #f9f9f6;
+    --on-background: #1a1c1b;
+    
+    /* Outline & Borders */
+    --outline: #75777e;
+    --outline-variant: #c5c6ce;
+    
+    /* Error Colors */
+    --error: #ba1a1a;
+    --error-container: #ffdad6;
+    --on-error: #ffffff;
+    --on-error-container: #93000a;
+    --error-alert: #C62828;
+    
+    /* Success */
+    --success-verified: #2E7D32;
+    
+    /* Special */
+    --navy-glass: rgba(13, 27, 53, 0.85);
+    --surface-tint: #515e7c;
+    --inverse-primary: #b9c6e8;
+    
+    /* Neumorphic Fallback (for existing components) */
+    --neo-base: #f9f9f6;
+    --neo-base-light: #ffffff;
+    --neo-base-dark: #e2e3e0;
+    --neo-primary: #000000;
+    --neo-primary-hover: #1a1a1a;
+    --neo-secondary: #ffdea6;
+    --neo-success: #2E7D32;
+    --neo-error: #ba1a1a;
+    --neo-warning: #f59e0b;
+    --neo-text-primary: #1a1c1b;
+    --neo-text-secondary: #45474d;
+    --neo-text-muted: #75777e;
+    
+    /* Neumorphic Shadows */
+    --neo-shadow-light: rgba(255, 255, 255, 0.8);
+    --neo-shadow-dark: rgba(0, 0, 0, 0.1);
+    --neo-shadow-inset: rgba(0, 0, 0, 0.05);
+    
+    /* Neumorphic Design Tokens */
+    --neu-bg-light: #f9f9f6;
+    --neu-bg-dark: #000000;
     --neu-shadow-light-1: rgba(255,255,255,0.7);
-    --neu-shadow-light-2: rgba(174,174,192,0.4);
-    --neu-shadow-dark-1: rgba(0,0,0,0.4);
+    --neu-shadow-light-2: rgba(0,0,0,0.1);
+    --neu-shadow-dark-1: rgba(0,0,0,0.6);
     --neu-shadow-dark-2: rgba(255,255,255,0.05);
     --neu-radius-sm: 12px;
     --neu-radius-md: 18px;
     --neu-radius-lg: 24px;
-    
-    /* Neumorphic Shadows */
-    --neo-shadow-light: rgba(255, 255, 255, 0.8);
-    --neo-shadow-dark: rgba(163, 177, 198, 0.6);
-    --neo-shadow-inset: rgba(163, 177, 198, 0.4);
-    
-    /* Accent Colors */
-    --neo-primary: #6366f1;
-    --neo-primary-hover: #4f46e5;
-    --neo-secondary: #fbbf24;
-    --neo-success: #10b981;
-    --neo-error: #ef4444;
-    --neo-warning: #f59e0b;
-    
-    /* Text Colors */
-    --neo-text-primary: #1f2937;
-    --neo-text-secondary: #6b7280;
-    --neo-text-muted: #9ca3af;
-    
-    /* Legacy color mapping for compatibility */
-    --color-surface: #f0f0f3;
-    --color-background: #f0f0f3;
-    --color-primary: #6366f1;
-    --color-secondary: #fbbf24;
-    --color-on-surface: #1f2937;
-    --color-on-primary: #ffffff;
-    --color-on-secondary: #1f2937;
   }
 
   .dark {
-    --neo-base: #1a1a1b;
-    --neo-base-light: #2a2a2b;
-    --neo-base-dark: #0f0f10;
-    --neo-shadow-light: rgba(42, 42, 43, 0.5);
-    --neo-shadow-dark: rgba(0, 0, 0, 0.8);
-    --neo-shadow-inset: rgba(0, 0, 0, 0.6);
-    --neo-text-primary: #f9fafb;
-    --neo-text-secondary: #d1d5db;
-    --neo-text-muted: #9ca3af;
+    --primary: #000000;
+    --primary-container: #0d1b35;
+    --on-primary: #ffffff;
+    --on-primary-container: #7784a3;
     
-    /* Neumorphic Design Tokens - Dark */
-    --neu-bg-light: #1e1e24;
-    --neu-bg-dark: #1e1e24;
+    --secondary: #ffdea6;
+    --secondary-container: #fdc34d;
+    --on-secondary: #271900;
+    --secondary-fixed: #ffdea6;
+    --secondary-fixed-dim: #f7bd48;
+    
+    --surface: #0a0a0a;
+    --surface-bright: #1a1a1a;
+    --surface-dim: #050505;
+    --surface-alt: #0f0f0f;
+    --surface-container: #121212;
+    --surface-container-low: #0d0d0d;
+    --surface-container-lowest: #000000;
+    --surface-container-high: #1a1a1a;
+    --surface-container-highest: #222222;
+    --surface-variant: #1c1c1c;
+    --on-surface: #e5e5e5;
+    --on-surface-variant: #a0a0a0;
+    
+    --background: #0a0a0a;
+    --on-background: #e5e5e5;
+    
+    --outline: #555555;
+    --outline-variant: #444444;
+    
+    /* Neumorphic Dark */
+    --neo-base: #0a0a0a;
+    --neo-base-light: #1a1a1a;
+    --neo-base-dark: #050505;
+    --neo-primary: #ffdea6;
+    --neo-primary-hover: #f7bd48;
+    --neo-secondary: #ffdea6;
+    --neo-text-primary: #e5e5e5;
+    --neo-text-secondary: #a0a0a0;
+    --neo-text-muted: #666666;
+    
+    --neu-bg-light: #0a0a0a;
+    --neu-bg-dark: #000000;
     --neu-shadow-light-1: rgba(255,255,255,0.05);
     --neu-shadow-light-2: rgba(255,255,255,0.02);
-    --neu-shadow-dark-1: rgba(0,0,0,0.6);
-    --neu-shadow-dark-2: rgba(0,0,0,0.3);
+    --neu-shadow-dark-1: rgba(0,0,0,0.8);
+    --neu-shadow-dark-2: rgba(0,0,0,0.5);
   }
 
   * {
@@ -412,36 +496,89 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Material 3 Color Tokens */
-  .bg-primary { background-color: #000000; }
-  .bg-primary-container { background-color: #0d1b35; }
-  .bg-secondary-fixed { background-color: #ffdea6; }
-  .bg-surface { background-color: #f9f9f6; }
-  .bg-surface-alt { background-color: #F0EDE8; }
-  .bg-surface-container-low { background-color: #f4f4f1; }
-  .bg-success-verified { background-color: #2E7D32; }
+  /* Material 3 Color Token Utilities */
+  .bg-primary { background-color: var(--primary); }
+  .bg-primary-container { background-color: var(--primary-container); }
+  .bg-primary-fixed { background-color: var(--primary-fixed); }
+  .bg-primary-fixed-dim { background-color: var(--primary-fixed-dim); }
+  
+  .bg-secondary { background-color: var(--secondary); }
+  .bg-secondary-container { background-color: var(--secondary-container); }
+  .bg-secondary-fixed { background-color: var(--secondary-fixed); }
+  .bg-secondary-fixed-dim { background-color: var(--secondary-fixed-dim); }
+  
+  .bg-tertiary { background-color: var(--tertiary); }
+  .bg-tertiary-container { background-color: var(--tertiary-container); }
+  .bg-tertiary-fixed { background-color: var(--tertiary-fixed); }
+  .bg-tertiary-fixed-dim { background-color: var(--tertiary-fixed-dim); }
+  
+  .bg-surface { background-color: var(--surface); }
+  .bg-surface-bright { background-color: var(--surface-bright); }
+  .bg-surface-dim { background-color: var(--surface-dim); }
+  .bg-surface-alt { background-color: var(--surface-alt); }
+  .bg-surface-container { background-color: var(--surface-container); }
+  .bg-surface-container-low { background-color: var(--surface-container-low); }
+  .bg-surface-container-lowest { background-color: var(--surface-container-lowest); }
+  .bg-surface-container-high { background-color: var(--surface-container-high); }
+  .bg-surface-container-highest { background-color: var(--surface-container-highest); }
+  .bg-surface-variant { background-color: var(--surface-variant); }
+  
+  .bg-success-verified { background-color: var(--success-verified); }
+  .bg-error { background-color: var(--error); }
+  .bg-error-container { background-color: var(--error-container); }
+  .bg-navy-glass { background-color: var(--navy-glass); }
 
-  .text-primary { color: #000000; }
-  .text-on-primary { color: #ffffff; }
-  .text-on-primary-container { color: #7784a3; }
-  .text-secondary-fixed { color: #ffdea6; }
-  .text-on-secondary-fixed { color: #271900; }
-  .text-on-surface { color: #1a1c1b; }
-  .text-on-surface-variant { color: #45474d; }
-  .text-on-background { color: #1a1c1b; }
-  .text-secondary { color: #7b5800; }
-  .text-outline { color: #75777e; }
-  .text-outline-variant { color: #c5c6ce; }
+  .text-primary { color: var(--primary); }
+  .text-primary-container { color: var(--primary-container); }
+  .text-on-primary { color: var(--on-primary); }
+  .text-on-primary-container { color: var(--on-primary-container); }
+  .text-on-primary-fixed { color: var(--on-primary-fixed); }
+  .text-on-primary-fixed-variant { color: var(--on-primary-fixed-variant); }
+  
+  .text-secondary { color: var(--secondary); }
+  .text-secondary-container { color: var(--secondary-container); }
+  .text-on-secondary { color: var(--on-secondary); }
+  .text-on-secondary-container { color: var(--on-secondary-container); }
+  .text-on-secondary-fixed { color: var(--on-secondary-fixed); }
+  .text-on-secondary-fixed-variant { color: var(--on-secondary-fixed-variant); }
+  .text-secondary-fixed { color: var(--secondary-fixed); }
+  .text-secondary-fixed-dim { color: var(--secondary-fixed-dim); }
+  
+  .text-tertiary { color: var(--tertiary); }
+  .text-tertiary-container { color: var(--tertiary-container); }
+  .text-on-tertiary { color: var(--on-tertiary); }
+  .text-on-tertiary-container { color: var(--on-tertiary-container); }
+  .text-on-tertiary-fixed { color: var(--on-tertiary-fixed); }
+  .text-on-tertiary-fixed-variant { color: var(--on-tertiary-fixed-variant); }
+  .text-tertiary-fixed { color: var(--tertiary-fixed); }
+  .text-tertiary-fixed-dim { color: var(--tertiary-fixed-dim); }
+  
+  .text-surface { color: var(--surface); }
+  .text-on-surface { color: var(--on-surface); }
+  .text-on-surface-variant { color: var(--on-surface-variant); }
+  
+  .text-background { color: var(--background); }
+  .text-on-background { color: var(--on-background); }
+  
+  .text-outline { color: var(--outline); }
+  .text-outline-variant { color: var(--outline-variant); }
+  
+  .text-error { color: var(--error); }
+  .text-on-error { color: var(--on-error); }
+  .text-error-container { color: var(--error-container); }
+  .text-on-error-container { color: var(--on-error-container); }
+  
+  .text-success-verified { color: var(--success-verified); }
 
-  .border-primary { border-color: #000000; }
-  .border-primary-container { border-color: #0d1b35; }
-  .border-secondary { border-color: #7b5800; }
-  .border-secondary-fixed { border-color: #ffdea6; }
-  .border-outline { border-color: #75777e; }
-  .border-outline-variant { border-color: #c5c6ce; }
+  .border-primary { border-color: var(--primary); }
+  .border-primary-container { border-color: var(--primary-container); }
+  .border-secondary { border-color: var(--secondary); }
+  .border-secondary-fixed { border-color: var(--secondary-fixed); }
+  .border-outline { border-color: var(--outline); }
+  .border-outline-variant { border-color: var(--outline-variant); }
 
-  .from-secondary { --tw-gradient-from: #7b5800; }
-  .to-secondary-fixed { --tw-gradient-to: #ffdea6; }
+  .from-secondary { --tw-gradient-from: var(--secondary); }
+  .to-secondary-fixed { --tw-gradient-to: var(--secondary-fixed); }
 
   /* Material Icons */
   .material-symbols-outlined {

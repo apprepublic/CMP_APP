@@ -9,20 +9,118 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        /* Material Design 3 - Primary */
+        primary: {
+          DEFAULT: 'var(--primary)',
+          container: 'var(--primary-container)',
+          fixed: 'var(--primary-fixed)',
+          'fixed-dim': 'var(--primary-fixed-dim)',
+        },
+        'on-primary': {
+          DEFAULT: 'var(--on-primary)',
+          container: 'var(--on-primary-container)',
+          fixed: 'var(--on-primary-fixed)',
+          'fixed-variant': 'var(--on-primary-fixed-variant)',
+        },
+        
+        /* Material Design 3 - Secondary (Gold) */
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          container: 'var(--secondary-container)',
+          fixed: 'var(--secondary-fixed)',
+          'fixed-dim': 'var(--secondary-fixed-dim)',
+        },
+        'on-secondary': {
+          DEFAULT: 'var(--on-secondary)',
+          container: 'var(--on-secondary-container)',
+          fixed: 'var(--on-secondary-fixed)',
+          'fixed-variant': 'var(--on-secondary-fixed-variant)',
+        },
+        
+        /* Material Design 3 - Tertiary */
+        tertiary: {
+          DEFAULT: 'var(--tertiary)',
+          container: 'var(--tertiary-container)',
+          fixed: 'var(--tertiary-fixed)',
+          'fixed-dim': 'var(--tertiary-fixed-dim)',
+        },
+        'on-tertiary': {
+          DEFAULT: 'var(--on-tertiary)',
+          container: 'var(--on-tertiary-container)',
+          fixed: 'var(--on-tertiary-fixed)',
+          'fixed-variant': 'var(--on-tertiary-fixed-variant)',
+        },
+        
+        /* Surface Colors */
+        surface: {
+          DEFAULT: 'var(--surface)',
+          bright: 'var(--surface-bright)',
+          dim: 'var(--surface-dim)',
+          alt: 'var(--surface-alt)',
+          container: {
+            DEFAULT: 'var(--surface-container)',
+            low: 'var(--surface-container-low)',
+            lowest: 'var(--surface-container-lowest)',
+            high: 'var(--surface-container-high)',
+            highest: 'var(--surface-container-highest)',
+          },
+          variant: 'var(--surface-variant)',
+        },
+        'on-surface': {
+          DEFAULT: 'var(--on-surface)',
+          variant: 'var(--on-surface-variant)',
+        },
+        'inverse-surface': 'var(--inverse-surface)',
+        'inverse-on-surface': 'var(--inverse-on-surface)',
+        
+        /* Background */
+        background: {
+          DEFAULT: 'var(--background)',
+        },
+        'on-background': 'var(--on-background)',
+        
+        /* Outline & Borders */
+        outline: {
+          DEFAULT: 'var(--outline)',
+          variant: 'var(--outline-variant)',
+        },
+        
+        /* Error Colors */
+        error: {
+          DEFAULT: 'var(--error)',
+          container: 'var(--error-container)',
+          alert: 'var(--error-alert)',
+        },
+        'on-error': {
+          DEFAULT: 'var(--on-error)',
+          container: 'var(--on-error-container)',
+        },
+        
+        /* Success */
+        success: {
+          verified: 'var(--success-verified)',
+        },
+        
+        /* Special */
+        'navy-glass': 'var(--navy-glass)',
+        'surface-tint': 'var(--surface-tint)',
+        'inverse-primary': 'var(--inverse-primary)',
+        
+        /* Neumorphic (for existing components) */
         neo: {
-          base: '#f0f0f3',
+          base: '#f9f9f6',
           'base-light': '#ffffff',
-          'base-dark': '#e0e0e3',
-          primary: '#6366f1',
-          'primary-hover': '#4f46e5',
-          secondary: '#fbbf24',
-          success: '#10b981',
-          error: '#ef4444',
+          'base-dark': '#e2e3e0',
+          primary: '#000000',
+          'primary-hover': '#1a1a1a',
+          secondary: '#ffdea6',
+          success: '#2E7D32',
+          error: '#ba1a1a',
           warning: '#f59e0b',
           text: {
-            primary: '#1f2937',
-            secondary: '#6b7280',
-            muted: '#9ca3af',
+            primary: '#1a1c1b',
+            secondary: '#45474d',
+            muted: '#75777e',
           },
         },
         neu: {
@@ -31,68 +129,37 @@ module.exports = {
         },
 
         /* ----------------------------------------------------------------
-         * COMPATIBILITY LAYER (added)
-         * The older Material-3 and shadcn token names below are still used by
-         * several pages/components (marketplace storefront, article reader,
-         * dashboard layout, footer, toast). They are aliased onto the
-         * neumorphic palette so those screens render instead of emitting no
-         * CSS. Prefer the neo-* / neu-* tokens for any NEW work.
+         * COMPATIBILITY LAYER (legacy shadcn/Material-3 tokens)
+         * Aliased to Material 3 color system for consistency
          * ---------------------------------------------------------------- */
 
-        // Material-3 surfaces
-        surface: '#f0f0f3',
-        'surface-variant': '#e4e4e7',
-        'surface-secondary': '#e0e0e3',
-        'surface-container': '#ffffff',
-        'surface-container-lowest': '#ffffff',
-        'surface-container-low': '#f7f7f9',
-        'surface-container-high': '#e8e8eb',
-        'on-surface': '#1f2937',
-        'on-surface-variant': '#6b7280',
-        background: '#f0f0f3',
-        'on-background': '#1f2937',
-
-        // Material-3 primary (brand indigo)
-        primary: '#6366f1',
-        'primary-container': '#6366f1',
-        'on-primary': '#ffffff',
-        'on-primary-container': '#ffffff',
-        'on-primary-fixed-variant': '#4f46e5',
-
-        // Material-3 secondary (brand amber)
-        secondary: '#fbbf24',
-        'secondary-container': '#fde68a',
-        'on-secondary-container': '#1f2937',
-        'secondary-fixed': '#fbbf24',
-        'secondary-fixed-dim': '#f59e0b',
-
-        // Material-3 outline
-        'outline-variant': '#e0e0e3',
-
+        // Material-3 surfaces mapped to new system
+        'surface-secondary': 'var(--surface-variant)',
+        
         // shadcn tokens (toast, footer)
-        muted: '#e5e7eb',
-        'muted-foreground': '#6b7280',
-        foreground: '#1f2937',
-        'primary-foreground': '#ffffff',
-        destructive: '#ef4444',
-        'destructive-foreground': '#ffffff',
-        ring: '#6366f1',
+        muted: 'var(--surface-container-high)',
+        'muted-foreground': 'var(--on-surface-variant)',
+        foreground: 'var(--on-surface)',
+        'primary-foreground': 'var(--on-primary)',
+        destructive: 'var(--error)',
+        'destructive-foreground': 'var(--on-error)',
+        ring: 'var(--secondary-fixed)',
       },
       ringOffsetColor: {
         // enables `ring-offset-background` used by toast.tsx
         background: '#f0f0f3',
       },
       boxShadow: {
-        'neo-outer': '6px 6px 12px rgba(163, 177, 198, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.8)',
-        'neo-outer-lg': '10px 10px 20px rgba(163, 177, 198, 0.6), -10px -10px 20px rgba(255, 255, 255, 0.8)',
-        'neo-inner': 'inset 4px 4px 8px rgba(163, 177, 198, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.8)',
-        'neo-inner-lg': 'inset 6px 6px 10px rgba(163, 177, 198, 0.4), inset -6px -6px 10px rgba(255, 255, 255, 0.8)',
-        'neo-icon': '4px 4px 8px rgba(163, 177, 198, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.8)',
-        'neu-raised': '8px 8px 16px rgba(174,174,192,0.4), -8px -8px 16px rgba(255,255,255,0.7)',
-        'neu-raised-sm': '4px 4px 8px rgba(174,174,192,0.4), -4px -4px 8px rgba(255,255,255,0.7)',
-        'neu-inset': 'inset 4px 4px 8px rgba(0,0,0,0.4), inset -4px -4px 8px rgba(255,255,255,0.05)',
-        'neu-pressed': 'inset 6px 6px 12px rgba(0,0,0,0.4), inset -6px -6px 12px rgba(255,255,255,0.05)',
-        'neu-flat': '2px 2px 4px rgba(174,174,192,0.4), -2px -2px 4px rgba(255,255,255,0.7)',
+        'neo-outer': '6px 6px 12px rgba(0, 0, 0, 0.08), -6px -6px 12px rgba(255, 255, 255, 0.9)',
+        'neo-outer-lg': '10px 10px 20px rgba(0, 0, 0, 0.08), -10px -10px 20px rgba(255, 255, 255, 0.9)',
+        'neo-inner': 'inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px rgba(255, 255, 255, 0.9)',
+        'neo-inner-lg': 'inset 6px 6px 10px rgba(0, 0, 0, 0.05), inset -6px -6px 10px rgba(255, 255, 255, 0.9)',
+        'neo-icon': '4px 4px 8px rgba(0, 0, 0, 0.08), -4px -4px 8px rgba(255, 255, 255, 0.9)',
+        'neu-raised': '8px 8px 16px rgba(0, 0, 0, 0.1), -8px -8px 16px rgba(255, 255, 255, 0.7)',
+        'neu-raised-sm': '4px 4px 8px rgba(0, 0, 0, 0.1), -4px -4px 8px rgba(255, 255, 255, 0.7)',
+        'neu-inset': 'inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.05)',
+        'neu-pressed': 'inset 6px 6px 12px rgba(0, 0, 0, 0.4), inset -6px -6px 12px rgba(255, 255, 255, 0.05)',
+        'neu-flat': '2px 2px 4px rgba(0, 0, 0, 0.1), -2px -2px 4px rgba(255, 255, 255, 0.7)',
       },
       borderRadius: {
         'neo': '1rem',

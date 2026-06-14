@@ -64,8 +64,14 @@ export default function RegisterPage() {
         },
       });
 
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        console.error('Supabase signup error:', supabaseError);
+        throw supabaseError;
+      }
 
+      console.log('Supabase auth successful:', authData.user?.id);
+
+      // Try to register with API, but don't fail if it's down
       try {
         await api.register({
           email: formData.email,
@@ -75,7 +81,9 @@ export default function RegisterPage() {
           username: formData.email.split('@')[0],
           referralCode: formData.referralCode || undefined,
         });
-      } catch {
+        console.log('API registration successful');
+      } catch (apiError: any) {
+        console.warn('API registration failed (this is OK):', apiError.message);
         // API server may be down — Supabase auth is the source of truth
       }
 
@@ -88,8 +96,10 @@ export default function RegisterPage() {
         referralCode: formData.referralCode || undefined,
       });
 
+      console.log('Registration complete, redirecting to dashboard...');
       router.push('/dashboard');
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
