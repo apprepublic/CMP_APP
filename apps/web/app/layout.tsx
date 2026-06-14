@@ -37,6 +37,10 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined"
         />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@500;600&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body className={inter.className}>
         <Providers>

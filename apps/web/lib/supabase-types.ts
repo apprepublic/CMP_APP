@@ -520,6 +520,26 @@ export interface Database {
           created_at?: string
         }
       }
+      waitlist: {
+        Row: {
+          id: string
+          email: string
+          created_at: string
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          created_at?: string
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          created_at?: string
+          status?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never

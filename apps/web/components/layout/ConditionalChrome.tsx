@@ -20,6 +20,7 @@ const selfChromedPrefixes = [
   '/tasks',
   '/music',
   '/marketplace',
+  '/', // Landing page has its own premium nav
 ];
 
 export function ConditionalChrome({ children }: { children: React.ReactNode }) {

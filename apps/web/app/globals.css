@@ -400,4 +400,68 @@
   @media (min-width: 1024px) {
     .mobile-nav { display: none !important; }
   }
+
+  /* Premium Material Design 3 Styles */
+  .premium-border-gold {
+    border: 1.5px solid #b8860b;
+  }
+
+  .glass-dark {
+    background: rgba(13, 27, 53, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Material 3 Color Tokens */
+  .bg-primary { background-color: #000000; }
+  .bg-primary-container { background-color: #0d1b35; }
+  .bg-secondary-fixed { background-color: #ffdea6; }
+  .bg-surface { background-color: #f9f9f6; }
+  .bg-surface-alt { background-color: #F0EDE8; }
+  .bg-surface-container-low { background-color: #f4f4f1; }
+  .bg-success-verified { background-color: #2E7D32; }
+
+  .text-primary { color: #000000; }
+  .text-on-primary { color: #ffffff; }
+  .text-on-primary-container { color: #7784a3; }
+  .text-secondary-fixed { color: #ffdea6; }
+  .text-on-secondary-fixed { color: #271900; }
+  .text-on-surface { color: #1a1c1b; }
+  .text-on-surface-variant { color: #45474d; }
+  .text-on-background { color: #1a1c1b; }
+  .text-secondary { color: #7b5800; }
+  .text-outline { color: #75777e; }
+  .text-outline-variant { color: #c5c6ce; }
+
+  .border-primary { border-color: #000000; }
+  .border-primary-container { border-color: #0d1b35; }
+  .border-secondary { border-color: #7b5800; }
+  .border-secondary-fixed { border-color: #ffdea6; }
+  .border-outline { border-color: #75777e; }
+  .border-outline-variant { border-color: #c5c6ce; }
+
+  .from-secondary { --tw-gradient-from: #7b5800; }
+  .to-secondary-fixed { --tw-gradient-to: #ffdea6; }
+
+  /* Material Icons */
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .material-symbols-outlined[filled="1"],
+  .material-symbols-outlined[style*="FILL' 1"] {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
 }
