@@ -105,33 +105,19 @@ export default function RegisterPage() {
 
   return (
     <PageTransition className="min-h-screen flex flex-col lg:flex-row bg-surface">
-      {/* Left Side: Graphic / Branding (Desktop Only) */}
+      {/* Left Side: Background Image (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: -40 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-primary-container relative overflow-hidden items-center justify-center p-12"
+        className="hidden lg:flex lg:w-1/2 bg-primary-container relative overflow-hidden items-center justify-center"
+        style={{
+          backgroundImage: 'url(/auth.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-secondary-container via-transparent to-transparent"></div>
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-        
-        <div className="relative z-10 max-w-lg text-on-tertiary">
-          <h2 className="font-h1 text-h1 mb-6 text-on-tertiary">Fuel Your Creative Enterprise.</h2>
-          <p className="font-body-lg text-body-lg text-on-primary-container mb-12">
-            Join a global network of creators. Secure banking, powerful growth tools, and an exclusive community await.
-          </p>
-          
-          {/* Premium Image */}
-          <div className="relative rounded-xl overflow-hidden shadow-2xl aspect-[4/3]">
-            <img
-              alt="Abstract rendering of digital growth"
-              className="object-cover w-full h-full"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUHyZ25whfdxqOv6NL62l2V6HP8hhOYcfx42xAxv3dPw51w3smkjJOn2Q01Nt9zCBGqdBHuMvXacC3npJNQPGCHL0-0TsU7S4WIXgPJly-j1rAHD6sNADHa_fGospvd4s-TGSdDqQycSjVfzh8S3oAVo1fQo64mVjGa4EW05Hm4ywzRLd-x9jFFwHYSNFOubC1LzP-ujOy8Vf_UxfydQfUecSUxN1iN-0314FpnErMXzbCsjMgsqwrBKHzJFi_E07_21u-uYpiczQ"
-            />
-            <div className="absolute inset-0 bg-navy-glass mix-blend-multiply opacity-40"></div>
-          </div>
-        </div>
+        <div className="absolute inset-0 bg-navy-glass mix-blend-multiply opacity-60"></div>
       </motion.div>
 
       {/* Right Side: Signup Form */}
