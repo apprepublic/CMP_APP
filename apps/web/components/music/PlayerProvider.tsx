@@ -80,7 +80,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setCurrent(song);
     setIndex(i);
     setProgress(0);
-  }, [playIndex]);
+  }, []);
 
   const play = useCallback(
     (song: Song, q?: Song[]) => {

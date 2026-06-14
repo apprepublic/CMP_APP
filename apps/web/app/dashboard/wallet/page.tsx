@@ -208,7 +208,7 @@ export default function WalletPage() {
               <NeuCard key={withdrawal.id} padding="md" interactive className="flex items-center justify-between rounded-none shadow-neu-flat">
                 <div className="flex items-center space-x-4">
                   <NeuIconBadge size="md">
-                    <LandMark className="w-5 h-5 text-neo-error" />
+                    <Landmark className="w-5 h-5 text-neo-error" />
                   </NeuIconBadge>
                   <div>
                     <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">

@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fdashboard\u002Fmarketplace\u002Fstore\u002F[id]","\u002Fdashboard\u002Fmusic\u002Fartist\u002F[id]","\u002Fmarketplace\u002Fstore\u002F[id]","\u002Fmusic\u002F[artist]","\u002Ftasks\u002Farticle\u002F[id]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

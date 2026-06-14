@@ -9,8 +9,9 @@ import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { NeuProgress } from '@/components/ui/neu-progress';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Coins, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Coins, Loader2, AlertCircle, Landmark } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import type { Database } from '@/lib/supabase-types';
 import { useWallet } from '@/lib/useWallet';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -39,17 +40,17 @@ export default function WithdrawAmountPage() {
 
       const { data, error } = await supabase
         .from('withdrawal_requests')
-        .insert({
+        .insert([{
           user_id: user.id,
-          amount: parseFloat(nairaAmount),
-          coin_amount: coinAmount,
+          amount: nairaAmount,
+          coin_amount: coinAmount.toString(),
           status: 'PENDING',
           account_details: {
             bank_name: bankName,
             account_number: bankAccount,
             account_name: accountName,
           },
-        })
+        }] as any)
         .select()
         .single();
 
