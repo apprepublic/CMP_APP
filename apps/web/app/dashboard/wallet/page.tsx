@@ -1,69 +1,109 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Landmark, Send, Receipt, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Landmark, Send, Receipt, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useWallet } from '@/lib/useWallet';
+import { useQuery } from '@tanstack/react-query';
 import WalletTopUp from '@/components/WalletTopUp';
 
-const transactions = [
-  { id: 1, type: 'TASK_EARN', description: 'Completed daily task', amount: 150, date: 'Today, 14:32', icon: 'play_circle' },
-  { id: 2, type: 'WITHDRAWAL', description: 'Bank transfer', amount: -10000, date: 'Yesterday, 09:15', icon: 'account_balance', naira: '₦100.00' },
-  { id: 3, type: 'REFERRAL_BONUS', description: 'L1 Referral earned', amount: 500, date: 'Jun 6, 18:45', icon: 'groups' },
-  { id: 4, type: 'TOP_UP', description: 'Bank deposit', amount: 5000, date: 'Jun 5, 10:22', icon: 'add_circle' },
-  { id: 5, type: 'MUSIC_STREAM', description: 'Stream earning', amount: 75, date: 'Jun 4, 22:15', icon: 'headphones' },
-];
+// TODO(prod): Wire NOWPayments integration - requires NEXT_PUBLIC_PAYMENTS_ENABLED flag
+const PAYMENTS_ENABLED = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === 'true';
+
+interface CoinTransaction {
+  id: string;
+  wallet_id: string;
+  type: string;
+  amount: number;
+  balance_after: number;
+  description: string;
+  reference_id: string | null;
+  created_at: string;
+}
+
+interface WithdrawalRequest {
+  id: string;
+  user_id: string;
+  amount: number;
+  coin_amount: number;
+  status: string;
+  account_details: any;
+  created_at: string;
+}
 
 export default function WalletPage() {
-  const [balance, setBalance] = useState(45200);
+  const { wallet, loading: walletLoading, user } = useWallet();
   const [showTopUp, setShowTopUp] = useState(false);
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  // Fetch coin transactions for the user's wallet
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ['coin-transactions', wallet?.id],
+    queryFn: async () => {
+      if (!wallet?.id) return [];
       
-      const { data } = await supabase
-        .from('wallets' as any)
-        .select('coin_balance')
+      const { data, error } = await supabase
+        .from('coin_transactions')
+        .select('*')
+        .eq('wallet_id', wallet.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data as CoinTransaction[];
+    },
+    enabled: !!wallet?.id,
+  });
+
+  // Fetch withdrawal requests
+  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useQuery({
+    queryKey: ['withdrawal-requests', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
         .eq('user_id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(10);
       
-      if (data) setBalance(Number((data as any).coin_balance));
-    };
+      if (error) throw error;
+      return data as WithdrawalRequest[];
+    },
+    enabled: !!user?.id,
+  });
 
-    fetchBalance();
-
-    let userId: string | undefined;
-    supabase.auth.getUser().then(d => { userId = d.data.user?.id; });
-
-    const channel = supabase
-      .channel('wallet-balance')
-      .on(
-        'postgres_changes' as any,
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'wallets',
-        },
-        (payload: any) => {
-          if (payload.new?.coin_balance !== undefined) {
-            setBalance(Number(payload.new.coin_balance));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const coinBalance = wallet?.coin_balance ?? 0;
 
   if (showTopUp) {
+    if (!PAYMENTS_ENABLED) {
+      // TODO(prod): Remove this gate once NOWPayments keys are configured
+      return (
+        <PageTransition className="space-y-gutter">
+          <Button variant="ghost" onClick={() => setShowTopUp(false)} className="mb-4">
+            ← Back to Wallet
+          </Button>
+          <NeuCard padding="lg" className="text-center py-12">
+            <NeuIconBadge size="lg" active className="mx-auto mb-4 bg-neo-secondary/20">
+              <Loader2 className="w-8 h-8 text-neo-secondary animate-spin" />
+            </NeuIconBadge>
+            <h3 className="font-h3 text-h3 text-neo-text-primary mb-2">Crypto Top-Up Coming Soon</h3>
+            <p className="font-body-md text-body-md text-neo-text-secondary mb-6">
+              We're integrating secure cryptocurrency payments. Check back soon!
+            </p>
+            <p className="font-body-sm text-body-sm text-neo-text-muted">
+              {/* TODO(prod): Remove this comment when payments are enabled */}
+              {/* Requires NOWPAYMENTS_API_KEY in environment */}
+            </p>
+          </NeuCard>
+        </PageTransition>
+      );
+    }
     return (
       <PageTransition className="space-y-gutter">
         <Button variant="ghost" onClick={() => setShowTopUp(false)} className="mb-4">
@@ -73,6 +113,24 @@ export default function WalletPage() {
       </PageTransition>
     );
   }
+
+  const formatType = (type: string) => {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return <span className="font-label-caps text-label-caps text-amber-600">Pending</span>;
+      case 'COMPLETED':
+        return <span className="font-label-caps text-label-caps text-neo-success">Completed</span>;
+      case 'FAILED':
+        return <span className="font-label-caps text-label-caps text-neo-error">Failed</span>;
+      default:
+        return <span className="font-label-caps text-label-caps text-neo-text-secondary">{status}</span>;
+    }
+  };
+
   return (
     <PageTransition className="space-y-gutter">
       {/* Balance Hero Section */}
@@ -84,10 +142,14 @@ export default function WalletPage() {
             <NeuIconBadge size="md" active className="flex-shrink-0" style={{ background: 'var(--neo-secondary)' }}>
               <span className="material-symbols-outlined text-neo-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>toll</span>
             </NeuIconBadge>
-            <span className="font-h1 text-h1 text-neo-secondary tracking-tight">{balance.toLocaleString()}</span>
+            {walletLoading ? (
+              <div className="h-10 w-32 neo-skeleton rounded" />
+            ) : (
+              <span className="font-h1 text-h1 text-neo-secondary tracking-tight">{coinBalance.toLocaleString()}</span>
+            )}
           </div>
           <p className="font-data-md text-data-md text-neo-text-secondary mt-2 bg-neu-bg inline-block px-3 py-1 rounded-full shadow-neu-inset border border-neo-bg-dark">
-            &asymp; &#8358;{(balance / 100).toFixed(2)} NGN
+            ≈ ₦{(coinBalance / 100).toFixed(2)} NGN
           </p>
         </div>
       </NeuCard>
@@ -105,12 +167,14 @@ export default function WalletPage() {
           </StaggerItem>
 
           <StaggerItem>
-            <NeuCard padding="md" interactive className="flex flex-col items-center justify-center">
-              <NeuIconBadge size="lg" className="mb-2">
-                <Landmark className="w-6 h-6 text-neo-primary" />
-              </NeuIconBadge>
-              <span className="font-body-md text-body-md font-semibold text-neo-text-primary">Withdraw</span>
-            </NeuCard>
+            <Link href="/dashboard/wallet/withdraw" className="block">
+              <NeuCard padding="md" interactive className="flex flex-col items-center justify-center">
+                <NeuIconBadge size="lg" className="mb-2">
+                  <Landmark className="w-6 h-6 text-neo-primary" />
+                </NeuIconBadge>
+                <span className="font-body-md text-body-md font-semibold text-neo-text-primary">Withdraw</span>
+              </NeuCard>
+            </Link>
           </StaggerItem>
 
           <StaggerItem>
@@ -133,36 +197,90 @@ export default function WalletPage() {
         </StaggerContainer>
       </section>
 
+      {/* Recent Withdrawals */}
+      {withdrawals.length > 0 && (
+        <NeuCard padding="none" className="overflow-hidden">
+          <div className="p-6 border-b border-neo-bg-dark">
+            <h3 className="font-h3 text-h3 text-neo-text-primary">Recent Withdrawals</h3>
+          </div>
+          <div className="divide-y divide-neo-bg-dark">
+            {withdrawals.map((withdrawal) => (
+              <NeuCard key={withdrawal.id} padding="md" interactive className="flex items-center justify-between rounded-none shadow-neu-flat">
+                <div className="flex items-center space-x-4">
+                  <NeuIconBadge size="md">
+                    <LandMark className="w-5 h-5 text-neo-error" />
+                  </NeuIconBadge>
+                  <div>
+                    <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">
+                      Withdrawal to {withdrawal.account_details?.bank_name || 'Bank Account'}
+                    </h4>
+                    <p className="font-body-sm text-body-sm text-neo-text-secondary">
+                      {new Date(withdrawal.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-data-md text-data-md text-neo-error">
+                    -{withdrawal.coin_amount.toLocaleString()} Coins
+                  </p>
+                  <p className="font-body-sm text-body-sm text-neo-text-secondary">
+                    ₦{withdrawal.amount.toLocaleString()}
+                  </p>
+                  <div className="mt-1">{getStatusBadge(withdrawal.status)}</div>
+                </div>
+              </NeuCard>
+            ))}
+          </div>
+        </NeuCard>
+      )}
+
       {/* Transaction History */}
       <NeuCard padding="none" className="overflow-hidden">
         <div className="p-6 border-b border-neo-bg-dark flex justify-between items-center">
           <h3 className="font-h3 text-h3 text-neo-text-primary">Recent Transactions</h3>
           <Button variant="ghost" size="sm">View All</Button>
         </div>
-        <div className="divide-y divide-neo-bg-dark">
-          {transactions.map((tx) => (
-            <NeuCard key={tx.id} padding="md" interactive className="flex items-center justify-between rounded-none shadow-neu-flat">
-              <div className="flex items-center space-x-4">
-                <NeuIconBadge size="md" active={tx.amount > 0}>
-                  <span className={`material-symbols-outlined ${tx.amount > 0 ? 'text-neo-success' : 'text-neo-error'}`}>{tx.icon}</span>
-                </NeuIconBadge>
-                <div>
-                  <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">{tx.type.replace('_', ' ')}</h4>
-                  <p className="font-body-sm text-body-sm text-neo-text-secondary">{tx.date}</p>
+        {transactionsLoading ? (
+          <div className="p-6 space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-16 neo-skeleton rounded" />
+            ))}
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="p-12 text-center text-neo-text-secondary">
+            <span className="material-symbols-outlined text-[48px] mb-2">receipt_long</span>
+            <p className="font-body-md text-body-md">No transactions yet</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-neo-bg-dark">
+            {transactions.map((tx) => (
+              <NeuCard key={tx.id} padding="md" interactive className="flex items-center justify-between rounded-none shadow-neu-flat">
+                <div className="flex items-center space-x-4">
+                  <NeuIconBadge size="md" active={tx.amount > 0}>
+                    <span className={`material-symbols-outlined ${tx.amount > 0 ? 'text-neo-success' : 'text-neo-error'}`}>
+                      {tx.amount > 0 ? 'arrow_downward' : 'arrow_upward'}
+                    </span>
+                  </NeuIconBadge>
+                  <div>
+                    <h4 className="font-body-md text-body-md font-medium text-neo-text-primary">{formatType(tx.type)}</h4>
+                    <p className="font-body-sm text-body-sm text-neo-text-secondary">
+                      {new Date(tx.created_at).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className={`font-data-md text-data-md flex items-center gap-1 ${tx.amount > 0 ? 'text-neo-success' : 'text-neo-text-primary'}`}>
-                  {tx.amount > 0 ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-                  {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
-                </p>
-                {tx.naira && (
-                  <p className="font-body-sm text-body-sm text-neo-text-secondary">{tx.naira}</p>
-                )}
-              </div>
-            </NeuCard>
-          ))}
-        </div>
+                <div className="text-right">
+                  <p className={`font-data-md text-data-md flex items-center gap-1 ${tx.amount > 0 ? 'text-neo-success' : 'text-neo-text-primary'}`}>
+                    {tx.amount > 0 ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                    {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
+                  </p>
+                  {tx.description && (
+                    <p className="font-body-sm text-body-sm text-neo-text-secondary">{tx.description}</p>
+                  )}
+                </div>
+              </NeuCard>
+            ))}
+          </div>
+        )}
       </NeuCard>
     </PageTransition>
   );
