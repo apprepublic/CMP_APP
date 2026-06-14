@@ -8,18 +8,18 @@ import { NeuProgress } from '@/components/ui/neu-progress';
 import { Button } from '@/components/ui/button';
 import { Wallet, Flame, ClipboardList, ArrowRight, Bell } from 'lucide-react';
 import { useFeaturedSongs, useStores, useTasks } from '@/lib/hooks';
-import { useUserStore } from '@/stores/userStore';
+import { useWallet } from '@/lib/useWallet';
 
 export default function DashboardPage() {
   const { data: songs = [], isLoading: songsLoading } = useFeaturedSongs();
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
-  const { user } = useUserStore();
+  const { wallet, loading: walletLoading } = useWallet();
 
   // Placeholder until auth is fully wired
-  const displayName = user?.displayName || '—';
-  const coinBalance = user?.wallet?.coinBalance ?? null;
-  const avatarUrl = user?.avatarUrl;
+  const displayName = 'User';
+  const coinBalance = wallet?.coin_balance ?? null;
+  const avatarUrl = null;
 
   return (
     <PageTransition className="space-y-12">
@@ -71,7 +71,9 @@ export default function DashboardPage() {
                   <Wallet className="w-5 h-5 text-neo-secondary" />
                 </NeuIconBadge>
               </div>
-              {coinBalance !== null ? (
+              {walletLoading ? (
+                <div className="h-8 w-32 neo-skeleton rounded" />
+              ) : coinBalance !== null ? (
                 <>
                   <div className="flex items-baseline gap-2">
                     <h3 className="font-data-lg text-data-lg text-h2 text-neo-text-primary">{coinBalance.toLocaleString()}</h3>

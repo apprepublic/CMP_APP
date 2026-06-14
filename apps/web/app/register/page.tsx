@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { NeuCard } from '@/components/ui/neu-card';
@@ -9,8 +10,13 @@ import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { NeuToggle } from '@/components/ui/neu-toggle';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Mail, Lock, Eye, EyeOff, Smartphone, CheckCircle, Rocket } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
+import { useUserStore } from '@/stores/userStore';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register } = useUserStore();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,10 +28,73 @@ export default function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Register:', formData);
+    setError('');
+
+    if (!acceptTerms) {
+      setError('You must accept the terms of service');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Sign up with Supabase
+      const { data: authData, error: supabaseError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (supabaseError) throw supabaseError;
+
+      // Register with API
+      const { user, accessToken, refreshToken } = await api.register({
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+        username: formData.email.split('@')[0],
+        referralCode: formData.referralCode || undefined,
+      });
+
+      api.setToken(accessToken);
+      
+      // Store refresh token
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
+      // Update user store
+      await register({
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+        username: formData.email.split('@')[0],
+        referralCode: formData.referralCode || undefined,
+      });
+
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,6 +145,11 @@ export default function RegisterPage() {
 
             <StaggerItem>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="p-3 rounded-lg bg-neo-error/10 text-neo-error text-sm font-body-sm">
+                    {error}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="First Name"
@@ -83,6 +157,7 @@ export default function RegisterPage() {
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     placeholder="First name"
+                    disabled={isLoading}
                   />
                   <Input
                     label="Last Name"
@@ -90,6 +165,7 @@ export default function RegisterPage() {
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     placeholder="Last name"
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -100,6 +176,7 @@ export default function RegisterPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="your@email.com"
                   icon={<Mail className="w-5 h-5" />}
+                  disabled={isLoading}
                 />
 
                 <Input
@@ -109,6 +186,7 @@ export default function RegisterPage() {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+2348012345678"
                   icon={<Smartphone className="w-5 h-5" />}
+                  disabled={isLoading}
                 />
 
                 <div className="relative">
@@ -119,15 +197,27 @@ export default function RegisterPage() {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Create a password"
                     icon={<Lock className="w-5 h-5" />}
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-[38px] text-neo-text-muted hover:text-neo-text-primary transition-colors"
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+
+                <Input
+                  label="Confirm Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  placeholder="Confirm your password"
+                  icon={<Lock className="w-5 h-5" />}
+                  disabled={isLoading}
+                />
 
                 <Input
                   label="Referral Code (Optional)"
@@ -135,6 +225,7 @@ export default function RegisterPage() {
                   value={formData.referralCode}
                   onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
                   placeholder="Enter referral code"
+                  disabled={isLoading}
                 />
 
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -142,6 +233,7 @@ export default function RegisterPage() {
                     size="md"
                     checked={acceptTerms}
                     onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+                    disabled={isLoading}
                   />
                   <span className="font-body-sm text-body-sm text-neo-text-secondary">
                     I agree to the{' '}
@@ -153,12 +245,12 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  disabled={!acceptTerms}
+                  disabled={!acceptTerms || isLoading}
                   className="w-full"
                   size="lg"
                   variant="default"
                 >
-                  Create Account
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
 
                 <div className="relative">
@@ -171,7 +263,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" size="default" className="gap-2 h-12">
+                  <Button variant="outline" size="default" className="gap-2 h-12" disabled>
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -180,7 +272,7 @@ export default function RegisterPage() {
                     </svg>
                     <span className="font-body-md text-body-md">Google</span>
                   </Button>
-                  <Button variant="outline" size="default" className="gap-2 h-12">
+                  <Button variant="outline" size="default" className="gap-2 h-12" disabled>
                     <Smartphone className="w-5 h-5" />
                     <span className="font-body-md text-body-md">Phone</span>
                   </Button>

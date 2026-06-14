@@ -2,28 +2,62 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { NeuCard } from '@/components/ui/neu-card';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Smartphone,
-} from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
+import { useUserStore } from '@/stores/userStore';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login } = useUserStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', { email, password });
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // Sign in with Supabase
+      const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (supabaseError) throw supabaseError;
+
+      if (data.user) {
+        // Get user profile from API and store token
+        const { user: userProfile, accessToken, refreshToken } = await api.login({ email, password });
+        api.setToken(accessToken);
+        
+        // Store refresh token
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+
+        // Update user store
+        await login({ email, password });
+        
+        // Redirect to dashboard
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -40,6 +74,11 @@ export default function LoginPage() {
 
             <StaggerItem>
               <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div className="p-3 rounded-lg bg-neo-error/10 text-neo-error text-sm font-body-sm">
+                    {error}
+                  </div>
+                )}
                 <Input
                   label="Email or Phone"
                   type="text"
@@ -47,6 +86,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email or phone number"
                   icon={<Mail className="w-5 h-5" />}
+                  disabled={isLoading}
                 />
 
                 <div>
@@ -57,6 +97,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     icon={<Lock className="w-5 h-5" />}
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -75,8 +116,9 @@ export default function LoginPage() {
                   className="w-full"
                   size="lg"
                   variant="default"
+                  disabled={isLoading}
                 >
-                  Sign In
+                  {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
 
                 <div className="relative">
@@ -89,7 +131,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" size="default" className="gap-2 h-12">
+                  <Button variant="outline" size="default" className="gap-2 h-12" disabled>
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -98,7 +140,7 @@ export default function LoginPage() {
                     </svg>
                     <span className="font-body-md text-body-md">Google</span>
                   </Button>
-                  <Button variant="outline" size="default" className="gap-2 h-12">
+                  <Button variant="outline" size="default" className="gap-2 h-12" disabled>
                     <Smartphone className="w-5 h-5" />
                     <span className="font-body-md text-body-md">Phone</span>
                   </Button>

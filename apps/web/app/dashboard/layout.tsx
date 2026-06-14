@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
+import { useAuth } from '@/lib/useAuth';
+import { NeuCard } from '@/components/ui/neu-card';
 
 const navItems = [
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -23,6 +25,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  // Redirect to login if not authenticated and not loading
+  if (!loading && !user) {
+    router.push('/login');
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neu-bg">
+        <NeuCard padding="lg" className="text-center">
+          <p className="font-body-md text-body-md text-neo-text-secondary">Redirecting to login...</p>
+        </NeuCard>
+      </div>
+    );
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neu-bg">
+        <NeuCard padding="lg" className="text-center">
+          <div className="w-8 h-8 border-2 border-neo-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="font-body-md text-body-md text-neo-text-secondary">Loading...</p>
+        </NeuCard>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-surface">
