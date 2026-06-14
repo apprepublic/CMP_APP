@@ -143,7 +143,16 @@ export default function LandingPage() {
           />
         </div>
         
-        <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
+        {/* Hero Image Layer - Between Background and Text */}
+        <div className="absolute inset-0 z-10 opacity-100 flex items-center justify-center pointer-events-none">
+          <img
+            alt="Hero visual"
+            className="w-full h-full object-cover"
+            src="/hero.png"
+          />
+        </div>
+        
+        <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
           <StaggerContainer stagger={0.1}>
             <StaggerItem>
               <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/30 bg-secondary-fixed/10 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
