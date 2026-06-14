@@ -78,52 +78,52 @@ export default function LandingPage() {
   };
 
   return (
-    <PageTransition className="min-h-screen bg-background">
+    <PageTransition className="min-h-screen bg-surface">
       {/* Top Navigation Shell - Desktop/Tablet Only */}
-      <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary/80 backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
-        <div className="font-h3 text-h3 font-bold text-on-primary">CMPapp</div>
+      <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
+        <div className="font-h3 text-h3 font-bold text-white">CMPapp</div>
         <div className="flex items-center gap-x-8">
           <Link className="font-body-md text-body-md text-secondary-fixed border-b-2 border-secondary-fixed pb-1" href="/dashboard">
             Dashboard
           </Link>
-          <Link className="font-body-md text-body-md text-on-primary-container hover:text-secondary transition-colors" href="/tasks">
+          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/tasks">
             Earn
           </Link>
-          <Link className="font-body-md text-body-md text-on-primary-container hover:text-secondary transition-colors" href="/music">
+          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/music">
             Music
           </Link>
-          <Link className="font-body-md text-body-md text-on-primary-container hover:text-secondary transition-colors" href="/marketplace">
+          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/marketplace">
             Market
           </Link>
-          <Link className="font-body-md text-body-md text-on-primary-container hover:text-secondary transition-colors" href="/wallet">
+          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/wallet">
             Wallet
           </Link>
         </div>
         <div className="flex items-center gap-4">
           {isAuthenticated && user ? (
             <>
-              <div className="premium-border-gold rounded-full px-4 py-1 flex items-center gap-2 bg-primary-container/50 backdrop-blur-md">
+              <div className="premium-border-gold rounded-full px-4 py-1 flex items-center gap-2 bg-white/10 backdrop-blur-md">
                 <Coins className="w-5 h-5 text-secondary-fixed" />
                 <span className="font-data-md text-data-md text-secondary-fixed">
                   {user.wallet?.coinBalance || 0}
                 </span>
               </div>
-              <button className="text-on-primary cursor-pointer hover:text-secondary-fixed transition-colors">
+              <button className="text-white hover:text-secondary-fixed transition-colors">
                 <Bell className="w-6 h-6" />
               </button>
               <Link href="/profile">
-                <UserCircle className="w-6 h-6 text-on-primary cursor-pointer hover:text-secondary-fixed transition-colors" />
+                <UserCircle className="w-6 h-6 text-white hover:text-secondary-fixed transition-colors" />
               </Link>
             </>
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-on-primary hover:text-secondary-fixed">
+                <Button variant="ghost" size="sm" className="text-white hover:text-secondary-fixed">
                   Login
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed">
+                <Button size="sm" className="bg-secondary-fixed hover:bg-secondary text-primary font-bold">
                   Sign Up
                 </Button>
               </Link>
@@ -155,18 +155,18 @@ export default function LandingPage() {
         <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
           <StaggerContainer stagger={0.1}>
             <StaggerItem>
-              <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/30 bg-secondary-fixed/10 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
+              <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/50 bg-secondary-fixed/20 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
                 GLOBAL DIGITAL REVOLUTION IS HERE
               </div>
             </StaggerItem>
             <StaggerItem>
-              <h1 className="font-h1 text-h1 text-on-primary max-w-4xl mx-auto mb-6">
+              <h1 className="font-h1 text-h1 text-white max-w-4xl mx-auto mb-6">
                 Empower Your Creativity. <br/>
                 <span className="text-secondary-fixed">Monetize Your Passion.</span>
               </h1>
             </StaggerItem>
             <StaggerItem>
-              <p className="font-body-lg text-body-lg text-on-primary-container max-w-2xl mx-auto mb-10">
+              <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mx-auto mb-10">
                 The first creative economy hub where every stream, task, and referral builds your wealth. Join thousands of creators in the global digital revolution.
               </p>
             </StaggerItem>
@@ -174,7 +174,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button
                   size="xl"
-                  className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
+                  className="bg-secondary-fixed hover:bg-secondary text-primary font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
                   asChild
                 >
                   <Link href={isAuthenticated ? '/dashboard' : '/register'} className="flex items-center gap-3">
@@ -185,7 +185,7 @@ export default function LandingPage() {
                 <Button
                   size="xl"
                   variant="outline"
-                  className="glass-dark hover:bg-on-primary-fixed-variant text-on-primary border border-outline font-h3 text-h3 px-8 py-4 rounded-lg transition-all"
+                  className="glass-dark hover:bg-white/10 text-white border border-white/30 font-h3 text-h3 px-8 py-4 rounded-lg transition-all"
                   asChild
                 >
                   <Link href="/marketplace" className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function LandingPage() {
             </NeuIconBadge>
             <div>
               <div className="font-label-caps text-label-caps text-secondary-fixed">RECENT EARNING</div>
-              <div className="font-data-md text-data-md text-on-primary">DJ Horizon earned 2,400 Coins</div>
+              <div className="font-data-md text-data-md text-white">DJ Horizon earned 2,400 Coins</div>
             </div>
           </NeuCard>
         </div>
@@ -222,12 +222,12 @@ export default function LandingPage() {
           <StaggerContainer stagger={0.1}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="bg-surface-alt/80 backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-sm h-full">
-                  <div className="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <Headphones className="w-8 h-8 text-secondary-fixed" />
+                <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
+                  <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                    <Headphones className="w-8 h-8 text-primary" />
                   </div>
                   <h3 className="font-h3 text-h3 mb-4 text-primary">Stream to Earn</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                  <p className="font-body-md text-body-md text-on-surface mb-6">
                     Earn coins by discovering and listening to emerging African artists. Your ears are assets—get paid for every minute you spend on premium audio.
                   </p>
                   <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/music">
@@ -237,12 +237,12 @@ export default function LandingPage() {
               </StaggerItem>
 
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="bg-surface-alt/80 backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-sm h-full">
-                  <div className="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <ClipboardCheck className="w-8 h-8 text-secondary-fixed" />
+                <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
+                  <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                    <ClipboardCheck className="w-8 h-8 text-primary" />
                   </div>
                   <h3 className="font-h3 text-h3 mb-4 text-primary">Micro-Task Market</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                  <p className="font-body-md text-body-md text-on-surface mb-6">
                     Complete simple digital tasks for global brands. From survey participation to content tagging, leverage your downtime for steady growth.
                   </p>
                   <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/tasks">
@@ -252,12 +252,12 @@ export default function LandingPage() {
               </StaggerItem>
 
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="bg-surface-alt/80 backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-sm h-full">
-                  <div className="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <Users className="w-8 h-8 text-secondary-fixed" />
+                <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
+                  <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                    <Users className="w-8 h-8 text-primary" />
                   </div>
                   <h3 className="font-h3 text-h3 mb-4 text-primary">Referral Network</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                  <p className="font-body-md text-body-md text-on-surface mb-6">
                     Build your tribe and earn 3-tier passive commissions. Empower your circle to earn and watch your ecosystem rewards scale indefinitely.
                   </p>
                   <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/referrals">
@@ -281,28 +281,28 @@ export default function LandingPage() {
         </div>
         
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row items-center gap-16 relative z-10">
-          <div className="flex-1 text-on-primary">
+          <div className="flex-1 text-white">
             <h2 className="font-h2 text-h2 mb-6">The Coin Economy</h2>
-            <p className="font-body-lg text-body-lg text-on-primary-container mb-8">
+            <p className="font-body-lg text-body-lg text-white/90 mb-8">
               CMP Coins are the heart of our creative hub. We've built a stable, transparent conversion model that bridges the gap between digital effort and real-world value.
             </p>
             <div className="space-y-6">
               <NeuCard padding="md" interactive className="glass-dark p-4 rounded-xl flex items-center gap-4">
-                <NeuIconBadge size="lg" active className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-primary-container/50">
+                <NeuIconBadge size="lg" active className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-white/10">
                   <span className="font-data-lg text-data-lg text-secondary-fixed">1</span>
                 </NeuIconBadge>
                 <div>
-                  <div className="font-h3 text-h3 text-on-primary">100 Coins : 1 USD</div>
-                  <div className="font-body-sm text-body-sm text-on-primary-container">Guaranteed conversion rate for liquidity.</div>
+                  <div className="font-h3 text-h3 text-white">100 Coins : 1 USD</div>
+                  <div className="font-body-sm text-body-sm text-white/70">Guaranteed conversion rate for liquidity.</div>
                 </div>
               </NeuCard>
               <NeuCard padding="md" interactive className="glass-dark p-4 rounded-xl flex items-center gap-4">
-                <NeuIconBadge size="lg" active className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-primary-container/50">
+                <NeuIconBadge size="lg" active className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-white/10">
                   <span className="font-data-lg text-data-lg text-secondary-fixed">2</span>
                 </NeuIconBadge>
                 <div>
-                  <div className="font-h3 text-h3 text-on-primary">Global Utilities</div>
-                  <div className="font-body-sm text-body-sm text-on-primary-container">Pay subscriptions, digital goods, and services directly with coins.</div>
+                  <div className="font-h3 text-h3 text-white">Global Utilities</div>
+                  <div className="font-body-sm text-body-sm text-white/70">Pay subscriptions, digital goods, and services directly with coins.</div>
                 </div>
               </NeuCard>
             </div>
@@ -314,13 +314,13 @@ export default function LandingPage() {
                 <NeuIconBadge size="lg" active className="w-32 h-32 rounded-full bg-gradient-to-tr from-secondary to-secondary-fixed flex items-center justify-center animate-pulse shadow-lg">
                   <Coins className="w-16 h-16 text-primary" />
                 </NeuIconBadge>
-                <div className="absolute -top-4 -right-4 bg-white/10 backdrop-blur-md border border-white/20 text-on-primary px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
+                <div className="absolute -top-4 -right-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
                   Live Value
                 </div>
               </div>
-              <div className="font-data-lg text-data-lg text-on-primary mb-2">Current Balance Value</div>
+              <div className="font-data-lg text-data-lg text-white mb-2">Current Balance Value</div>
               <div className="font-h1 text-h1 text-secondary-fixed">$ 12,500.00</div>
-              <div className="font-body-sm text-body-sm text-on-primary-container mt-4">1,250,000 CMP COINS</div>
+              <div className="font-body-sm text-body-sm text-white/70 mt-4">1,250,000 CMP COINS</div>
             </NeuCard>
           </div>
         </div>
@@ -336,7 +336,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-end mb-16">
             <div>
               <h2 className="font-h2 text-h2 text-primary">Creator Spotlight</h2>
-              <p className="font-body-md text-body-md text-on-surface-variant mt-2">See who's leading the digital revolution globally.</p>
+              <p className="font-body-md text-body-md text-on-surface mt-2">See who's leading the digital revolution globally.</p>
             </div>
             <Button variant="ghost" className="text-secondary font-bold flex items-center gap-2">
               View Rankings <span className="material-symbols-outlined">expand_more</span>
@@ -347,7 +347,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
               {creators.map((creator, index) => (
                 <StaggerItem key={index}>
-                  <NeuCard padding="none" interactive className="bg-surface-container-low rounded-xl overflow-hidden hover:shadow-xl transition-shadow group h-full">
+                  <NeuCard padding="none" interactive className="bg-white rounded-xl overflow-hidden hover:shadow-xl transition-shadow group h-full">
                     <div className="h-64 relative">
                       <img
                         alt={creator.name}
@@ -355,7 +355,7 @@ export default function LandingPage() {
                         src={creator.image}
                       />
                       {creator.badge && (
-                        <div className={`absolute top-4 right-4 ${creator.badgeType === 'success' ? 'bg-success-verified/90' : 'bg-primary/90'} backdrop-blur-sm text-on-primary px-2 py-1 rounded flex items-center gap-1 font-label-caps text-[10px] border border-white/20`}>
+                        <div className={`absolute top-4 right-4 ${creator.badgeType === 'success' ? 'bg-success-verified/90' : 'bg-primary/90'} backdrop-blur-sm text-white px-2 py-1 rounded flex items-center gap-1 font-label-caps text-[10px] border border-white/20`}>
                           <CheckCircle className="w-3.5 h-3.5" />
                           {creator.badge}
                         </div>
@@ -363,7 +363,7 @@ export default function LandingPage() {
                     </div>
                     <div className="p-6">
                       <h4 className="font-h3 text-h3 mb-1 text-primary">{creator.name}</h4>
-                      <div className="font-body-sm text-body-sm text-on-surface-variant mb-4">
+                      <div className="font-body-sm text-body-sm text-on-surface mb-4">
                         {creator.location} • {creator.role}
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-outline-variant">
@@ -389,9 +389,9 @@ export default function LandingPage() {
           />
         </div>
         
-        <div className="max-w-4xl mx-auto text-center relative z-10 glass-dark p-12 rounded-3xl border border-white/10">
-          <h2 className="font-h1 text-h1 text-on-primary mb-6">Ready to Build Your Wealth?</h2>
-          <p className="font-body-lg text-body-lg text-on-primary-container mb-12">
+        <div className="max-w-4xl mx-auto text-center relative z-10 glass-dark p-12 rounded-3xl border border-white/20">
+          <h2 className="font-h1 text-h1 text-white mb-6">Ready to Build Your Wealth?</h2>
+          <p className="font-body-lg text-body-lg text-white/90 mb-12">
             Start Your Journey with <span className="text-secondary-fixed font-bold">500 Bonus Coins</span>. It takes less than 60 seconds to join the hub and begin monetizing your tasks.
           </p>
           <form onSubmit={handleEmailSubmit} className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto mb-8">
@@ -400,19 +400,19 @@ export default function LandingPage() {
               placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 bg-white/5 border border-outline-variant/30 rounded-lg px-6 py-4 text-on-primary focus:outline-none focus:ring-2 focus:ring-secondary-fixed backdrop-blur-sm"
+              className="flex-1 bg-white/10 border border-white/30 rounded-lg px-6 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-secondary-fixed backdrop-blur-sm"
               required
             />
             <Button
               type="submit"
               size="xl"
               disabled={isSubmitting}
-              className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
+              className="bg-secondary-fixed hover:bg-secondary text-primary font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </Button>
           </form>
-          <div className="flex items-center justify-center gap-8 text-on-primary-container font-label-caps text-label-caps flex-wrap">
+          <div className="flex items-center justify-center gap-8 text-white/80 font-label-caps text-label-caps flex-wrap">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-secondary-fixed" />
               No Fees
@@ -430,42 +430,42 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-primary text-on-primary py-16 px-margin-mobile md:px-margin-desktop border-t border-outline-variant/10">
+      <footer className="bg-primary text-white py-16 px-margin-mobile md:px-margin-desktop border-t border-white/10">
         <div className="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-4 gap-gutter">
           <div className="md:col-span-1">
-            <div className="font-h2 text-h2 text-on-primary mb-4">CMPapp</div>
-            <p className="font-body-sm text-body-sm text-on-primary-container">
+            <div className="font-h2 text-h2 text-white mb-4">CMPapp</div>
+            <p className="font-body-sm text-body-sm text-white/70">
               The creative economy hub empowering the global digital generation through music, tasks, and community.
             </p>
           </div>
           <div>
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">PLATFORM</h5>
-            <ul className="space-y-3 font-body-sm text-body-sm text-on-primary-container">
-              <li><Link className="hover:text-on-primary transition-colors" href="#">How it Works</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="/marketplace">Marketplace</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="/tasks">Earn Coins</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="/wallet">Store</Link></li>
+            <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">How it Works</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/marketplace">Marketplace</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/wallet">Store</Link></li>
             </ul>
           </div>
           <div>
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">COMMUNITY</h5>
-            <ul className="space-y-3 font-body-sm text-body-sm text-on-primary-container">
-              <li><Link className="hover:text-on-primary transition-colors" href="#">Discord Hub</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="/referrals">Referral Program</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="#">Creator Perks</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="/contests">Leaderboards</Link></li>
+            <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Discord Hub</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/referrals">Referral Program</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Creator Perks</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/contests">Leaderboards</Link></li>
             </ul>
           </div>
           <div>
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">LEGAL</h5>
-            <ul className="space-y-3 font-body-sm text-body-sm text-on-primary-container">
-              <li><Link className="hover:text-on-primary transition-colors" href="#">Privacy Policy</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="#">Terms of Service</Link></li>
-              <li><Link className="hover:text-on-primary transition-colors" href="#">Cookie Policy</Link></li>
+            <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Terms of Service</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-container-max mx-auto mt-16 pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center font-body-sm text-body-sm text-on-primary-container gap-4">
+        <div className="max-w-container-max mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center font-body-sm text-body-sm text-white/70 gap-4">
           <div>© 2024 CMPapp. Built for the Creative Revolution.</div>
           <div className="flex gap-6">
             <button className="cursor-pointer hover:text-secondary-fixed transition-colors">
