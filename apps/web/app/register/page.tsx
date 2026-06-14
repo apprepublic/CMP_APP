@@ -10,7 +10,7 @@ import { useUserStore } from '@/stores/userStore';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, Eye, EyeOff, Person, Smartphone, CheckCircle, ArrowForward, Coins } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Smartphone, CheckCircle, ArrowRight, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -173,7 +173,7 @@ export default function RegisterPage() {
                       First Name
                     </label>
                     <div className="relative">
-                      <Person className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
                       <input
                         className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
                         id="firstName"
@@ -192,7 +192,7 @@ export default function RegisterPage() {
                       Last Name
                     </label>
                     <div className="relative">
-                      <Person className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
                       <input
                         className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
                         id="lastName"
@@ -355,7 +355,7 @@ export default function RegisterPage() {
                   className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm group"
                 >
                   Join the Economy
-                  <ArrowForward className="group-hover:translate-x-1 transition-transform w-5 h-5" />
+                  <ArrowRight className="group-hover:translate-x-1 transition-transform w-5 h-5" />
                 </Button>
               </form>
             </StaggerItem>

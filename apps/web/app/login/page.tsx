@@ -10,7 +10,7 @@ import { useUserStore } from '@/stores/userStore';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, Eye, EyeOff, ArrowForward } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -171,6 +171,7 @@ export default function LoginPage() {
                     className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-md text-body-md font-medium text-primary-container bg-[#B8860B] hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B8860B] transition-colors duration-200"
                   >
                     {isLoading ? 'Signing in...' : 'Sign In'}
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </div>
               </form>
