@@ -6,6 +6,7 @@ export async function generateStaticParams() {
   return [{ id: 'example-store' }];
 }
 
-export default function StoreFrontPage({ params }: { params: Promise<{ id: string }> }) {
-  return <StoreFrontClient slug={(await params).id} />;
+export default async function StoreFrontPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <StoreFrontClient slug={id} />;
 }

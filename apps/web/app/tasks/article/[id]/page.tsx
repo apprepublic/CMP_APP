@@ -6,6 +6,7 @@ export async function generateStaticParams() {
   return [{ id: 'beginners-guide-earning-coins-online' }];
 }
 
-export default function ArticleReaderPage({ params }: { params: Promise<{ id: string }> }) {
-  return <ArticleReaderClient slug={(await params).id} />;
+export default async function ArticleReaderPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <ArticleReaderClient slug={id} />;
 }

@@ -6,6 +6,7 @@ export async function generateStaticParams() {
   return [{ id: 'aisha-m' }];
 }
 
-export default function ArtistProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  return <ArtistProfileClient slug={(await params).id} />;
+export default async function ArtistProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <ArtistProfileClient slug={id} />;
 }
