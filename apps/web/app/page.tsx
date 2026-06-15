@@ -105,10 +105,10 @@ export default function LandingPage() {
         </div>
 
         {/* Hero Image Layer - Between Background and Text (Desktop Only) */}
-        <div className="hidden md:block absolute inset-0 z-10 pl-0 pb-[88px] pr-0 pointer-events-none overflow-visible">
+        <div className="hidden md:block absolute inset-0 z-10 pl-0 pb-[500px] pr-0 pointer-events-none overflow-visible">
           <img
             alt="Hero visual"
-            className="w-[720%] h-auto object-contain"
+            className="w-[360%] h-auto object-contain"
             src="/hero.png"
           />
         </div>
