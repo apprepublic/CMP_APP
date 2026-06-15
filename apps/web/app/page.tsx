@@ -123,7 +123,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" className="bg-secondary-fixed hover:bg-[#8B6914] text-[#0d1b35] font-bold">
+                <Button size="sm" className="!bg-[#B8860B] hover:!bg-[#8B6914] text-[#0d1b35] font-bold">
                   Sign Up
                 </Button>
               </Link>
@@ -174,7 +174,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button
                   size="xl"
-                  className="bg-[#B8860B] hover:bg-[#8B6914] text-[#FFDEA6] font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
+                  className="!bg-[#B8860B] hover:!bg-[#8B6914] text-[#FFDEA6] font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
                   asChild
                 >
                   <Link href={isAuthenticated ? '/dashboard' : '/register'} className="flex items-center gap-3">
@@ -211,8 +211,8 @@ export default function LandingPage() {
           <StaggerContainer stagger={0.1}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
-                  <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                <NeuCard padding="lg" interactive className="!bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
+                  <div className="w-16 h-16 !bg-[#B8860B] rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
                     <Headphones className="w-8 h-8 text-[#0d1b35]" />
                   </div>
                   <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Stream to Earn</h3>
@@ -226,8 +226,8 @@ export default function LandingPage() {
               </StaggerItem>
 
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
-                  <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                <NeuCard padding="lg" interactive className="!bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
+                  <div className="w-16 h-16 !bg-[#B8860B] rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
                     <ClipboardCheck className="w-8 h-8 text-[#0d1b35]" />
                   </div>
                   <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Micro-Task Market</h3>
@@ -241,8 +241,8 @@ export default function LandingPage() {
               </StaggerItem>
 
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
-                  <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                <NeuCard padding="lg" interactive className="!bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
+                  <div className="w-16 h-16 !bg-[#B8860B] rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
                     <Users className="w-8 h-8 text-[#0d1b35]" />
                   </div>
                   <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Referral Network</h3>
@@ -396,7 +396,7 @@ export default function LandingPage() {
               type="submit"
               size="xl"
               disabled={isSubmitting}
-              className="bg-[#B8860B] hover:bg-[#8B6914] text-[#0d1b35] font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
+              className="!bg-[#B8860B] hover:!bg-[#8B6914] text-[#0d1b35] font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </Button>
