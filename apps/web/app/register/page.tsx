@@ -120,9 +120,9 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-navy-glass mix-blend-multiply opacity-60"></div>
         
         <div className="relative z-10 max-w-lg text-white">
-          <h2 className="font-h1 text-h1 mb-6">Fuel Your Creative Enterprise.</h2>
+          <h2 className="font-h1 text-h1 mb-6">Unlock Your Creative Potential.</h2>
           <p className="font-body-lg text-body-lg text-white/90 mb-12">
-            Join a global network of creators. Secure banking, powerful growth tools, and an exclusive community await.
+            Stream music, complete tasks, refer friends, and earn real rewards. Join a thriving community of creators getting paid for what they love.
           </p>
         </div>
       </motion.div>
