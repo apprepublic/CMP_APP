@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { AuthHeader } from '@/components/auth-header';
 import { Mail, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
@@ -150,12 +149,7 @@ export default function VerifyPage() {
       <div className="min-h-screen bg-primary-container relative overflow-hidden">
         <AuthHeader />
         <div className="relative z-10 w-full max-w-md px-4 md:px-0 pt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="glass-card rounded-xl p-8 w-full text-center"
-          >
+          <div className="glass-card rounded-xl p-8 w-full text-center">
             <div className="w-20 h-20 bg-success-verified/20 rounded-full flex items-center justify-center mb-6 mx-auto border border-success-verified/30">
               <CheckCircle className="w-10 h-10 text-success-verified" />
             </div>
@@ -180,12 +174,7 @@ export default function VerifyPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md px-4 md:px-0 pt-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="glass-card rounded-xl p-6 md:p-8 w-full"
-        >
+        <div className="glass-card rounded-xl p-6 md:p-8 w-full">
           {mode === 'loading' ? (
             <div className="text-center py-12">
               <Loader2 className="w-10 h-10 animate-spin text-[#B8860B] mx-auto mb-4" />
@@ -332,7 +321,7 @@ export default function VerifyPage() {
               </button>
             </form>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

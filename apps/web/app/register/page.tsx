@@ -5,26 +5,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { api } from '@/lib/api';
-import { useUserStore } from '@/stores/userStore';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Input } from '@/components/ui/input';
 import { AuthHeader } from '@/components/auth-header';
-import { Mail, Lock, Eye, EyeOff, User, Smartphone, CheckCircle, ArrowRight, Coins } from 'lucide-react';
+import { Mail, User, Smartphone, ArrowRight, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useUserStore();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
     referralCode: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,66 +30,29 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const { data: authData, error: supabaseError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-            phone: formData.phone || undefined,
-          },
+      const { data, error: funcError } = await supabase.functions.invoke('register-user', {
+        body: {
+          email: formData.email,
+          fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+          referralCode: formData.referralCode || undefined,
         },
       });
 
-      if (supabaseError) {
-        console.error('Supabase signup error:', supabaseError);
-        throw supabaseError;
+      if (funcError) {
+        throw new Error(funcError.message || 'Failed to register');
       }
 
-      console.log('Supabase auth successful:', authData.user?.id);
-
-      // Try to register with API, but don't fail if it's down
-      try {
-        await api.register({
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          displayName: `${formData.firstName} ${formData.lastName}`.trim(),
-          username: formData.email.split('@')[0],
-          referralCode: formData.referralCode || undefined,
-        });
-        console.log('API registration successful');
-      } catch (apiError: any) {
-        console.warn('API registration failed (this is OK):', apiError.message);
+      if (!data?.success) {
+        throw new Error(data?.error || 'Registration failed');
       }
 
-      await register({
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
-        username: formData.email.split('@')[0],
-        referralCode: formData.referralCode || undefined,
-      });
-
-      console.log('Registration complete, redirecting to dashboard...');
-      router.push('/dashboard');
+      router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to create account');
+      setError(err.message || 'Failed to register');
     } finally {
       setIsLoading(false);
     }
@@ -142,228 +97,171 @@ export default function RegisterPage() {
             <span className="font-data-md text-data-md text-[#B8860B]">500 Bonus Coins</span>
           </div>
 
-          <StaggerContainer stagger={0.08}>
-            <StaggerItem>
-              {/* Header */}
-              <div className="mb-8">
-                <h1 className="font-h2 text-h1-mobile md:text-h2 text-primary-container mb-2">Create Account</h1>
-                <p className="font-body-md text-body-md text-on-surface-variant">Start building your secure financial future.</p>
-              </div>
-            </StaggerItem>
+          <div className="space-y-5">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="font-h2 text-h1-mobile md:text-h2 text-primary-container mb-2">Create Account</h1>
+              <p className="font-body-md text-body-md text-on-surface-variant">Start building your secure financial future.</p>
+            </div>
 
-            <StaggerItem>
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {error && (
-                  <div className="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm font-body-sm">
-                    {error}
-                  </div>
-                )}
-
-                {/* Full Name */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="firstName">
-                      First Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                      <input
-                        className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                        id="firstName"
-                        name="firstName"
-                        placeholder="Alex"
-                        required
-                        type="text"
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="lastName">
-                      Last Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                      <input
-                        className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                        id="lastName"
-                        name="lastName"
-                        placeholder="Carter"
-                        required
-                        type="text"
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm font-body-sm">
+                  {error}
                 </div>
+              )}
 
-                {/* Email */}
+              {/* Full Name */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="email">
-                    Email Address
+                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="firstName">
+                    First Name
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
                     <input
                       className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                      id="email"
-                      name="email"
-                      placeholder="alex@creativehub.com"
+                      id="firstName"
+                      name="firstName"
+                      placeholder="Alex"
                       required
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="phone">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                    <input
-                      className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                      id="phone"
-                      name="phone"
-                      placeholder="+2348012345678"
-                      required
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="password">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                    <input
-                      className="w-full pl-10 pr-10 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                      id="password"
-                      name="password"
-                      placeholder="••••••••"
-                      required
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant transition-colors"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={isLoading}
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <p className="font-body-sm text-body-sm text-outline mt-1 text-xs">Must be at least 6 characters long.</p>
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="confirmPassword">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                    <input
-                      className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      placeholder="••••••••"
-                      required
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                {/* Referral Code */}
-                <div>
-                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="referralCode">
-                    Referral Code (Optional)
-                  </label>
-                  <div className="relative">
-                    <Coins className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                    <input
-                      className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
-                      id="referralCode"
-                      name="referralCode"
-                      placeholder="Enter code"
                       type="text"
-                      value={formData.referralCode}
-                      onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       disabled={isLoading}
                     />
                   </div>
                 </div>
-
-                {/* TOS Checkbox */}
-                <div className="flex items-start gap-3 pt-2">
-                  <div className="flex items-center h-5">
-                    <input
-                      className="w-4 h-4 rounded border-outline-variant text-primary-container focus:ring-primary-container focus:ring-2 bg-surface-alt"
-                      id="terms"
-                      name="terms"
-                      required
-                      type="checkbox"
-                      checked={acceptTerms}
-                      onChange={(e) => setAcceptTerms(e.target.checked)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <label className="font-body-sm text-body-sm text-on-surface-variant leading-tight" htmlFor="terms">
-                    I agree to the{' '}
-                    <Link href="/terms" className="text-primary-container hover:underline font-medium">
-                      Terms of Service
-                    </Link>{' '}
-                    and{' '}
-                    <Link href="/privacy" className="text-primary-container hover:underline font-medium">
-                      Privacy Policy
-                    </Link>
-                    .
+                <div>
+                  <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="lastName">
+                    Last Name
                   </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                    <input
+                      className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
+                      id="lastName"
+                      name="lastName"
+                      placeholder="Carter"
+                      required
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
+              </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={!acceptTerms || isLoading}
-                  className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  Join the Economy
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </form>
-            </StaggerItem>
+              {/* Email */}
+              <div>
+                <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="email">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                  <input
+                    className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
+                    id="email"
+                    name="email"
+                    placeholder="alex@creativehub.com"
+                    required
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
 
-            <StaggerItem>
-              {/* Footer Link */}
-              <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-8">
-                Already have an account?{' '}
-                <Link href="/login" className="text-primary-container font-medium hover:underline">
-                  Sign In
-                </Link>
-              </p>
-            </StaggerItem>
-          </StaggerContainer>
+              {/* Phone */}
+              <div>
+                <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="phone">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                  <input
+                    className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
+                    id="phone"
+                    name="phone"
+                    placeholder="+2348012345678"
+                    required
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Referral Code */}
+              <div>
+                <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="referralCode">
+                  Referral Code (Optional)
+                </label>
+                <div className="relative">
+                  <Coins className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
+                  <input
+                    className="w-full pl-10 pr-4 py-3 bg-surface-alt border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md text-on-surface transition-colors placeholder:text-outline"
+                    id="referralCode"
+                    name="referralCode"
+                    placeholder="Enter code"
+                    type="text"
+                    value={formData.referralCode}
+                    onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* TOS Checkbox */}
+              <div className="flex items-start gap-3 pt-2">
+                <div className="flex items-center h-5">
+                  <input
+                    className="w-4 h-4 rounded border-outline-variant text-primary-container focus:ring-primary-container focus:ring-2 bg-surface-alt"
+                    id="terms"
+                    name="terms"
+                    required
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant leading-tight" htmlFor="terms">
+                  I agree to the{' '}
+                  <Link href="/terms" className="text-primary-container hover:underline font-medium">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" className="text-primary-container hover:underline font-medium">
+                    Privacy Policy
+                  </Link>
+                  .
+                </label>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={!acceptTerms || isLoading}
+                className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                Join the Economy
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
+
+            {/* Footer Link */}
+            <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-8">
+              Already have an account?{' '}
+              <Link href="/login" className="text-primary-container font-medium hover:underline">
+                Sign In
+              </Link>
+            </p>
+          </div>
         </motion.div>
       </div>
     </div>
