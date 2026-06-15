@@ -235,8 +235,8 @@ export default function LandingPage() {
           <div className="flex-1 relative w-full max-w-md">
             <div className="aspect-square glass-dark rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
               <div className="mb-6 relative">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-secondary to-secondary-fixed flex items-center justify-center animate-pulse shadow-lg">
-                  <span className="material-symbols-outlined text-primary text-6xl" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+                <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-secondary to-secondary-fixed flex items-center justify-center animate-pulse shadow-lg p-4">
+                  <img src="/coin.png" alt="CMP Coin" className="w-full h-full object-contain" />
                 </div>
                 <div className="absolute -top-4 -right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
                   Live Value
