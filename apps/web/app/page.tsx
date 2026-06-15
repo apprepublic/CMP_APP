@@ -143,12 +143,12 @@ export default function LandingPage() {
           />
         </div>
         
-        {/* Hero Image Layer - Between Background and Text (Desktop Only) */}
-        <div className="hidden md:block absolute inset-0 z-10 opacity-100 flex items-center justify-center pointer-events-none overflow-hidden">
+        {/* Hero Image Layer - Centered on Screen (Desktop Only) */}
+        <div className="hidden md:block fixed inset-0 z-10 flex items-center justify-center pointer-events-none overflow-hidden">
           <img
             alt="Hero visual"
             className="max-w-[120%] max-h-[120%] w-auto h-auto object-contain"
-            src="/auth.jpg"
+            src="/hero.png"
           />
         </div>
         
