@@ -3,13 +3,11 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { NeuCard } from '@/components/ui/neu-card';
-import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
-import { Headphones, ClipboardCheck, TrendingUp, ArrowRight, Coins, Users, CheckCircle, Music, Wallet, ShoppingBag, Bell, UserCircle } from 'lucide-react';
+import { TrendingUp, CheckCircle } from 'lucide-react';
 
 const creators = [
   {
@@ -123,9 +121,9 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button variant="secondary" size="sm" className="!bg-[#B8860B] !from-[#B8860B] !to-[#8B6914] text-[#0d1b35] font-bold">
+                <button className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all shadow-[0_0_30px_rgba(255,222,166,0.3)] flex items-center gap-3">
                   Sign Up
-                </Button>
+                </button>
               </Link>
             </>
           )}
@@ -174,8 +172,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button
                   size="xl"
-                  variant="secondary"
-                  className="!bg-[#B8860B] !from-[#B8860B] !to-[#8B6914] text-[#FFDEA6] font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
+                  className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
                   asChild
                 >
                   <Link href={isAuthenticated ? '/dashboard' : '/register'} className="flex items-center gap-3">
@@ -206,54 +203,54 @@ export default function LandingPage() {
       <section className="py-24 bg-surface px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="max-w-container-max mx-auto">
           <div className="text-center mb-16">
-            <h2 className="font-h2 text-h2 text-[#0d1b35] mb-4">Multiple Paths to Prosperity</h2>
+            <h2 className="font-h2 text-h2 text-primary mb-4">Multiple Paths to Prosperity</h2>
             <div className="h-1 w-24 bg-secondary-fixed mx-auto rounded-full"></div>
           </div>
           <StaggerContainer stagger={0.1}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="!bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
-                  <div className="w-16 h-16 !bg-[#B8860B] rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <Headphones className="w-8 h-8 text-[#0d1b35]" />
+                <div className="bg-surface-alt/80 backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-sm">
+                  <div className="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                    <span className="material-symbols-outlined text-secondary-fixed text-4xl">headphones</span>
                   </div>
-                  <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Stream to Earn</h3>
-                  <p className="font-body-md text-body-md text-on-surface mb-6">
+                  <h3 className="font-h3 text-h3 mb-4">Stream to Earn</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant mb-6">
                     Earn coins by discovering and listening to emerging African artists. Your ears are assets—get paid for every minute you spend on premium audio.
                   </p>
                   <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/music">
-                    Start Listening <ArrowRight className="w-4 h-4" />
+                    Start Listening <span className="material-symbols-outlined">arrow_forward</span>
                   </Link>
-                </NeuCard>
+                </div>
               </StaggerItem>
 
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="!bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
-                  <div className="w-16 h-16 !bg-[#B8860B] rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <ClipboardCheck className="w-8 h-8 text-[#0d1b35]" />
+                <div className="bg-surface-alt/80 backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-sm">
+                  <div className="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                    <span className="material-symbols-outlined text-secondary-fixed text-4xl">task_alt</span>
                   </div>
-                  <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Micro-Task Market</h3>
-                  <p className="font-body-md text-body-md text-on-surface mb-6">
+                  <h3 className="font-h3 text-h3 mb-4">Micro-Task Market</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant mb-6">
                     Complete simple digital tasks for global brands. From survey participation to content tagging, leverage your downtime for steady growth.
                   </p>
                   <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/tasks">
-                    Browse Tasks <ArrowRight className="w-4 h-4" />
+                    Browse Tasks <span className="material-symbols-outlined">arrow_forward</span>
                   </Link>
-                </NeuCard>
+                </div>
               </StaggerItem>
 
               <StaggerItem>
-                <NeuCard padding="lg" interactive className="!bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
-                  <div className="w-16 h-16 !bg-[#B8860B] rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <Users className="w-8 h-8 text-[#0d1b35]" />
+                <div className="bg-surface-alt/80 backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-sm">
+                  <div className="w-16 h-16 bg-primary-container rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
+                    <span className="material-symbols-outlined text-secondary-fixed text-4xl">groups</span>
                   </div>
-                  <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Referral Network</h3>
-                  <p className="font-body-md text-body-md text-on-surface mb-6">
+                  <h3 className="font-h3 text-h3 mb-4">Referral Network</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant mb-6">
                     Build your tribe and earn 3-tier passive commissions. Empower your circle to earn and watch your ecosystem rewards scale indefinitely.
                   </p>
                   <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/referrals">
-                    Invite Friends <ArrowRight className="w-4 h-4" />
+                    Invite Friends <span className="material-symbols-outlined">arrow_forward</span>
                   </Link>
-                </NeuCard>
+                </div>
               </StaggerItem>
             </div>
           </StaggerContainer>
@@ -277,34 +274,34 @@ export default function LandingPage() {
               CMP Coins are the heart of our creative hub. We've built a stable, transparent conversion model that bridges the gap between digital effort and real-world value.
             </p>
             <div className="space-y-6">
-              <NeuCard padding="md" interactive className="glass-dark p-4 rounded-xl flex items-center gap-4">
-                <NeuIconBadge size="lg" active className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-white/10">
+              <div className="flex items-center gap-4 glass-dark p-4 rounded-xl w-max">
+                <div className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-primary-container/50">
                   <span className="font-data-lg text-data-lg text-secondary-fixed">1</span>
-                </NeuIconBadge>
+                </div>
                 <div>
                   <div className="font-h3 text-h3 text-white">100 Coins : 1 USD</div>
                   <div className="font-body-sm text-body-sm text-white/70">Guaranteed conversion rate for liquidity.</div>
                 </div>
-              </NeuCard>
-              <NeuCard padding="md" interactive className="glass-dark p-4 rounded-xl flex items-center gap-4">
-                <NeuIconBadge size="lg" active className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-white/10">
+              </div>
+              <div className="flex items-center gap-4 glass-dark p-4 rounded-xl w-max">
+                <div className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-primary-container/50">
                   <span className="font-data-lg text-data-lg text-secondary-fixed">2</span>
-                </NeuIconBadge>
+                </div>
                 <div>
                   <div className="font-h3 text-h3 text-white">Global Utilities</div>
                   <div className="font-body-sm text-body-sm text-white/70">Pay subscriptions, digital goods, and services directly with coins.</div>
                 </div>
-              </NeuCard>
+              </div>
             </div>
           </div>
 
           <div className="flex-1 relative w-full max-w-md">
             <NeuCard padding="lg" className="aspect-square glass-dark rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
               <div className="mb-6 relative">
-                <NeuIconBadge size="lg" active className="w-32 h-32 rounded-full bg-gradient-to-tr from-secondary to-secondary-fixed flex items-center justify-center animate-pulse shadow-lg">
-                  <Coins className="w-16 h-16 text-[#0d1b35]" />
-                </NeuIconBadge>
-                <div className="absolute -top-4 -right-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-secondary to-secondary-fixed flex items-center justify-center animate-pulse shadow-lg">
+                  <span className="material-symbols-outlined text-primary text-6xl" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+                </div>
+                <div className="absolute -top-4 -right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
                   Live Value
                 </div>
               </div>
@@ -325,7 +322,7 @@ export default function LandingPage() {
         <div className="max-w-container-max mx-auto">
           <div className="flex justify-between items-end mb-16">
             <div>
-              <h2 className="font-h2 text-h2 text-[#0d1b35]">Creator Spotlight</h2>
+              <h2 className="font-h2 text-h2 text-primary">Creator Spotlight</h2>
               <p className="font-body-md text-body-md text-on-surface mt-2">See who's leading the digital revolution globally.</p>
             </div>
             <Button variant="ghost" className="text-secondary font-bold flex items-center gap-2">
@@ -352,13 +349,13 @@ export default function LandingPage() {
                       )}
                     </div>
                     <div className="p-6">
-                      <h4 className="font-h3 text-h3 mb-1 text-[#0d1b35]">{creator.name}</h4>
-                      <div className="font-body-sm text-body-sm text-on-surface mb-4">
+                      <h4 className="font-h3 text-h3 mb-1 text-primary">{creator.name}</h4>
+                      <div className="font-body-sm text-body-sm text-on-surface-variant mb-4">
                         {creator.location} • {creator.role}
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-outline-variant">
                         <div className="font-label-caps text-label-caps text-secondary">COINS EARNED</div>
-                        <div className="font-data-md text-data-md text-[#0d1b35]">{creator.coins}</div>
+                        <div className="font-data-md text-data-md text-primary">{creator.coins}</div>
                       </div>
                     </div>
                   </NeuCard>
@@ -393,12 +390,9 @@ export default function LandingPage() {
               className="flex-1 bg-white/10 border border-white/30 rounded-lg px-6 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-secondary-fixed backdrop-blur-sm"
               required
             />
-            <Button
+            <button
               type="submit"
-              size="xl"
-              variant="secondary"
-              disabled={isSubmitting}
-              className="!bg-[#B8860B] !from-[#B8860B] !to-[#8B6914] text-[#0d1b35] font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
+              className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </Button>
