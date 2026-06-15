@@ -38,26 +38,28 @@ export default function LandingPage() {
     <div className="min-h-screen bg-surface">
       {/* Top Navigation Shell - Desktop/Tablet Only */}
 <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
-      <div className="flex items-center gap-3">
-        <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
-      </div>
-        <div className="flex items-center gap-x-8">
-          <Link className="font-body-md text-body-md text-secondary-fixed border-b-2 border-secondary-fixed pb-1" href="/dashboard">
-            Dashboard
-          </Link>
-          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/tasks">
-            Earn
-          </Link>
-          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/music">
-            Music
-          </Link>
-          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/marketplace">
-            Market
-          </Link>
-          <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/wallet">
-            Wallet
-          </Link>
-        </div>
+  <Link href="/" className="flex items-center gap-3">
+    <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
+  </Link>
+  {isAuthenticated && (
+    <div className="flex items-center gap-x-8">
+      <Link className="font-body-md text-body-md text-secondary-fixed border-b-2 border-secondary-fixed pb-1" href="/dashboard">
+        Dashboard
+      </Link>
+      <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/tasks">
+        Earn
+      </Link>
+      <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/music">
+        Music
+      </Link>
+      <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/marketplace">
+        Market
+      </Link>
+      <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/wallet">
+        Wallet
+      </Link>
+    </div>
+  )}
         <div className="flex items-center gap-4">
           {isAuthenticated && user ? (
             <>
