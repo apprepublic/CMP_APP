@@ -122,7 +122,7 @@ export default function LandingPage() {
                 </button>
               </Link>
               <Link href="/register">
-                <button className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all shadow-[0_0_30px_rgba(255,222,166,0.3)] flex items-center gap-3">
+                <button className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-body-md text-body-md px-6 py-2.5 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]">
                   Sign Up
                 </button>
               </Link>
