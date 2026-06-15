@@ -2,50 +2,9 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle } from 'lucide-react';
-
-const creators = [
-  {
-    name: 'DJ Horizon',
-    location: 'London, UK',
-    role: 'Audio Curator',
-    coins: '450K+',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBE3pxt9qWHcXBSPsyxNGFoO-0Fp1JADPZzlFKBo6LchDLYGjhXHDh0KBI6mxEwSQ_mjTF19Q6glEJIYzVJ4ddam1Htz-rjt2xa9DheCZJfVL0WPpkLd7fhDZlmNK6BcWNeZJAjVbxXar3wsXTjXe63CZkXzxTdpSrOIGht1q9lF7FDeSClsdJXNLfu04BiHDwSjjWxyFzbpnWRDMmIrj8AUEqqPdRXj1VrDc20gbZAlHLVZN8W-lX7KrIyPTcaUW7zG8b_2C8XBDM',
-    badge: 'TOP EARNER',
-    badgeType: 'success'
-  },
-  {
-    name: 'SynthX',
-    location: 'NYC, USA',
-    role: 'Visual Designer',
-    coins: '280K+',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCpiga3eNOVP8yXBmlTNQD-8rvLmmwEikDjZAWVzH-KFiNYtQPsXf_58t9SDDhgXjRA5aY6W_O6siz5Aenybsd59MVJMOfSCwNSVWK_lR7WLrbWVvO6DRmtTwUhJ_fG6shEvUUbqFYZjvXdpj_yt6RXOmpqfjkmGilqacpa3K-jHTsQFrSmcmIvjuU-HpJ3XON77d0wtkyEz-g3w8VJzDt8cpS-0442OCncJFJMzeNwMHa81VM-8KNTy-CaUme_QEjvQ4eAMVcRRn0',
-    badge: 'PRO CREATOR',
-    badgeType: 'primary'
-  },
-  {
-    name: 'Bella Voices',
-    location: 'Tokyo, JP',
-    role: 'Podcast Host',
-    coins: '190K+',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqkXT-8nTiFDgN-EPzsYxJc5xTladBCv9aJ-3nBZW3h8SlgZ7CzLq8lG-QyrU_GIIwa-aA-yG97Ux5LqSkEmuczKhqqe5vjBb3gdznHNOCHW2OVOFO172T_rOkAPy9RQ67azHCIjBanfO7Q2aeT-1OjmFX82-iOQbkyja9BwYkVRPh6huHB3veUqMzZgp9SpAuiDFGwhWHxYBdkWJ20vneKSjSpqUj5v9VDO_KAf2IHBJdq1kWS-MmbfpTeuJB8Py1JbstbzjjCps',
-    badge: null,
-    badgeType: null
-  },
-  {
-    name: 'Network Queen',
-    location: 'Berlin, DE',
-    role: 'Referrer',
-    coins: '1.2M+',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCgaAYWsJ0U0tL27v8tcN5JaA3LkaKugrFW32u-0v9LdNNgPfykbMtqMjiqm2hUklepZHlEd_KLhbsoDbgJ2hyw8gGgmsEsVCQPsc3E6CkkpkGUEtkdKqi2dqBqKQUz5wPyj_6jQuVZ0WsBS5ZM5U6NUntnfXGV-1ofKGWWOlrhn1mPPnyWWVjmkWbTopnQuFYGpXEKuhk-AQMFyLJeUAUP2KcshuPOXepDytpZFQepqsvJBfmo1fCSA1dTIjZ6b4-hHrSKVo_KeCQ',
-    badge: null,
-    badgeType: null
-  }
-];
 
 export default function LandingPage() {
   const { isAuthenticated, user } = useUserStore();
@@ -132,7 +91,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen pt-20 flex flex-col items-center justify-center overflow-hidden bg-primary">
+      <section className="relative min-h-screen pt-20 flex flex-col justify-center overflow-hidden bg-primary">
         {/* Background Animation */}
         <div className="absolute inset-0 z-0 opacity-50">
           <img
@@ -143,46 +102,39 @@ export default function LandingPage() {
         </div>
 
         {/* Hero Image Layer - Between Background and Text (Desktop Only) */}
-        <div className="hidden md:block absolute inset-0 z-10 flex items-center justify-start pl-56 pb-8 pointer-events-none overflow-hidden">
+        <div className="hidden md:block absolute inset-0 z-10 flex items-end justify-start pl-8 md:pl-32 pb-16 pointer-events-none overflow-hidden">
           <img
             alt="Hero visual"
-            className="max-w-[120%] max-h-[120%] w-auto h-auto object-contain"
+            className="max-w-[240%] max-h-[240%] w-auto h-auto object-contain"
             src="/hero.png"
           />
         </div>
 
-        <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
+        <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-left">
           <div>
             <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/50 bg-secondary-fixed/20 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
               GLOBAL DIGITAL REVOLUTION IS HERE
             </div>
           </div>
           <div>
-            <h1 className="font-h1 text-h1 text-white max-w-4xl mx-auto mb-6">
+            <h1 className="font-h1 text-h1 text-white max-w-4xl mb-6">
               Empower Your Creativity. <br/>
               <span className="text-secondary-fixed">Monetize Your Passion.</span>
             </h1>
           </div>
           <div>
-            <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mx-auto mb-10">
+            <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mb-10">
               The first creative economy hub where every stream, task, and referral builds your wealth. Join thousands of creators in the global digital revolution.
             </p>
           </div>
           <div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-start items-center">
                 <Link
                   href={isAuthenticated ? '/dashboard' : '/register'}
                   className="inline-flex items-center justify-center gap-3 bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
                 >
                   Join the Economy
                   <span className="material-symbols-outlined text-xl">trending_up</span>
-                </Link>
-                <Link
-                  href="/marketplace"
-                  className="inline-flex items-center justify-center gap-3 glass-dark hover:bg-white/10 text-white border border-white/30 font-h3 text-h3 px-8 py-4 rounded-lg transition-all"
-                >
-                  Explore Marketplace
-                  <span className="material-symbols-outlined text-xl">arrow_forward</span>
                 </Link>
               </div>
           </div>
@@ -301,51 +253,6 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary-fixed/10 rounded-full blur-3xl -ml-48 -mb-48"></div>
       </section>
 
-      {/* Creator Spotlight */}
-      <section className="py-24 bg-surface px-margin-mobile md:px-margin-desktop">
-        <div className="max-w-container-max mx-auto">
-          <div className="flex justify-between items-end mb-16">
-            <div>
-              <h2 className="font-h2 text-h2 text-primary">Creator Spotlight</h2>
-              <p className="font-body-md text-body-md text-on-surface mt-2">See who's leading the digital revolution globally.</p>
-            </div>
-            <button className="text-secondary font-bold flex items-center gap-2 hover:opacity-80 transition-opacity">
-              View Rankings <span className="material-symbols-outlined">expand_more</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
-            {creators.map((creator, index) => (
-              <div key={index} className="bg-white rounded-xl overflow-hidden hover:shadow-xl transition-shadow group h-full">
-                <div className="h-64 relative">
-                  <img
-                    alt={creator.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    src={creator.image}
-                  />
-                  {creator.badge && (
-                    <div className={`absolute top-4 right-4 ${creator.badgeType === 'success' ? 'bg-success-verified/90' : 'bg-primary/90'} backdrop-blur-sm text-white px-2 py-1 rounded flex items-center gap-1 font-label-caps text-[10px] border border-white/20`}>
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      {creator.badge}
-                    </div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <h4 className="font-h3 text-h3 mb-1 text-primary">{creator.name}</h4>
-                  <div className="font-body-sm text-body-sm text-on-surface-variant mb-4">
-                    {creator.location} • {creator.role}
-                  </div>
-                  <div className="flex justify-between items-center pt-4 border-t border-outline-variant">
-                    <div className="font-label-caps text-label-caps text-secondary">COINS EARNED</div>
-                    <div className="font-data-md text-data-md text-primary">{creator.coins}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Final CTA */}
       <section className="py-24 bg-primary px-margin-mobile md:px-margin-desktop relative overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20">
@@ -372,7 +279,7 @@ export default function LandingPage() {
             />
             <button
               type="submit"
-              className="h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-body-md text-body-md px-8 py-3 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </button>
