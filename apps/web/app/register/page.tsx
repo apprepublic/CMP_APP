@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useUserStore } from '@/stores/userStore';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Input } from '@/components/ui/input';
+import { AuthHeader } from '@/components/auth-header';
 import { Mail, Lock, Eye, EyeOff, User, Smartphone, CheckCircle, ArrowRight, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -103,7 +104,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <PageTransition className="min-h-screen flex flex-col lg:flex-row bg-surface">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-surface">
+      <AuthHeader />
       {/* Left Side: Background Image with Text (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: -40 }}
@@ -127,7 +129,7 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Right Side: Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -364,6 +366,6 @@ export default function RegisterPage() {
           </StaggerContainer>
         </motion.div>
       </div>
-    </PageTransition>
+    </div>
   );
 }

@@ -370,7 +370,7 @@ export default function LandingPage() {
             />
             <button
               type="submit"
-              className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
+              className="h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </button>

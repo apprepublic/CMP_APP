@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useUserStore } from '@/stores/userStore';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Input } from '@/components/ui/input';
+import { AuthHeader } from '@/components/auth-header';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
@@ -55,7 +56,8 @@ export default function LoginPage() {
   };
 
   return (
-    <PageTransition className="min-h-screen bg-primary-container flex items-center justify-center relative overflow-hidden bg-pattern">
+    <div className="min-h-screen bg-primary-container relative overflow-hidden bg-pattern">
+      <AuthHeader />
       {/* Abstract 3D Shapes (Decorative) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#B8860B]/20 to-transparent blur-[100px]"></div>
@@ -68,7 +70,7 @@ export default function LoginPage() {
       </div>
 
       {/* Login Container */}
-      <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0">
+      <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0 pt-20">
         <StaggerContainer stagger={0.1}>
           <StaggerItem>
             {/* Header */}
@@ -188,6 +190,6 @@ export default function LoginPage() {
           </StaggerItem>
         </StaggerContainer>
       </div>
-    </PageTransition>
+    </div>
   );
 }

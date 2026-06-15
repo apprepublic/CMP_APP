@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
+import { AuthHeader } from '@/components/auth-header';
 import { Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function ResetPasswordPage() {
@@ -47,14 +48,15 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <PageTransition className="min-h-screen bg-primary-container flex items-center justify-center relative overflow-hidden bg-pattern">
+    <div className="min-h-screen bg-primary-container relative overflow-hidden bg-pattern">
+      <AuthHeader />
       {/* Abstract 3D Shapes (Decorative) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#B8860B]/20 to-transparent blur-[100px]"></div>
         <div className="absolute bottom-[10%] -right-[5%] w-[30%] h-[50%] rounded-full bg-gradient-to-tl from-primary to-[#B8860B]/10 blur-[80px]"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0">
+      <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0 pt-20">
         <StaggerContainer stagger={0.1}>
           <StaggerItem>
             {/* Icon Header */}
@@ -145,6 +147,6 @@ export default function ResetPasswordPage() {
           </StaggerItem>
         </StaggerContainer>
       </div>
-    </PageTransition>
+    </div>
   );
 }

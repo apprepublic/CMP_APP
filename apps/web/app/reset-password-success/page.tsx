@@ -2,27 +2,20 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
+import { AuthHeader } from '@/components/auth-header';
 import { CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function ResetPasswordSuccessPage() {
   return (
-    <PageTransition className="min-h-screen bg-surface flex flex-col items-center justify-center relative bg-grid-pattern px-margin-mobile md:px-margin-desktop">
-      {/* Brand Anchor */}
-      <div className="absolute top-8 left-0 right-0 text-center pointer-events-none">
-        <span className="font-h3 text-h3 text-primary tracking-tight">CMPapp</span>
-      </div>
-
+    <div className="min-h-screen bg-surface relative bg-grid-pattern px-margin-mobile md:px-margin-desktop">
+      <AuthHeader />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md pt-20"
       >
-        <StaggerContainer stagger={0.1}>
-          <StaggerItem>
-            {/* Main Card Container */}
-            <div className="bg-white rounded-xl p-8 md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-outline-variant/20 relative overflow-hidden flex flex-col items-center text-center">
+        <div className="bg-white rounded-xl p-8 md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-outline-variant/20 relative overflow-hidden flex flex-col items-center text-center">
               {/* Premium Accent: Top Border */}
               <div className="absolute top-0 left-0 w-full h-1.5 bg-secondary-container"></div>
 
@@ -58,12 +51,10 @@ export default function ResetPasswordSuccessPage() {
                 className="inline-flex items-center gap-1.5 font-body-sm text-body-sm text-surface-tint hover:text-primary transition-colors duration-200"
               >
                 <ShieldCheck className="w-[18px] h-[18px]" />
-                Contact Support
-              </Link>
-            </div>
-          </StaggerItem>
-        </StaggerContainer>
+Contact Support
+          </Link>
+        </div>
       </motion.div>
-    </PageTransition>
+    </div>
   );
 }
