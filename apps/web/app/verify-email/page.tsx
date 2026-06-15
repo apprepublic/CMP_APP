@@ -160,7 +160,7 @@ export default function VerifyEmailPage() {
                 <button
                   type="submit"
                   disabled={isLoading || otp.length !== 6}
-                  className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                 >
                   {isLoading ? (
                     <>

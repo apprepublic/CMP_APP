@@ -167,10 +167,10 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-md text-body-md font-medium text-primary-container bg-[#B8860B] hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B8860B] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                   >
                     {isLoading ? 'Signing in...' : 'Sign In'}
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-5 h-5" />
                   </button>
                 </div>
               </form>

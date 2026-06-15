@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
                   We've sent a password reset link to <span className="font-semibold text-secondary-fixed">{email}</span>
                 </p>
                 <Link href="/login">
-                  <button className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-md text-body-md font-medium text-primary-container bg-[#B8860B] hover:bg-[#8B6914] transition-colors duration-200">
+                  <button className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors duration-200">
                     Back to Login
                   </button>
                 </Link>
@@ -111,10 +111,10 @@ export default function ForgotPasswordPage() {
                   <button
                     type="submit"
                     disabled={isLoading || !email}
-                    className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                   >
                     {isLoading ? 'Sending...' : 'Send Recovery Link'}
-                    <ArrowRight className="ml-2 w-5 h-5" />
+                    <ArrowRight className="w-5 h-5" />
                   </button>
                 </form>
 

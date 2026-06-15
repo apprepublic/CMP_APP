@@ -43,7 +43,7 @@ export default function ResetPasswordSuccessPage() {
 
               {/* Primary Action Button */}
               <Link href="/login" className="w-full">
-                <button className="w-full h-12 bg-secondary-container text-primary font-bold font-label-caps text-label-caps rounded-lg hover:bg-secondary-fixed-dim transition-all duration-200 shadow-sm border border-secondary/20 flex items-center justify-center gap-2 group">
+                <button className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-all duration-200 shadow-sm flex items-center justify-center gap-2 group">
                   Back to Sign In
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>

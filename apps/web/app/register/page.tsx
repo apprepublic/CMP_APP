@@ -344,10 +344,10 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={!acceptTerms || isLoading}
-                  className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
                   Join the Economy
-                  <ArrowRight className="group-hover:translate-x-1 transition-transform w-5 h-5" />
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </form>
             </StaggerItem>
