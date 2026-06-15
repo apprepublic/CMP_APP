@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
         React.createElement(VerificationOtpEmail, { fullName, verificationCode, verificationLink, appUrl })
       );
       await resend.emails.send({
-        from: "CMPapp <noreply@cmpapp.ng>",
+        from: "CMPapp <onboarding@resend.dev>",
         to: [email],
         subject: "Verify your account",
         html,
