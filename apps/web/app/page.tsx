@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
+import { CheckCircle } from 'lucide-react';
 
 export default function LandingPage() {
   const { isAuthenticated, user } = useUserStore();
