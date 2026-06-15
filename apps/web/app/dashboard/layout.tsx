@@ -57,7 +57,9 @@ export default function DashboardLayout({
       {/* SideNavBar (Desktop) */}
       <nav className="hidden lg:flex flex-col h-full border-r border-outline-variant bg-primary fixed left-0 h-full w-64 z-40">
         <div className="p-6">
-          <h1 className="font-h2 text-h2 text-on-primary">CMPapp</h1>
+          <h1 className="font-h2 text-h2 text-on-primary flex items-center gap-3">
+            <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
+          </h1>
           <p className="font-label-caps text-label-caps text-on-primary-container">Creative Economy</p>
         </div>
         <div className="flex-1 overflow-y-auto py-6 space-y-2">

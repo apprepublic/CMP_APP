@@ -31,10 +31,7 @@ export default function MarketplacePage() {
       {/* TopAppBar */}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat border-b border-neu-bg-dark">
         <div className="flex items-center gap-3">
-          <NeuIconBadge size="sm" active>
-            <span className="material-symbols-outlined text-neo-primary">person</span>
-          </NeuIconBadge>
-          <h1 className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</h1>
+          <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
         </div>
         <div className="flex items-center gap-4">
           <button className="w-10 h-10 flex items-center justify-center rounded-full text-neo-text-secondary hover:bg-neu-bg shadow-neu-flat transition-colors relative">

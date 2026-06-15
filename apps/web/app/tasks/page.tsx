@@ -41,7 +41,7 @@ export default function TasksPage() {
     <PageTransition className="min-h-screen bg-neu-bg pb-24 md:pb-8">
       {/* TopAppBar - Mobile */}
       <header className="fixed top-0 left-0 w-full z-40 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat md:hidden">
-        <span className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</span>
+        <img src="/logo.png" alt="CMPapp" className="h-6 w-auto" />
         <button className="text-neo-text-secondary">
           <span className="material-symbols-outlined">notifications</span>
         </button>
@@ -49,7 +49,7 @@ export default function TasksPage() {
 
       {/* Desktop Nav */}
       <nav className="hidden md:flex fixed top-0 left-0 w-full z-40 bg-neu-bg shadow-neu-flat px-gutter py-4 justify-between items-center">
-        <span className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</span>
+        <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
         <div className="flex gap-8">
           <Link className="font-label-caps text-label-caps text-neo-text-secondary hover:text-neo-secondary flex items-center gap-2" href="/">
             <span className="material-symbols-outlined">home</span> Home

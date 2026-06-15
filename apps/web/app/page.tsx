@@ -77,8 +77,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-surface">
       {/* Top Navigation Shell - Desktop/Tablet Only */}
-      <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
-        <div className="font-h3 text-h3 font-bold text-white">CMPapp</div>
+<nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
+      <div className="flex items-center gap-3">
+        <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
+      </div>
         <div className="flex items-center gap-x-8">
           <Link className="font-body-md text-body-md text-secondary-fixed border-b-2 border-secondary-fixed pb-1" href="/dashboard">
             Dashboard
@@ -396,7 +398,9 @@ export default function LandingPage() {
       <footer className="bg-primary text-white py-16 px-margin-mobile md:px-margin-desktop border-t border-white/10">
         <div className="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-4 gap-gutter">
           <div className="md:col-span-1">
-            <div className="font-h2 text-h2 text-white mb-4">CMPapp</div>
+            <div className="flex items-center gap-3 mb-4">
+              <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
+            </div>
             <p className="font-body-sm text-body-sm text-white/70">
               The creative economy hub empowering the global digital generation through music, tasks, and community.
             </p>

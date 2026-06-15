@@ -45,7 +45,7 @@ export default function MusicPage() {
       {/* TopAppBar */}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat border-b border-neu-bg-dark">
         <div className="flex items-center gap-3">
-          <span className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</span>
+          <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
         </div>
         <button className="w-10 h-10 flex items-center justify-center rounded-full shadow-neu-flat transition-colors text-neo-text-secondary">
           <span className="material-symbols-outlined">notifications</span>

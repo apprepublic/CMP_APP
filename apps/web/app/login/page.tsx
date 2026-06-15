@@ -75,7 +75,7 @@ export default function LoginPage() {
           <StaggerItem>
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="font-h2 text-h1-mobile md:text-h2 text-on-primary mb-2">CMPapp</h1>
+              <img src="/logo.png" alt="CMPapp" className="h-12 w-auto mx-auto mb-4" />
               <p className="font-body-sm text-body-sm text-on-primary-container">Secure access to your creative enterprise.</p>
             </div>
           </StaggerItem>
