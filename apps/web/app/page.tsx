@@ -123,7 +123,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" className="bg-secondary-fixed hover:bg-secondary text-primary font-bold">
+                <Button size="sm" className="bg-secondary-fixed hover:bg-[#8B6914] text-[#0d1b35] font-bold">
                   Sign Up
                 </Button>
               </Link>
@@ -144,7 +144,7 @@ export default function LandingPage() {
         </div>
         
         {/* Hero Image Layer - Between Background and Text (Desktop Only) */}
-        <div className="hidden md:block absolute inset-0 z-10 flex items-center justify-start pl-32 pb-24 pointer-events-none overflow-hidden">
+        <div className="hidden md:block absolute inset-0 z-10 flex items-center justify-start pl-40 pb-32 pointer-events-none overflow-hidden">
           <img
             alt="Hero visual"
             className="max-w-[120%] max-h-[120%] w-auto h-auto object-contain"
@@ -205,7 +205,7 @@ export default function LandingPage() {
       <section className="py-24 bg-surface px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="max-w-container-max mx-auto">
           <div className="text-center mb-16">
-            <h2 className="font-h2 text-h2 text-primary mb-4">Multiple Paths to Prosperity</h2>
+            <h2 className="font-h2 text-h2 text-[#0d1b35] mb-4">Multiple Paths to Prosperity</h2>
             <div className="h-1 w-24 bg-secondary-fixed mx-auto rounded-full"></div>
           </div>
           <StaggerContainer stagger={0.1}>
@@ -213,9 +213,9 @@ export default function LandingPage() {
               <StaggerItem>
                 <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
                   <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <Headphones className="w-8 h-8 text-primary" />
+                    <Headphones className="w-8 h-8 text-[#0d1b35]" />
                   </div>
-                  <h3 className="font-h3 text-h3 mb-4 text-primary">Stream to Earn</h3>
+                  <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Stream to Earn</h3>
                   <p className="font-body-md text-body-md text-on-surface mb-6">
                     Earn coins by discovering and listening to emerging African artists. Your ears are assets—get paid for every minute you spend on premium audio.
                   </p>
@@ -228,9 +228,9 @@ export default function LandingPage() {
               <StaggerItem>
                 <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
                   <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <ClipboardCheck className="w-8 h-8 text-primary" />
+                    <ClipboardCheck className="w-8 h-8 text-[#0d1b35]" />
                   </div>
-                  <h3 className="font-h3 text-h3 mb-4 text-primary">Micro-Task Market</h3>
+                  <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Micro-Task Market</h3>
                   <p className="font-body-md text-body-md text-on-surface mb-6">
                     Complete simple digital tasks for global brands. From survey participation to content tagging, leverage your downtime for steady growth.
                   </p>
@@ -243,9 +243,9 @@ export default function LandingPage() {
               <StaggerItem>
                 <NeuCard padding="lg" interactive className="bg-white backdrop-blur-md p-8 rounded-xl border-b-4 border-secondary hover:border-secondary-fixed transition-all group shadow-lg h-full">
                   <div className="w-16 h-16 bg-secondary-fixed rounded-lg flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-md">
-                    <Users className="w-8 h-8 text-primary" />
+                    <Users className="w-8 h-8 text-[#0d1b35]" />
                   </div>
-                  <h3 className="font-h3 text-h3 mb-4 text-primary">Referral Network</h3>
+                  <h3 className="font-h3 text-h3 mb-4 text-[#0d1b35]">Referral Network</h3>
                   <p className="font-body-md text-body-md text-on-surface mb-6">
                     Build your tribe and earn 3-tier passive commissions. Empower your circle to earn and watch your ecosystem rewards scale indefinitely.
                   </p>
@@ -301,7 +301,7 @@ export default function LandingPage() {
             <NeuCard padding="lg" className="aspect-square glass-dark rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
               <div className="mb-6 relative">
                 <NeuIconBadge size="lg" active className="w-32 h-32 rounded-full bg-gradient-to-tr from-secondary to-secondary-fixed flex items-center justify-center animate-pulse shadow-lg">
-                  <Coins className="w-16 h-16 text-primary" />
+                  <Coins className="w-16 h-16 text-[#0d1b35]" />
                 </NeuIconBadge>
                 <div className="absolute -top-4 -right-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
                   Live Value
@@ -324,7 +324,7 @@ export default function LandingPage() {
         <div className="max-w-container-max mx-auto">
           <div className="flex justify-between items-end mb-16">
             <div>
-              <h2 className="font-h2 text-h2 text-primary">Creator Spotlight</h2>
+              <h2 className="font-h2 text-h2 text-[#0d1b35]">Creator Spotlight</h2>
               <p className="font-body-md text-body-md text-on-surface mt-2">See who's leading the digital revolution globally.</p>
             </div>
             <Button variant="ghost" className="text-secondary font-bold flex items-center gap-2">
@@ -351,13 +351,13 @@ export default function LandingPage() {
                       )}
                     </div>
                     <div className="p-6">
-                      <h4 className="font-h3 text-h3 mb-1 text-primary">{creator.name}</h4>
+                      <h4 className="font-h3 text-h3 mb-1 text-[#0d1b35]">{creator.name}</h4>
                       <div className="font-body-sm text-body-sm text-on-surface mb-4">
                         {creator.location} • {creator.role}
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-outline-variant">
                         <div className="font-label-caps text-label-caps text-secondary">COINS EARNED</div>
-                        <div className="font-data-md text-data-md text-primary">{creator.coins}</div>
+                        <div className="font-data-md text-data-md text-[#0d1b35]">{creator.coins}</div>
                       </div>
                     </div>
                   </NeuCard>
@@ -396,7 +396,7 @@ export default function LandingPage() {
               type="submit"
               size="xl"
               disabled={isSubmitting}
-              className="bg-secondary-fixed hover:bg-secondary text-primary font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
+              className="bg-[#B8860B] hover:bg-[#8B6914] text-[#0d1b35] font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </Button>
