@@ -105,12 +105,12 @@ export default function RegisterPage() {
 
   return (
     <PageTransition className="min-h-screen flex flex-col lg:flex-row bg-surface">
-      {/* Left Side: Background Image (Desktop Only) */}
+      {/* Left Side: Background Image with Text (Desktop Only) */}
       <motion.div
         initial={{ opacity: 0, x: -40 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-primary-container relative overflow-hidden items-center justify-center"
+        className="hidden lg:flex lg:w-1/2 bg-primary-container relative overflow-hidden items-center justify-center p-12"
         style={{
           backgroundImage: 'url(/auth.jpg)',
           backgroundSize: 'cover',
@@ -118,6 +118,13 @@ export default function RegisterPage() {
         }}
       >
         <div className="absolute inset-0 bg-navy-glass mix-blend-multiply opacity-60"></div>
+        
+        <div className="relative z-10 max-w-lg text-white">
+          <h2 className="font-h1 text-h1 mb-6">Fuel Your Creative Enterprise.</h2>
+          <p className="font-body-lg text-body-lg text-white/90 mb-12">
+            Join a global network of creators. Secure banking, powerful growth tools, and an exclusive community await.
+          </p>
+        </div>
       </motion.div>
 
       {/* Right Side: Signup Form */}
