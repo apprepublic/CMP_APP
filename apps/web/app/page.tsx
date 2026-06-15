@@ -123,7 +123,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" className="!bg-[#B8860B] hover:!bg-[#8B6914] text-[#0d1b35] font-bold">
+                <Button variant="secondary" size="sm" className="!bg-[#B8860B] !from-[#B8860B] !to-[#8B6914] text-[#0d1b35] font-bold">
                   Sign Up
                 </Button>
               </Link>
@@ -174,7 +174,8 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button
                   size="xl"
-                  className="!bg-[#B8860B] hover:!bg-[#8B6914] text-[#FFDEA6] font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
+                  variant="secondary"
+                  className="!bg-[#B8860B] !from-[#B8860B] !to-[#8B6914] text-[#FFDEA6] font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
                   asChild
                 >
                   <Link href={isAuthenticated ? '/dashboard' : '/register'} className="flex items-center gap-3">
@@ -395,8 +396,9 @@ export default function LandingPage() {
             <Button
               type="submit"
               size="xl"
+              variant="secondary"
               disabled={isSubmitting}
-              className="!bg-[#B8860B] hover:!bg-[#8B6914] text-[#0d1b35] font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
+              className="!bg-[#B8860B] !from-[#B8860B] !to-[#8B6914] text-[#0d1b35] font-bold font-h3 text-h3 px-10 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </Button>
