@@ -113,7 +113,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="relative z-20 max-w-container-max mx-auto px-[8px] md:px-[10px] text-left">
+        <div className="relative z-20 max-w-container-max mx-auto px-4 md:px-8 text-left">
           <div>
             <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/50 bg-secondary-fixed/20 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
               GLOBAL DIGITAL REVOLUTION IS HERE
