@@ -198,18 +198,7 @@ export default function LandingPage() {
           </StaggerContainer>
         </div>
 
-        {/* Subtle Float UI - Desktop Only */}
-        <div className="absolute bottom-10 left-10 hidden lg:block">
-          <NeuCard padding="md" className="glass-dark p-4 rounded-xl flex items-center gap-4">
-            <NeuIconBadge size="md" active className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center">
-              <Music className="w-5 h-5 text-primary" />
-            </NeuIconBadge>
-            <div>
-              <div className="font-label-caps text-label-caps text-secondary-fixed">RECENT EARNING</div>
-              <div className="font-data-md text-data-md text-white">DJ Horizon earned 2,400 Coins</div>
-            </div>
-          </NeuCard>
-        </div>
+        
       </section>
 
       {/* Value Proposition Grid */}
