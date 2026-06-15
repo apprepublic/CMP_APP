@@ -5,26 +5,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { api } from '@/lib/api';
-import { useUserStore } from '@/stores/userStore';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Input } from '@/components/ui/input';
 import { AuthHeader } from '@/components/auth-header';
-import { Mail, Lock, Eye, EyeOff, User, Smartphone, CheckCircle, ArrowRight, Coins } from 'lucide-react';
+import { Mail, User, Smartphone, CheckCircle, ArrowRight, Coins } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useUserStore();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
     referralCode: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,66 +30,29 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const { data: authData, error: supabaseError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-            phone: formData.phone || undefined,
-          },
+      const { data, error: funcError } = await supabase.functions.invoke('register-user', {
+        body: {
+          email: formData.email,
+          fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+          referralCode: formData.referralCode || undefined,
         },
       });
 
-      if (supabaseError) {
-        console.error('Supabase signup error:', supabaseError);
-        throw supabaseError;
+      if (funcError) {
+        throw new Error(funcError.message || 'Failed to register');
       }
 
-      console.log('Supabase auth successful:', authData.user?.id);
-
-      // Try to register with API, but don't fail if it's down
-      try {
-        await api.register({
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          displayName: `${formData.firstName} ${formData.lastName}`.trim(),
-          username: formData.email.split('@')[0],
-          referralCode: formData.referralCode || undefined,
-        });
-        console.log('API registration successful');
-      } catch (apiError: any) {
-        console.warn('API registration failed (this is OK):', apiError.message);
+      if (!data?.success) {
+        throw new Error(data?.error || 'Registration failed');
       }
 
-      await register({
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
-        username: formData.email.split('@')[0],
-        referralCode: formData.referralCode || undefined,
-      });
-
-      console.log('Registration complete, redirecting to dashboard...');
-      router.push('/dashboard');
+      router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to create account');
+      setError(err.message || 'Failed to register');
     } finally {
       setIsLoading(false);
     }
@@ -142,23 +97,20 @@ export default function RegisterPage() {
             <span className="font-data-md text-data-md text-[#B8860B]">500 Bonus Coins</span>
           </div>
 
-          <StaggerContainer stagger={0.08}>
-            <StaggerItem>
-              {/* Header */}
-              <div className="mb-8">
-                <h1 className="font-h2 text-h1-mobile md:text-h2 text-primary-container mb-2">Create Account</h1>
-                <p className="font-body-md text-body-md text-on-surface-variant">Start building your secure financial future.</p>
-              </div>
-            </StaggerItem>
+          <div className="space-y-5">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="font-h2 text-h1-mobile md:text-h2 text-primary-container mb-2">Create Account</h1>
+              <p className="font-body-md text-body-md text-on-surface-variant">Start building your secure financial future.</p>
+            </div>
 
-            <StaggerItem>
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {error && (
-                  <div className="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm font-body-sm">
-                    {error}
-                  </div>
-                )}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm font-body-sm">
+                  {error}
+                </div>
+              )}
 
                 {/* Full Name */}
                 <div className="grid grid-cols-2 gap-4">
