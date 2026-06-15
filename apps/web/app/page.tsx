@@ -174,7 +174,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button
                   size="xl"
-                  className="bg-secondary-fixed hover:bg-secondary text-primary font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
+                  className="bg-[#B8860B] hover:bg-[#8B6914] text-[#FFDEA6] font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
                   asChild
                 >
                   <Link href={isAuthenticated ? '/dashboard' : '/register'} className="flex items-center gap-3">
