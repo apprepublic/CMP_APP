@@ -108,7 +108,7 @@ export default function LandingPage() {
         <div className="hidden md:block absolute top-0 left-0 w-full h-full z-10 pointer-events-none overflow-visible">
           <img
             alt="Hero visual"
-            className="absolute bottom-[100px] left-0 w-[900px] h-auto object-contain"
+            className="absolute bottom-[80px] left-0 w-[900px] h-auto object-contain"
             src="/hero.png"
           />
         </div>
