@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function ResetPasswordSuccessPage() {
@@ -44,10 +43,10 @@ export default function ResetPasswordSuccessPage() {
 
               {/* Primary Action Button */}
               <Link href="/login" className="w-full">
-                <Button className="w-full h-12 bg-secondary-container text-primary font-bold font-label-caps text-label-caps rounded-lg hover:bg-secondary-fixed-dim transition-all duration-200 shadow-sm border border-secondary/20 flex items-center justify-center gap-2 group">
+                <button className="w-full h-12 bg-secondary-container text-primary font-bold font-label-caps text-label-caps rounded-lg hover:bg-secondary-fixed-dim transition-all duration-200 shadow-sm border border-secondary/20 flex items-center justify-center gap-2 group">
                   Back to Sign In
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                </button>
               </Link>
 
               {/* Divider */}

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Button } from '@/components/ui/button';
 import { Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function ResetPasswordPage() {
@@ -133,14 +132,14 @@ export default function ResetPasswordPage() {
                 </div>
 
                 {/* Submit Button */}
-                <Button
+                <button
                   type="submit"
                   disabled={isLoading || !newPassword || !confirmPassword}
-                  className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Updating...' : 'Update Password'}
                   <ArrowRight className="w-5 h-5" />
-                </Button>
+                </button>
               </form>
             </div>
           </StaggerItem>

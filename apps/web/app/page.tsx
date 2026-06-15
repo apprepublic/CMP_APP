@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
@@ -115,9 +115,9 @@ export default function LandingPage() {
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-white hover:text-secondary-fixed">
+                <button className="text-white hover:text-secondary-fixed font-medium transition-colors">
                   Login
-                </Button>
+                </button>
               </Link>
               <Link href="/register">
                 <button className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all shadow-[0_0_30px_rgba(255,222,166,0.3)] flex items-center gap-3">
@@ -168,28 +168,21 @@ export default function LandingPage() {
           </div>
           <div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button
-                size="xl"
-                className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
-                asChild
-              >
-                <Link href={isAuthenticated ? '/dashboard' : '/register'} className="flex items-center gap-3">
+                <Link
+                  href={isAuthenticated ? '/dashboard' : '/register'}
+                  className="inline-flex items-center justify-center gap-3 bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-h3 text-h3 px-8 py-4 rounded-lg transition-all scale-100 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,222,166,0.3)]"
+                >
                   Join the Economy
                   <span className="material-symbols-outlined text-xl">trending_up</span>
                 </Link>
-              </Button>
-              <Button
-                size="xl"
-                variant="outline"
-                className="glass-dark hover:bg-white/10 text-white border border-white/30 font-h3 text-h3 px-8 py-4 rounded-lg transition-all"
-                asChild
-              >
-                <Link href="/marketplace" className="flex items-center gap-3">
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center justify-center gap-3 glass-dark hover:bg-white/10 text-white border border-white/30 font-h3 text-h3 px-8 py-4 rounded-lg transition-all"
+                >
                   Explore Marketplace
                   <span className="material-symbols-outlined text-xl">arrow_forward</span>
                 </Link>
-              </Button>
-            </div>
+              </div>
           </div>
         </div>
 
@@ -314,9 +307,9 @@ export default function LandingPage() {
               <h2 className="font-h2 text-h2 text-primary">Creator Spotlight</h2>
               <p className="font-body-md text-body-md text-on-surface mt-2">See who's leading the digital revolution globally.</p>
             </div>
-            <Button variant="ghost" className="text-secondary font-bold flex items-center gap-2">
+            <button className="text-secondary font-bold flex items-center gap-2 hover:opacity-80 transition-opacity">
               View Rankings <span className="material-symbols-outlined">expand_more</span>
-            </Button>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">

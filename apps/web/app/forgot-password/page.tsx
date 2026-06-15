@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Mail, ArrowRight, Lock } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -69,9 +69,9 @@ export default function ForgotPasswordPage() {
                   We've sent a password reset link to <span className="font-semibold text-secondary-fixed">{email}</span>
                 </p>
                 <Link href="/login">
-                  <Button className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-md text-body-md font-medium text-primary-container bg-[#B8860B] hover:bg-[#8B6914] transition-colors duration-200">
+                  <button className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-md text-body-md font-medium text-primary-container bg-[#B8860B] hover:bg-[#8B6914] transition-colors duration-200">
                     Back to Login
-                  </Button>
+                  </button>
                 </Link>
               </div>
             ) : (
@@ -108,14 +108,14 @@ export default function ForgotPasswordPage() {
                     </div>
                   </div>
 
-                  <Button
+                  <button
                     type="submit"
                     disabled={isLoading || !email}
-                    className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors"
+                    className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? 'Sending...' : 'Send Recovery Link'}
                     <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+                  </button>
                 </form>
 
                 <div className="mt-6 text-center">

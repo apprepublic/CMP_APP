@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
 import { useUserStore } from '@/stores/userStore';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, Lock, Eye, EyeOff, User, Smartphone, CheckCircle, ArrowRight, Coins } from 'lucide-react';
 
@@ -342,14 +341,14 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Submit Button */}
-                <Button
+                <button
                   type="submit"
                   disabled={!acceptTerms || isLoading}
-                  className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm group"
+                  className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-sm group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Join the Economy
                   <ArrowRight className="group-hover:translate-x-1 transition-transform w-5 h-5" />
-                </Button>
+                </button>
               </form>
             </StaggerItem>
 

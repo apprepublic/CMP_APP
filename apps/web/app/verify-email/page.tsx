@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Mail, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useUserStore } from '@/stores/userStore';
@@ -157,10 +157,10 @@ export default function VerifyEmailPage() {
                   </div>
                 </div>
 
-                <Button
+                <button
                   type="submit"
                   disabled={isLoading || otp.length !== 6}
-                  className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors"
+                  className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm font-body-lg text-body-lg text-primary-container bg-secondary-container hover:bg-[#8B6914] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -170,20 +170,18 @@ export default function VerifyEmailPage() {
                   ) : (
                     'Verify Email'
                   )}
-                </Button>
+                </button>
               </form>
 
               <div className="mt-6 text-center">
                 <p className="font-body-sm text-body-sm text-white/70 mb-3">
                   Didn't receive the code?
                 </p>
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
                   onClick={handleResend}
                   disabled={isResending}
-                  className="w-full text-white/70 hover:text-secondary-fixed"
+                  className="w-full text-white/70 hover:text-secondary-fixed disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isResending ? (
                     <>
@@ -193,7 +191,7 @@ export default function VerifyEmailPage() {
                   ) : (
                     'Resend Verification Email'
                   )}
-                </Button>
+                </button>
               </div>
 
               <div className="mt-6 pt-6 border-t border-white/10">
