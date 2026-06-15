@@ -105,7 +105,7 @@ export default function LandingPage() {
         </div>
 
         {/* Hero Image Layer - Between Background and Text (Desktop Only) */}
-        <div className="hidden md:block absolute inset-0 z-10 flex items-end justify-start pl-8 md:pl-16 pb-[88px] pointer-events-none overflow-hidden">
+        <div className="hidden md:block absolute inset-0 z-10 flex items-end justify-start pl-0 md:pl-0 pb-[88px] pointer-events-none overflow-hidden">
           <img
             alt="Hero visual"
             className="max-w-[720%] max-h-[720%] w-auto h-auto object-contain"
@@ -113,7 +113,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="relative z-20 max-w-container-max mx-auto px-0 md:px-4 text-left">
+        <div className="relative z-20 w-full px-4 md:px-8 lg:px-16 text-left">
           <div>
             <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/50 bg-secondary-fixed/20 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
               GLOBAL DIGITAL REVOLUTION IS HERE
