@@ -14,6 +14,7 @@ import { Footer } from '@/components/layout/Footer';
  * below all render their own chrome, so the global chrome is suppressed there.
  */
 const selfChromedPrefixes = [
+  '/wallet',
   '/dashboard',
   '/login',
   '/register',
