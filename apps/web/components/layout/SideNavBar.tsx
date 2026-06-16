@@ -1,13 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { useUserStore } from '@/stores/userStore';
+import { supabase } from '@/lib/supabase';
 
 export default function SideNavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isCollapsed, toggle } = useSidebarStore();
+  const { logout } = useUserStore();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    router.push('/login');
+  };
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -96,6 +106,7 @@ export default function SideNavBar() {
             {!isCollapsed && <span>Settings</span>}
           </Link>
           <button
+            onClick={handleLogout}
             title={isCollapsed ? "Logout" : undefined}
             className={clsx(
               "flex items-center gap-3 py-3 text-on-primary-container hover:bg-on-primary-fixed-variant transition-colors rounded-lg font-label-caps text-label-caps w-full text-left",
