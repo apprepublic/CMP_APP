@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useWallet } from '@/lib/useWallet';
 import { useTransactions } from '@/lib/hooks';
 
@@ -39,15 +40,15 @@ export default function WalletPage() {
       {/* Quick Action Grid */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Top Up (Primary Action) */}
-        <button className="flex flex-col items-center justify-center p-6 bg-secondary-container rounded-lg hover:bg-secondary transition-colors group shadow-sm">
+        <Link href="/wallet/topup" className="flex flex-col items-center justify-center p-6 bg-secondary-container rounded-lg hover:bg-secondary transition-colors group shadow-sm">
           <span className="material-symbols-outlined text-on-secondary-container group-hover:text-on-secondary mb-2 text-3xl transition-colors">add_circle</span>
           <span className="font-body-md text-body-md font-semibold text-on-secondary-container group-hover:text-on-secondary transition-colors">Top Up</span>
-        </button>
+        </Link>
         {/* Withdraw */}
-        <button className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary-container transition-all group shadow-sm">
+        <Link href="/wallet/withdraw" className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary-container transition-all group shadow-sm">
           <span className="material-symbols-outlined text-primary-container mb-2 text-3xl">account_balance</span>
           <span className="font-body-md text-body-md font-semibold text-on-surface">Withdraw</span>
-        </button>
+        </Link>
         {/* Send Coins */}
         <button className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary-container transition-all group shadow-sm">
           <span className="material-symbols-outlined text-primary-container mb-2 text-3xl">send</span>

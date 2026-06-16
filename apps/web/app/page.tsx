@@ -113,11 +113,6 @@ export default function LandingPage() {
 
         <div className="relative z-20 w-full px-4 md:px-8 lg:px-16 text-left">
           <div>
-            <div className="inline-block px-4 py-1 rounded-full border border-secondary-fixed/50 bg-secondary-fixed/20 backdrop-blur-md text-secondary-fixed font-label-caps text-label-caps mb-6">
-              GLOBAL DIGITAL REVOLUTION IS HERE
-            </div>
-          </div>
-          <div>
             <h1 className="font-h1 text-h1 text-white max-w-4xl mb-6">
               Empower Your Creativity. <br/>
               <span className="text-secondary-fixed">Monetize Your Passion.</span>
