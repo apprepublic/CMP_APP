@@ -13,7 +13,7 @@ export default function TopNavBar() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/tasks', label: 'Earn' },
     { href: '/music', label: 'Music' },
-    { href: '/marketplace', label: 'Market' },
+
     { href: '/wallet', label: 'Wallet' },
   ];
 

@@ -11,7 +11,7 @@ export default function SideNavBar() {
     { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { href: '/tasks', label: 'Earn', icon: 'monetization_on' },
     { href: '/music', label: 'Music', icon: 'library_music' },
-    { href: '/marketplace', label: 'Market', icon: 'storefront' },
+
     { href: '/wallet', label: 'Wallet', icon: 'account_balance_wallet' },
   ];
 

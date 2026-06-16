@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useFeaturedSongs, useStores, useTasks } from '@/lib/hooks';
+import { useFeaturedSongs, useTasks } from '@/lib/hooks';
 import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
 export default function DashboardPage() {
   const { data: songs = [], isLoading: songsLoading } = useFeaturedSongs();
-  const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { wallet, loading: walletLoading } = useWallet();
   const { user } = useUserStore();
@@ -146,46 +145,7 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {/* Featured Stores */}
-            <section>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-h3 text-h3 text-on-background">Featured Stores</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {storesLoading ? (
-                  <>
-                    <div className="sm:col-span-2 h-48 rounded-xl bg-surface-dim animate-pulse" />
-                    <div className="h-32 rounded-xl bg-surface-dim animate-pulse" />
-                    <div className="h-32 rounded-xl bg-surface-dim animate-pulse" />
-                  </>
-                ) : stores.length === 0 ? (
-                  <div className="sm:col-span-2 text-center py-8 text-on-surface-variant">No featured stores yet.</div>
-                ) : (
-                  <>
-                    {stores.slice(0, 1).map((store: any) => (
-                      <Link href={`/marketplace/store/${store.slug}`} key={store.id} className="sm:col-span-2 h-48 rounded-xl overflow-hidden relative group cursor-pointer bg-surface-alt">
-                        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent flex flex-col justify-end p-6 z-10">
-                          <span className="bg-[#B8860B] text-primary font-label-caps text-label-caps text-[10px] px-2 py-1 rounded w-fit mb-2">HOT DEAL</span>
-                          <h4 className="font-h3 text-h3 text-on-primary">{store.name}</h4>
-                          <p className="font-body-sm text-body-sm text-surface-dim mt-1">{store.description || 'Explore our featured store.'}</p>
-                        </div>
-                      </Link>
-                    ))}
-                    {stores.slice(1, 3).map((store: any) => (
-                      <Link href={`/marketplace/store/${store.slug}`} key={store.id} className="h-32 rounded-xl overflow-hidden relative group cursor-pointer bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/30 hover:border-[#B8860B] transition-colors">
-                        <div className="p-4 flex flex-col h-full justify-between">
-                          <span className="material-symbols-outlined text-primary">storefront</span>
-                          <div>
-                            <h4 className="font-body-md text-body-md font-semibold text-on-background">{store.name}</h4>
-                            <p className="font-body-sm text-body-sm text-on-surface-variant text-xs line-clamp-1">{store.description || 'Store'}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </>
-                )}
-              </div>
-            </section>
+
           </div>
 
           {/* Right Column: Daily Tasks */}
