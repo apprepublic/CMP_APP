@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const { user } = useUserStore();
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
-  const coinBalance = wallet?.coinBalance ?? 0;
+  const coinBalance = wallet?.coin_balance ?? 0;
   const avatarUrl = null;
 
   return (
