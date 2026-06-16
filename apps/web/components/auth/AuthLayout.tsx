@@ -36,7 +36,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </motion.div>
 
       {/* Right Side: Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 pt-20">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 pt-20 lg:pt-32">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
