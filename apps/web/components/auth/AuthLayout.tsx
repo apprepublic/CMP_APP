@@ -20,7 +20,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         transition={{ delay: 0.2, duration: 0.6 }}
         className="hidden lg:flex lg:w-1/2 bg-primary-container relative overflow-hidden items-center justify-center p-12"
         style={{
-          backgroundImage: 'url(/auth.jpg)',
+          backgroundImage: 'url(/login.jpeg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}

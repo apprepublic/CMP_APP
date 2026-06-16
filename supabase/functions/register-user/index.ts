@@ -44,7 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check existing user
     const { data: existing } = await supabase
-      .from("users")
+      .from("User")
       .select("id")
       .eq("email", email.toLowerCase())
       .maybeSingle();
