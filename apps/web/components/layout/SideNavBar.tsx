@@ -47,9 +47,7 @@ export default function SideNavBar() {
       </div>
       
       <div className="p-4 mt-auto">
-        <button className="w-full bg-[#B8860B] hover:bg-[#8B6914] text-primary font-label-caps text-label-caps rounded-lg py-3 mb-4 transition-colors">
-          Upgrade to Premium
-        </button>
+
         <div className="flex flex-col gap-1 px-2">
           <Link href="/settings" className="flex items-center gap-3 px-4 py-3 text-on-primary-container hover:bg-on-primary-fixed-variant transition-colors rounded-lg font-label-caps text-label-caps mx-2">
             <span className="material-symbols-outlined">settings</span>
