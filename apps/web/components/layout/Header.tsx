@@ -45,11 +45,8 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-neu-bg shadow-neu-flat">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <NeuIconBadge size="sm" active className="bg-neo-primary shadow-none">
-            <span className="text-lg font-bold text-white">C</span>
-          </NeuIconBadge>
-          <span className="text-xl font-bold text-neo-text-primary">CMPapp</span>
+        <Link href="/" className="flex items-center gap-3">
+          <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop Nav */}

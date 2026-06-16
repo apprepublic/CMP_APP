@@ -29,10 +29,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">C</span>
-              </div>
-              <span className="text-xl font-bold">CMPapp</span>
+              <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
             </div>
             <p className="text-sm text-muted-foreground">
               Nigeria&apos;s premier earning platform. Complete tasks, stream music, sell products, and earn CMP Coins!

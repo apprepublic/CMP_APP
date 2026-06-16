@@ -20,9 +20,9 @@ export default function TopNavBar() {
   return (
     <header className="sticky top-0 w-full z-40 bg-primary shadow-md flex justify-between items-center px-margin-mobile lg:px-margin-desktop h-20">
       <div className="flex items-center gap-6">
-        <span className="lg:hidden font-h3 text-h3 font-bold text-on-primary">
-          CMPapp
-        </span>
+        <Link href="/" className="lg:hidden">
+          <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
+        </Link>
         
         {/* Desktop Nav Links (Hidden on mobile) */}
         <nav className="hidden lg:flex items-center gap-6 pt-2">

@@ -18,7 +18,7 @@ export default function SideNavBar() {
   return (
     <nav className="hidden lg:flex flex-col h-full border-r border-outline-variant bg-primary dark:bg-primary-container fixed left-0 w-64 z-40 transition-all duration-200 ease-in-out">
       <div className="p-6">
-        <div className="font-h2 text-h2 text-on-primary mb-2">CMPapp</div>
+        <img src="/logo.png" alt="CMPapp" className="h-10 w-auto mb-2" />
         <div className="font-label-caps text-label-caps text-on-primary-container">Creative Economy</div>
       </div>
       
