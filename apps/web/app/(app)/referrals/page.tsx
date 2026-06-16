@@ -20,7 +20,7 @@ export default function ReferralsPage() {
   const { data: stats, isLoading: statsLoading } = useReferralStats(user?.id || '');
   const { data: referrals = [], isLoading: referralsLoading } = useReferrals(user?.id || '');
 
-  const referralCode = wallet?.referralCode || '...';
+  const referralCode = '...'; // TODO: Get from wallet when referral_code is added to Wallet type
   const totalReferrals = stats?.totalReferrals || 0;
   const activeReferrals = stats?.activeReferrals || 0;
   const totalEarned = stats?.totalEarned || 0;
