@@ -3,12 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { Input } from '@/components/ui/input';
-import { AuthHeader } from '@/components/auth-header';
 import { Mail, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useUserStore } from '@/stores/userStore';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -78,138 +76,116 @@ export default function VerifyEmailPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-primary-container relative overflow-hidden bg-pattern">
-        <AuthHeader />
-        <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0 pt-20">
-          <StaggerContainer stagger={0.1}>
-            <StaggerItem>
-              <div className="glass-card rounded-xl p-8 w-full text-center">
-                <div className="w-20 h-20 bg-success-verified/20 rounded-full flex items-center justify-center mb-6 mx-auto border border-success-verified/30">
-                  <CheckCircle className="w-10 h-10 text-success-verified" />
-                </div>
-                <h2 className="font-h3 text-h3 text-white mb-4">Email Verified!</h2>
-                <p className="font-body-md text-body-md text-white/70 mb-6">
-                  Your email has been successfully verified. Redirecting to dashboard...
-                </p>
-              </div>
-            </StaggerItem>
-          </StaggerContainer>
+      <AuthLayout>
+        <div className="w-full max-w-md bg-surface-container-lowest rounded-xl p-8 md:p-10 relative shadow-[0px_4px_20px_rgba(0,0,0,0.04)] text-center">
+          <div className="w-20 h-20 bg-success-verified/10 rounded-full flex items-center justify-center mb-6 mx-auto border border-success-verified/20">
+            <CheckCircle className="w-10 h-10 text-success-verified" />
+          </div>
+          <h2 className="font-h3 text-h3 text-primary-container mb-4">Email Verified!</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+            Your email has been successfully verified. Redirecting to dashboard...
+          </p>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-primary-container relative overflow-hidden bg-pattern">
-      <AuthHeader />
-      {/* Abstract 3D Shapes (Decorative) */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#B8860B]/20 to-transparent blur-[100px]"></div>
-        <div className="absolute bottom-[10%] -right-[5%] w-[30%] h-[50%] rounded-full bg-gradient-to-tl from-primary to-[#B8860B]/10 blur-[80px]"></div>
-      </div>
+    <AuthLayout>
+      <div className="w-full max-w-md bg-surface-container-lowest rounded-xl p-8 md:p-10 relative shadow-[0px_4px_20px_rgba(0,0,0,0.04)]">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#B8860B]/30 mb-4">
+            <Mail className="text-[#B8860B] w-8 h-8" />
+          </div>
+          <h2 className="font-h3 text-h3 text-primary-container mb-2">Verify Your Email</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant">
+            Enter the 6-digit code sent to your email
+          </p>
+        </div>
 
-      <div className="relative z-10 w-full max-w-md px-margin-mobile md:px-0 pt-20">
-        <StaggerContainer stagger={0.1}>
-          <StaggerItem>
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-secondary-container mb-4">
-                <Mail className="text-secondary-container w-8 h-8" />
-              </div>
-              <h2 className="font-h3 text-h3 text-white mb-2">Verify Your Email</h2>
-              <p className="font-body-md text-body-md text-white/70">
-                Enter the 6-digit code sent to your email
-              </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && error !== 'VERIFICATION_SENT' && (
+            <div className="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm font-body-sm flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
-          </StaggerItem>
-
-          <StaggerItem>
-            <div className="glass-card rounded-xl p-6 md:p-8 w-full">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && error !== 'VERIFICATION_SENT' && (
-                  <div className="p-3 rounded-lg bg-error-alert/20 border border-error-alert/30 text-error text-sm font-body-sm flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{error}</span>
-                  </div>
-                )}
-                
-                {error === 'VERIFICATION_SENT' && (
-                  <div className="p-3 rounded-lg bg-success-verified/20 border border-success-verified/30 text-success-verified text-sm font-body-sm flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>Verification email sent! Please check your inbox.</span>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block font-label-caps text-label-caps text-white/70 mb-2 uppercase" htmlFor="otp">
-                    Verification Code
-                  </label>
-                  <div className="relative gold-glow rounded-lg transition-shadow duration-200">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
-                    <input
-                      className="block w-full pl-10 pr-3 py-3 bg-[#0a1529] border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-0 focus:border-transparent transition-colors text-center font-data-lg text-data-lg tracking-widest"
-                      id="otp"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={6}
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="000000"
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || otp.length !== 6}
-                  className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      Verifying...
-                    </>
-                  ) : (
-                    'Verify Email'
-                  )}
-                </button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <p className="font-body-sm text-body-sm text-white/70 mb-3">
-                  Didn't receive the code?
-                </p>
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={isResending}
-                  className="w-full text-white/70 hover:text-secondary-fixed disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isResending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Resend Verification Email'
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <Link
-                  href="/dashboard"
-                  className="flex items-center justify-center gap-2 text-secondary-fixed hover:underline font-body-sm"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Dashboard
-                </Link>
-              </div>
+          )}
+          
+          {error === 'VERIFICATION_SENT' && (
+            <div className="p-3 rounded-lg bg-success-verified/10 border border-success-verified/30 text-success-verified text-sm font-body-sm flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Verification email sent! Please check your inbox.</span>
             </div>
-          </StaggerItem>
-        </StaggerContainer>
+          )}
+
+          <div>
+            <label className="block font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase" htmlFor="otp">
+              Verification Code
+            </label>
+            <div className="relative rounded-lg transition-shadow duration-200">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
+              <input
+                className="block w-full pl-10 pr-3 py-3 bg-surface-alt border border-outline-variant rounded-lg text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:border-primary-container transition-colors text-center font-data-lg text-data-lg tracking-widest"
+                id="otp"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || otp.length !== 6}
+            className="w-full h-12 bg-[#B8860B] hover:bg-[#8B6914] text-primary-container font-bold font-body-md text-body-md rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Verifying...
+              </>
+            ) : (
+              'Verify Email'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="font-body-sm text-body-sm text-on-surface-variant mb-3">
+            Didn't receive the code?
+          </p>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={isResending}
+            className="w-full text-on-surface-variant hover:text-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isResending ? (
+              <>
+                <Loader2 className="inline w-4 h-4 animate-spin mr-2" />
+                Sending...
+              </>
+            ) : (
+              'Resend Verification Email'
+            )}
+          </button>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-outline-variant/30">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center gap-2 text-primary-container hover:underline font-body-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
