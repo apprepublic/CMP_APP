@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { useUserStore } from '@/stores/useUserStore';
+import { useUserStore } from '@/stores/userStore';
 
 export default function TopNavBar() {
   const pathname = usePathname();
