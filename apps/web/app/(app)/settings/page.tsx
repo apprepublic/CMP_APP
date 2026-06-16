@@ -73,15 +73,16 @@ export default function SettingsPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Not authenticated');
 
-      const { error } = (await supabase
-        .from('User' as any)
+      // @ts-ignore - Supabase type inference doesn't work with custom tables
+      const { error } = await supabase
+        .from('User')
         .update({
           displayName: fullName,
           username: username,
           bio: bio,
           country: country,
-        } as any)
-        .eq('id', authUser.id)) as { error: any };
+        })
+        .eq('id', authUser.id);
 
       if (error) throw error;
       setSaveMessage('Profile updated successfully!');
