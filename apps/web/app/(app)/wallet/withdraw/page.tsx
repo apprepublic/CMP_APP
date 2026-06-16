@@ -1,273 +1,149 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { NeuCard } from '@/components/ui/neu-card';
-import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
-import { NeuProgress } from '@/components/ui/neu-progress';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Coins, Loader2, AlertCircle, Landmark } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import type { Database } from '@/lib/supabase-types';
-import { useWallet } from '@/lib/useWallet';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function WithdrawAmountPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const { wallet, user, loading } = useWallet();
-  const [amount, setAmount] = useState('');
-  const [bankAccount, setBankAccount] = useState('');
-  const [bankName, setBankName] = useState('');
-  const [accountName, setAccountName] = useState('');
-  const [step, setStep] = useState(1);
+  const availableBalance = 45200; // Simulated
+  const conversionRate = 10.50; // 1 CMP = 10.50 Naira (using 1 CMP = 1 Coin terminology here based on mockup, though mockup says 100 Coins = 1 Naira? Mockup says 100 Coins = ₦1, let's use that)
+  // Wait, the new mockup says "100 Coins = ₦1", so 1 Coin = 0.01 Naira.
+  const [coins, setCoins] = useState<string>('');
 
-  const coinBalance = wallet?.coin_balance ?? 0;
-  const nairaAmount = amount ? (parseInt(amount) / 100).toFixed(2) : '0.00';
+  const parsedCoins = parseInt(coins) || 0;
+  const isOverBalance = parsedCoins > availableBalance;
+  const isUnderMin = parsedCoins < 100 && parsedCoins > 0;
+  const isValid = parsedCoins >= 100 && parsedCoins <= availableBalance;
+  
+  const nairaAmount = useMemo(() => {
+    return (parsedCoins / 100).toFixed(2);
+  }, [parsedCoins]);
 
-  // Create withdrawal mutation
-  const createWithdrawal = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) throw new Error('Not authenticated');
-      
-      const coinAmount = parseInt(amount);
-      if (coinAmount > coinBalance) {
-        throw new Error('Insufficient balance');
-      }
-
-      const { data, error } = await supabase
-        .from('withdrawal_requests')
-        .insert([{
-          user_id: user.id,
-          amount: nairaAmount,
-          coin_amount: coinAmount.toString(),
-          status: 'PENDING',
-          account_details: {
-            bank_name: bankName,
-            account_number: bankAccount,
-            account_name: accountName,
-          },
-        }] as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      // Refresh wallet and withdrawal requests
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      queryClient.invalidateQueries({ queryKey: ['withdrawal-requests'] });
-      router.push('/dashboard/wallet');
-    },
+  const formattedNaira = parseFloat(nairaAmount).toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 
-  const handleSubmit = () => {
-    if (!amount || !bankAccount || !bankName || !accountName) return;
-    createWithdrawal.mutate();
+  const handleContinue = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isValid) {
+      router.push('/wallet/withdraw/bank');
+    }
   };
 
-  const canSubmit = step === 1 
-    ? amount && parseInt(amount) > 0 && parseInt(amount) <= coinBalance
-    : bankAccount && bankName && accountName;
-
-  if (loading) {
-    return (
-      <PageTransition className="space-y-gutter">
-        <NeuCard padding="lg" className="animate-pulse">
-          <div className="h-8 bg-neu-bg rounded w-1/3 mb-4" />
-          <div className="h-4 bg-neu-bg rounded w-1/2 mb-8" />
-          <div className="h-32 bg-neu-bg rounded" />
-        </NeuCard>
-      </PageTransition>
-    );
-  }
-
   return (
-    <PageTransition className="space-y-gutter">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard/wallet">
-          <NeuIconBadge size="md" className="cursor-pointer">
-            <ArrowLeft className="w-5 h-5 text-neo-text-primary" />
-          </NeuIconBadge>
-        </Link>
-        <div>
-          <h2 className="font-h3 text-h3 text-neo-text-primary m-0">Withdraw Funds</h2>
-          <p className="text-neo-text-secondary font-body-sm mt-1">Step {step} of 2: {step === 1 ? 'Amount Selection' : 'Bank Details'}</p>
-        </div>
-      </div>
-
-      {/* Stepper Progress */}
-      <NeuProgress value={step === 1 ? 50 : 100} showLabel label={`Step ${step} of 2`} size="md" />
-
-      {/* Balance Indicator */}
-      <NeuCard padding="md" interactive>
-        <div className="flex justify-between items-center">
-          <span className="font-body-md text-neo-text-secondary">Available Balance</span>
-          <div className="flex items-center gap-2">
-            <NeuIconBadge size="sm" active>
-              <span className="material-symbols-outlined text-neo-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            </NeuIconBadge>
-            <span className="font-data-lg text-data-lg text-neo-text-primary">{coinBalance.toLocaleString()}</span>
-          </div>
-        </div>
-      </NeuCard>
-
-      {/* Step 1: Amount Selection */}
-      {step === 1 && (
-        <NeuCard padding="lg">
-          <StaggerContainer stagger={0.08}>
-            <StaggerItem>
-              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
-                <Input
-                  label="Amount to Withdraw (Coins)"
-                  type="number"
-                  min={100}
-                  max={coinBalance}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0"
-                  icon={<span className="material-symbols-outlined text-neo-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>}
-                />
-
-                {/* Real-time Conversion Display */}
-                <div className="bg-neu-bg rounded-xl p-4 shadow-neu-inset">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-body-sm text-neo-text-secondary">Conversion Rate</span>
-                    <span className="font-data-md text-data-md text-neo-text-secondary">100 Coins = ₦1</span>
-                  </div>
-                  <div className="flex justify-between items-end border-t border-neo-bg-dark pt-3">
-                    <span className="font-body-md text-neo-text-primary">You will receive:</span>
-                    <div className="text-right">
-                      <span className="font-data-lg text-data-lg text-neo-primary block">₦{nairaAmount}</span>
-                      <span className="font-label-caps text-label-caps text-neo-success mt-1 block">No hidden fees</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <div className="pt-4">
-                  <Button 
-                    type="submit"
-                    size="lg" 
-                    className="w-full gap-2" 
-                    disabled={!amount || parseInt(amount) <= 0 || parseInt(amount) > coinBalance}
-                  >
-                    Continue
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                </div>
-                <div className="text-center mt-4">
-                  <Link href="/dashboard/wallet" className="text-neo-primary hover:underline font-body-sm transition-colors">
-                    Cancel
-                  </Link>
-                </div>
-              </form>
-            </StaggerItem>
-          </StaggerContainer>
-        </NeuCard>
-      )}
-
-      {/* Step 2: Bank Details */}
-      {step === 2 && (
-        <NeuCard padding="lg">
-          <StaggerContainer stagger={0.08}>
-            <StaggerItem>
-              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                <Input
-                  label="Account Number"
-                  type="text"
-                  value={bankAccount}
-                  onChange={(e) => setBankAccount(e.target.value)}
-                  placeholder="0123456789"
-                  maxLength={10}
-                  icon={<Landmark className="w-5 h-5" />}
-                />
-
-                <Input
-                  label="Bank Name"
-                  type="text"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="e.g., GTBank, Zenith Bank"
-                  icon={<Landmark className="w-5 h-5" />}
-                />
-
-                <Input
-                  label="Account Name"
-                  type="text"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  placeholder="Name on the account"
-                  icon={<span className="material-symbols-outlined">person</span>}
-                />
-
-                {/* Summary */}
-                <NeuCard padding="md" className="bg-neu-bg shadow-neu-inset">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-body-md text-neo-text-secondary">Withdrawing</span>
-                    <span className="font-data-lg text-data-lg text-neo-primary">{amount ? parseInt(amount).toLocaleString() : '0'} Coins</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-body-md text-neo-text-secondary">To receive</span>
-                    <span className="font-data-lg text-data-lg text-neo-success">₦{nairaAmount}</span>
-                  </div>
-                </NeuCard>
-
-                {/* Action Button */}
-                <div className="pt-4">
-                  <Button 
-                    type="submit"
-                    size="lg" 
-                    className="w-full gap-2"
-                    disabled={!canSubmit || createWithdrawal.isPending}
-                  >
-                    {createWithdrawal.isPending ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Confirm Withdrawal
-                        <ArrowRight className="w-5 h-5" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <div className="text-center mt-4">
-                  <button 
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-neo-primary hover:underline font-body-sm transition-colors"
-                  >
-                    Back
-                  </button>
-                </div>
-              </form>
-            </StaggerItem>
-          </StaggerContainer>
-        </NeuCard>
-      )}
-
-      {/* Info Notice */}
-      <NeuCard padding="md" className="bg-neo-warning/10 border border-neo-warning/30">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-neo-warning flex-shrink-0 mt-0.5" />
+    <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop flex items-center justify-center min-h-[calc(100vh-80px)] md:min-h-screen pb-24 md:pb-margin-desktop bg-surface relative z-10">
+      {/* Withdrawal Card */}
+      <div className="bg-surface-container-lowest rounded-xl w-full max-w-lg p-6 md:p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] mt-4">
+        
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/wallet" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-outline-variant transition-colors">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </Link>
           <div>
-            <p className="font-body-sm text-body-sm text-neo-text-primary">
-              Withdrawals are processed within 24-48 hours on business days.
-            </p>
-            <p className="font-body-sm text-body-sm text-neo-text-secondary mt-1">
-              Minimum withdrawal: 100 Coins (₦1.00). Maximum: Your total balance.
-            </p>
+            <h2 className="font-h3 text-h3 text-on-surface m-0">Withdraw Funds</h2>
+            <p className="text-on-surface-variant font-body-sm mt-1">Step 1 of 3: Amount Selection</p>
           </div>
         </div>
-      </NeuCard>
-    </PageTransition>
+
+        {/* Stepper */}
+        <div className="w-full flex items-center justify-between mb-8 px-2 relative">
+          <div className="absolute left-[15%] right-[15%] top-1/2 h-[2px] bg-surface-variant -z-10 -translate-y-1/2"></div>
+          
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm border-[1.5px] border-[#B8860B]">
+              1
+            </div>
+            <span className="font-label-caps text-label-caps text-on-surface">Amount</span>
+          </div>
+          
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">
+              2
+            </div>
+            <span className="font-label-caps text-label-caps text-outline">Bank</span>
+          </div>
+          
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">
+              3
+            </div>
+            <span className="font-label-caps text-label-caps text-outline">Confirm</span>
+          </div>
+        </div>
+
+        {/* Balance Indicator */}
+        <div className="bg-surface border border-outline-variant/30 rounded-lg p-4 mb-8 flex justify-between items-center">
+          <span className="font-body-md text-on-surface-variant">Available Balance</span>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+            <span className="font-data-lg text-data-lg text-on-surface">{availableBalance.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Input Form */}
+        <form onSubmit={handleContinue} className="space-y-6">
+          <div className="space-y-2">
+            <label className="block font-label-caps text-label-caps text-on-surface" htmlFor="withdrawAmount">Amount to Withdraw (Coins)</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+              </div>
+              <input 
+                id="withdrawAmount" 
+                type="number"
+                min="100"
+                max={availableBalance}
+                value={coins}
+                onChange={(e) => setCoins(e.target.value)}
+                placeholder="0"
+                className={`block w-full pl-12 pr-4 py-4 bg-surface border rounded-lg text-on-surface font-data-lg text-data-lg focus:ring-primary focus:border-primary transition-colors focus:outline-none ${isOverBalance ? 'border-error-alert focus:border-error-alert' : 'border-outline-variant focus:border-primary'}`}
+              />
+            </div>
+            {isOverBalance && (
+              <p className="text-error-alert font-body-sm mt-1">Amount exceeds available balance.</p>
+            )}
+            {isUnderMin && (
+              <p className="text-error-alert font-body-sm mt-1">Minimum withdrawal amount is 100 coins.</p>
+            )}
+          </div>
+
+          {/* Real-time Conversion Display */}
+          <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-body-sm text-on-surface-variant">Conversion Rate</span>
+              <span className="font-data-md text-data-md text-on-surface-variant">100 Coins = ₦1</span>
+            </div>
+            <div className="flex justify-between items-end border-t border-outline-variant/20 pt-3">
+              <span className="font-body-md text-on-surface">You will receive:</span>
+              <div className="text-right">
+                <span className="font-data-lg text-data-lg text-primary block">₦{formattedNaira}</span>
+                <span className="font-label-caps text-label-caps text-success-verified mt-1 block">No hidden fees</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="pt-4">
+            <button 
+              type="submit"
+              disabled={!isValid}
+              className="w-full bg-primary text-on-primary font-body-lg text-body-lg font-semibold py-4 rounded-lg hover:bg-primary/90 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>Continue</span>
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+          
+          <div className="text-center mt-4">
+            <Link href="/wallet" className="text-primary hover:text-on-primary-fixed-variant font-body-sm underline transition-colors">
+              Cancel
+            </Link>
+          </div>
+        </form>
+
+      </div>
+    </main>
   );
 }
