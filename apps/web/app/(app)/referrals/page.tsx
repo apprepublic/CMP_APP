@@ -2,20 +2,9 @@
 
 import { useState } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
-
-const referralStats = {
-  totalReferrals: 124,
-  activeReferrals: 89,
-  totalEarned: 14250,
-  weeklyEarnings: 1200,
-};
-
-const recentActivity = [
-  { id: 1, name: 'Sarah K.', username: '@sarahcreates', level: 'L1', date: 'Oct 24, 2023', earnings: 450, initials: 'SK' },
-  { id: 2, name: 'Mike J.', username: '@mikebeats', level: 'L2', date: 'Oct 22, 2023', earnings: 120, initials: 'MJ' },
-  { id: 3, name: 'Anna Lee', username: '@annavox', level: 'L3', date: 'Oct 18, 2023', earnings: 45, initials: 'AL' },
-  { id: 4, name: 'David B.', username: '@davebass', level: 'L1', date: 'Oct 15, 2023', earnings: 310, initials: 'DB' },
-];
+import { useReferralStats, useReferrals } from '@/lib/hooks';
+import { useWallet } from '@/lib/useWallet';
+import { useUserStore } from '@/stores/userStore';
 
 const weeklyData = [
   { name: 'Week 1', coins: 1200 },
@@ -26,9 +15,20 @@ const weeklyData = [
 
 export default function ReferralsPage() {
   const [copied, setCopied] = useState(false);
+  const { user } = useUserStore();
+  const { wallet } = useWallet();
+  const { data: stats, isLoading: statsLoading } = useReferralStats(user?.id || '');
+  const { data: referrals = [], isLoading: referralsLoading } = useReferrals(user?.id || '');
+
+  const referralCode = wallet?.referral_code || '...';
+  const totalReferrals = stats?.totalReferrals || 0;
+  const activeReferrals = stats?.activeReferrals || 0;
+  const totalEarned = stats?.totalEarned || 0;
+  const weeklyEarnings = stats?.weeklyEarnings || 0;
 
   const copyCode = () => {
-    navigator.clipboard.writeText('CMP-ALEX99');
+    if (referralCode === '...') return;
+    navigator.clipboard.writeText(referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -57,7 +57,7 @@ export default function ReferralsPage() {
             <p className="font-body-sm text-body-sm text-on-primary-container mb-6 relative z-10">Share this code with your network to start earning.</p>
             
             <div className="bg-primary p-4 rounded-lg flex items-center justify-between border border-secondary-fixed/30 relative z-10 group">
-              <span className="font-data-lg text-data-lg text-secondary-fixed tracking-wider select-all" id="referralCode">CMP-ALEX99</span>
+              <span className="font-data-lg text-data-lg text-secondary-fixed tracking-wider select-all" id="referralCode">{referralCode}</span>
               <button 
                 onClick={copyCode}
                 aria-label="Copy code" 
@@ -92,7 +92,7 @@ export default function ReferralsPage() {
                 <span className="font-label-caps text-label-caps">Network</span>
               </div>
               <div>
-                <div className="font-data-lg text-h2 text-primary-container">{referralStats.totalReferrals}</div>
+                <div className="font-data-lg text-h2 text-primary-container">{statsLoading ? '...' : totalReferrals}</div>
                 <div className="font-body-sm text-body-sm text-on-surface-variant mt-1">Total Referrals</div>
               </div>
             </div>
@@ -102,7 +102,7 @@ export default function ReferralsPage() {
                 <span className="font-label-caps text-label-caps">Active</span>
               </div>
               <div>
-                <div className="font-data-lg text-h2 text-primary-container">{referralStats.activeReferrals}</div>
+                <div className="font-data-lg text-h2 text-primary-container">{statsLoading ? '...' : activeReferrals}</div>
                 <div className="font-body-sm text-body-sm text-on-surface-variant mt-1">Generating Yield</div>
               </div>
             </div>
@@ -116,11 +116,11 @@ export default function ReferralsPage() {
               </div>
               <div className="flex items-baseline space-x-2 relative z-10">
                 <span className="text-2xl">🪙</span>
-                <span className="font-data-lg text-h1 text-primary-container">{referralStats.totalEarned.toLocaleString()}</span>
+                <span className="font-data-lg text-h1 text-primary-container">{statsLoading ? '...' : totalEarned.toLocaleString()}</span>
               </div>
               <div className="font-body-sm text-body-sm text-success-verified mt-2 flex items-center space-x-1 relative z-10">
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                <span>+{referralStats.weeklyEarnings.toLocaleString()} this week</span>
+                <span>+{weeklyEarnings.toLocaleString()} this week</span>
               </div>
             </div>
           </div>
@@ -172,42 +172,50 @@ export default function ReferralsPage() {
                 <thead>
                   <tr className="bg-surface-container-highest border-b border-outline-variant/30">
                     <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">User</th>
-                    <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">Level</th>
+                    <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">Status</th>
                     <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">Joined</th>
-                    <th className="p-4 font-label-caps text-label-caps text-on-surface-variant text-right">Earned</th>
                   </tr>
                 </thead>
                 <tbody className="font-body-sm text-body-sm divide-y divide-outline-variant/20">
-                  {recentActivity.map((referral) => (
-                    <tr key={referral.id} className="hover:bg-surface transition-colors group">
-                      <td className="p-4 flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs ${
-                          referral.level === 'L1' ? 'bg-primary-container' : 
-                          referral.level === 'L2' ? 'bg-surface-tint' : 
-                          'bg-primary-fixed-dim text-on-primary-container'
-                        }`}>
-                          {referral.initials}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-on-surface">{referral.name}</div>
-                          <div className="text-xs text-on-surface-variant">{referral.username}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          referral.level === 'L1' ? 'bg-secondary-container/20 text-secondary border border-secondary-container/30' : 
-                          referral.level === 'L2' ? 'bg-surface-container-high text-on-surface-variant border border-outline-variant/30' : 
-                          'bg-surface-container text-on-surface-variant border border-outline-variant/20'
-                        }`}>
-                          {referral.level === 'L1' ? 'L1 (20%)' : referral.level === 'L2' ? 'L2 (10%)' : 'L3 (5%)'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-on-surface-variant">{referral.date}</td>
-                      <td className="p-4 text-right font-data-md text-data-md text-primary-container group-hover:text-secondary transition-colors">
-                        +{referral.earnings} 🪙
-                      </td>
+                  {referralsLoading ? (
+                    <tr>
+                      <td colSpan={3} className="p-4 text-center text-on-surface-variant">Loading network...</td>
                     </tr>
-                  ))}
+                  ) : referrals.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-4 text-center text-on-surface-variant">No referrals found in your network.</td>
+                    </tr>
+                  ) : (
+                    referrals.map((referral) => {
+                      const name = referral.referred_user?.full_name || referral.referred_user?.email?.split('@')[0] || 'Unknown';
+                      const initials = name.slice(0, 2).toUpperCase();
+                      const date = new Date(referral.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                      const level = 'L1'; // Keep at L1 for now since we don't have deeper tier modeling yet
+
+                      return (
+                        <tr key={referral.id} className="hover:bg-surface transition-colors group">
+                          <td className="p-4 flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs bg-primary-container">
+                              {initials}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-on-surface">{name}</div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              referral.status === 'ACTIVE' 
+                                ? 'bg-secondary-container/20 text-secondary border border-secondary-container/30'
+                                : 'bg-surface-container-high text-on-surface-variant border border-outline-variant/30'
+                            }`}>
+                              {referral.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-on-surface-variant">{date}</td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

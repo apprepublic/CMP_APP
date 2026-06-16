@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useFeaturedSongs, useTasks } from '@/lib/hooks';
+import { useFeaturedSongs, useTasks, useStreak } from '@/lib/hooks';
 import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
@@ -10,10 +10,13 @@ export default function DashboardPage() {
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { wallet, loading: walletLoading } = useWallet();
   const { user } = useUserStore();
+  
+  const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
 
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const displayName = user?.displayName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const coinBalance = wallet?.coin_balance ?? 0;
-  const avatarUrl = null;
+  const avatarUrl = user?.user_metadata?.avatar_url || null;
+  const currentStreak = streak?.current_streak || 0;
 
   return (
     <div className="flex-1 w-full pb-24 md:pb-0 min-h-screen relative z-0">
@@ -23,7 +26,7 @@ export default function DashboardPage() {
         <div className="absolute top-0 right-0 p-8 flex items-center gap-6 z-10">
           <div className="flex items-center gap-2 bg-surface-container-low/10 border-[1.5px] border-[#B8860B] rounded-full px-4 py-2 backdrop-blur-sm">
             <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            <span className="font-data-md text-data-md text-[#B8860B] text-lg">{coinBalance.toLocaleString()} Coins</span>
+            <span className="font-data-md text-data-md text-[#B8860B] text-lg">{walletLoading ? '...' : coinBalance.toLocaleString()} Coins</span>
           </div>
           <button className="text-on-primary hover:text-[#B8860B] transition-colors relative">
             <span className="material-symbols-outlined text-2xl">notifications</span>
@@ -69,7 +72,7 @@ export default function DashboardPage() {
             )}
             <div className="mt-4 flex items-center gap-1 text-success-verified font-body-sm text-body-sm">
               <span className="material-symbols-outlined text-sm">trending_up</span>
-              <span>+450 this week</span>
+              <span>Keep earning today</span>
             </div>
           </div>
 
@@ -79,14 +82,20 @@ export default function DashboardPage() {
               <span className="font-label-caps text-label-caps text-on-surface-variant">Current Streak</span>
               <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="font-data-lg text-data-lg text-h2 text-on-background">12</h3>
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Days</span>
-            </div>
+            {streakLoading ? (
+              <div className="h-10 w-24 bg-surface-dim animate-pulse rounded" />
+            ) : (
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-data-lg text-data-lg text-h2 text-on-background">{currentStreak}</h3>
+                <span className="font-body-sm text-body-sm text-on-surface-variant">{currentStreak === 1 ? 'Day' : 'Days'}</span>
+              </div>
+            )}
             <div className="mt-4 w-full bg-surface-variant rounded-full h-2">
-              <div className="bg-[#B8860B] h-2 rounded-full" style={{ width: '80%' }}></div>
+              <div className="bg-[#B8860B] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (currentStreak / 7) * 100)}%` }}></div>
             </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant mt-2 text-xs">2 days to next milestone</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-2 text-xs">
+              {7 - (currentStreak % 7)} days to next milestone
+            </p>
           </div>
 
           {/* Tasks Remaining */}
@@ -122,7 +131,7 @@ export default function DashboardPage() {
               <div className="flex gap-4 overflow-x-auto pb-4 snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 {songsLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="min-w-[160px] bg-surface-container-lowest rounded-xl p-4 flex flex-col items-center gap-3">
+                    <div key={i} className="min-w-[160px] bg-surface-container-lowest rounded-xl p-4 flex flex-col items-center gap-3 border border-outline-variant/30">
                       <div className="w-20 h-20 rounded-full bg-surface-dim animate-pulse" />
                       <div className="w-24 h-4 bg-surface-dim animate-pulse rounded" />
                     </div>
@@ -131,9 +140,13 @@ export default function DashboardPage() {
                   <div className="w-full text-center py-8 text-on-surface-variant">No top artists yet.</div>
                 ) : (
                   songs.slice(0, 4).map((song: any, i: number) => (
-                    <Link href={`/music/artist/${song.artist?.id || i}`} key={song.id || i} className="min-w-[160px] bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.04)] rounded-xl p-4 flex flex-col items-center gap-3 snap-start hover:-translate-y-1 transition-transform cursor-pointer border border-transparent hover:border-outline-variant">
+                    <Link href={`/music/artist/${song.artist?.slug || song.artist?.id || i}`} key={song.id || i} className="min-w-[160px] bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.04)] rounded-xl p-4 flex flex-col items-center gap-3 snap-start hover:-translate-y-1 transition-transform cursor-pointer border border-transparent hover:border-outline-variant">
                       <div className="w-20 h-20 rounded-full border-2 border-surface-container-highest overflow-hidden flex items-center justify-center bg-surface-dim">
-                        <span className="material-symbols-outlined text-[32px] text-on-surface-variant">music_note</span>
+                        {song.artist?.avatar_url ? (
+                           <img src={song.artist.avatar_url} alt={song.artist.stage_name} className="w-full h-full object-cover" />
+                        ) : (
+                           <span className="material-symbols-outlined text-[32px] text-on-surface-variant">music_note</span>
+                        )}
                       </div>
                       <div className="text-center">
                         <h4 className="font-body-md text-body-md font-semibold text-on-background">{song.artist?.stage_name || 'Unknown Artist'}</h4>
@@ -144,8 +157,6 @@ export default function DashboardPage() {
                 )}
               </div>
             </section>
-
-
           </div>
 
           {/* Right Column: Daily Tasks */}
@@ -166,19 +177,19 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   tasks.slice(0, 3).map((task: any) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-alt transition-colors group">
+                    <div key={task.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-alt transition-colors group border border-transparent hover:border-outline-variant/30">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
                           <span className="material-symbols-outlined text-sm">
-                            {task.category === 'CONTENT' ? 'article' : task.category === 'ENGAGEMENT' ? 'play_circle' : 'share'}
+                            {task.category === 'CONTENT' ? 'article' : task.category === 'ENGAGEMENT' ? 'play_circle' : task.category === 'SURVEY' ? 'poll' : 'share'}
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-body-md text-body-md font-medium text-on-background">{task.title}</h4>
+                          <h4 className="font-body-md text-body-md font-medium text-on-background line-clamp-1">{task.title}</h4>
                           <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">+{task.coin_reward} Coins</p>
                         </div>
                       </div>
-                      <Link href="/tasks" className="bg-[#B8860B] hover:bg-[#8B6914] text-primary font-label-caps text-label-caps px-4 py-2 rounded-lg transition-colors">
+                      <Link href="/tasks" className="bg-[#B8860B] hover:bg-[#8B6914] text-primary font-label-caps text-label-caps px-4 py-2 rounded-lg transition-colors shadow-sm ml-2 shrink-0">
                         Start
                       </Link>
                     </div>

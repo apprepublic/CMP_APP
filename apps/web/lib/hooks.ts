@@ -13,6 +13,10 @@ import {
   getProducts,
   getContests,
   getTasks,
+  getTransactions,
+  getStreak,
+  getReferralStats,
+  getReferrals,
 } from './queries';
 
 /**
@@ -46,3 +50,15 @@ export const useProducts = () => useQuery({ queryKey: ['products'], queryFn: () 
 export const useContests = () => useQuery({ queryKey: ['contests'], queryFn: getContests });
 
 export const useTasks = () => useQuery({ queryKey: ['tasks'], queryFn: getTasks });
+
+export const useTransactions = (walletId: string) => 
+  useQuery({ queryKey: ['transactions', walletId], queryFn: () => getTransactions(walletId), enabled: !!walletId });
+
+export const useStreak = (userId: string) =>
+  useQuery({ queryKey: ['streak', userId], queryFn: () => getStreak(userId), enabled: !!userId });
+
+export const useReferralStats = (userId: string) =>
+  useQuery({ queryKey: ['referralStats', userId], queryFn: () => getReferralStats(userId), enabled: !!userId });
+
+export const useReferrals = (userId: string) =>
+  useQuery({ queryKey: ['referrals', userId], queryFn: () => getReferrals(userId), enabled: !!userId });

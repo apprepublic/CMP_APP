@@ -90,9 +90,104 @@ export interface Task {
   sort_order: number;
 }
 
+export interface CoinTransaction {
+  id: string;
+  wallet_id: string;
+  type: string;
+  amount: number;
+  balance_after: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface Streak {
+  id: string;
+  user_id: string;
+  streak_type: string;
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string;
+  next_reset_at: string;
+}
+
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referred_user_id: string;
+  status: string;
+  created_at: string;
+  referred_user?: {
+    id: string;
+    email: string;
+    full_name: string | null;
+  };
+}
+
+export interface ReferralStats {
+  totalReferrals: number;
+  activeReferrals: number;
+  totalEarned: number;
+  weeklyEarnings: number;
+}
+
 function unwrap<T>(res: { data: T | null; error: any }): T {
   if (res.error) throw new Error(res.error.message || 'Query failed');
   return (res.data ?? ([] as unknown)) as T;
+}
+
+/* ----------------------------- WALLET ---------------------------- */
+
+export async function getTransactions(walletId: string): Promise<CoinTransaction[]> {
+  return unwrap<CoinTransaction[]>(
+    await db.from('coin_transactions').select('*').eq('wallet_id', walletId).order('created_at', { ascending: false })
+  );
+}
+
+/* ----------------------------- STREAKS --------------------------- */
+
+export async function getStreak(userId: string): Promise<Streak | null> {
+  const res = await db.from('streaks').select('*').eq('user_id', userId).eq('streak_type', 'DAILY_LOGIN').single();
+  if (res.error) return null;
+  return res.data as Streak;
+}
+
+/* ---------------------------- REFERRALS -------------------------- */
+
+export async function getReferrals(userId: string): Promise<Referral[]> {
+  return unwrap<Referral[]>(
+    await db.from('referrals').select('*, referred_user:users!referred_user_id(id, email, full_name)').eq('referrer_id', userId).order('created_at', { ascending: false })
+  );
+}
+
+export async function getReferralStats(userId: string): Promise<ReferralStats> {
+  const referrals = await getReferrals(userId).catch(() => []);
+  const activeReferrals = referrals.filter(r => r.status === 'ACTIVE').length;
+  
+  const { data: wallets } = await db.from('wallets').select('id').eq('user_id', userId).single();
+  let totalEarned = 0;
+  let weeklyEarnings = 0;
+  
+  if (wallets) {
+    const { data: txs } = await db.from('coin_transactions').select('amount, created_at').eq('wallet_id', wallets.id).eq('type', 'REFERRAL_REWARD');
+    if (txs) {
+      totalEarned = txs.reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+      
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const oneWeekAgoStr = oneWeekAgo.toISOString();
+      
+      weeklyEarnings = txs
+        .filter((tx: any) => tx.created_at >= oneWeekAgoStr)
+        .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+    }
+  }
+
+  return {
+    totalReferrals: referrals.length,
+    activeReferrals,
+    totalEarned,
+    weeklyEarnings,
+  };
 }
 
 /* ----------------------------- MUSIC ----------------------------- */

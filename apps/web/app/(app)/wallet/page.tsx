@@ -1,6 +1,21 @@
 'use client';
 
+import { useWallet } from '@/lib/useWallet';
+import { useTransactions } from '@/lib/hooks';
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export default function WalletPage() {
+  const { wallet, loading: walletLoading } = useWallet();
+  const { data: transactions = [], isLoading: txLoading } = useTransactions(wallet?.id || '');
+
+  const coinBalance = wallet?.coin_balance ?? 0;
+  // Assume 100 coins = 1 NGN for display purposes
+  const fiatEquivalent = (coinBalance / 100).toFixed(2);
+
   return (
     <main className="flex-1 pt-8 pb-24 lg:pb-12 px-margin-mobile lg:px-margin-desktop max-w-container-max mx-auto w-full space-y-gutter">
       {/* Balance Hero Section */}
@@ -11,10 +26,12 @@ export default function WalletPage() {
           <h2 className="font-body-md text-body-md text-inverse-primary mb-2 opacity-80">Total Balance</h2>
           <div className="flex items-baseline space-x-3 mb-1">
             <span className="material-symbols-outlined text-secondary-fixed text-4xl">toll</span>
-            <span className="font-h1 text-h1 text-secondary-fixed tracking-tight">45,200</span>
+            <span className="font-h1 text-h1 text-secondary-fixed tracking-tight">
+              {walletLoading ? '...' : coinBalance.toLocaleString()}
+            </span>
           </div>
           <p className="font-data-md text-data-md text-on-primary-container bg-on-primary-fixed/50 inline-block px-3 py-1 rounded-full border border-outline/30">
-            ≈ ₦452.00 NGN
+            ≈ ₦{fiatEquivalent} NGN
           </p>
         </div>
       </section>
@@ -45,37 +62,42 @@ export default function WalletPage() {
           <button className="font-body-sm text-body-sm text-surface-tint hover:text-primary transition-colors">View All</button>
         </div>
         <div className="divide-y divide-outline-variant/30">
-          {/* Transaction Item 1 */}
-          <div className="p-4 hover:bg-surface-bright transition-colors flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-secondary-fixed/20 rounded-full flex items-center justify-center text-secondary-container">
-                <span className="material-symbols-outlined">play_circle</span>
-              </div>
-              <div>
-                <h4 className="font-body-md text-body-md font-medium text-on-surface">TASK_EARN</h4>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Today, 14:32</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-data-md text-data-md text-success-verified">+ 150</p>
-            </div>
-          </div>
-          {/* Transaction Item 2 */}
-          <div className="p-4 hover:bg-surface-bright transition-colors flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-error-container/50 rounded-full flex items-center justify-center text-error">
-                <span className="material-symbols-outlined">account_balance</span>
-              </div>
-              <div>
-                <h4 className="font-body-md text-body-md font-medium text-on-surface">WITHDRAWAL</h4>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Yesterday, 09:15</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-data-md text-data-md text-on-surface">- 10,000</p>
-              <p className="font-body-sm text-body-sm text-on-surface-variant">₦100.00</p>
-            </div>
-          </div>
+          {txLoading ? (
+             <div className="p-8 flex justify-center text-on-surface-variant">
+               <span className="material-symbols-outlined animate-spin mr-2">refresh</span> Loading...
+             </div>
+          ) : transactions.length === 0 ? (
+             <div className="p-8 text-center text-on-surface-variant">
+               No recent transactions found.
+             </div>
+          ) : (
+            transactions.map((tx) => {
+              const isPositive = Number(tx.amount) > 0;
+              return (
+                <div key={tx.id} className="p-4 hover:bg-surface-bright transition-colors flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isPositive ? 'bg-secondary-fixed/20 text-secondary-container' : 'bg-error-container/50 text-error'}`}>
+                      <span className="material-symbols-outlined">
+                        {tx.type === 'TASK_EARN' ? 'play_circle' : tx.type === 'WITHDRAWAL' ? 'account_balance' : tx.type === 'REFERRAL_REWARD' ? 'groups' : 'toll'}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-body-md text-body-md font-medium text-on-surface">{tx.type}</h4>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">{formatDate(tx.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-data-md text-data-md ${isPositive ? 'text-success-verified' : 'text-on-surface'}`}>
+                      {isPositive ? '+' : ''} {Number(tx.amount).toLocaleString()}
+                    </p>
+                    {tx.description && (
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">{tx.description}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
     </main>
