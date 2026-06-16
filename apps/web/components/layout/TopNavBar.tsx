@@ -1,21 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import clsx from 'clsx';
 import { useUserStore } from '@/stores/userStore';
 
 export default function TopNavBar() {
-  const pathname = usePathname();
   const { user } = useUserStore();
-
-  const links = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/tasks', label: 'Earn' },
-    { href: '/music', label: 'Music' },
-
-    { href: '/wallet', label: 'Wallet' },
-  ];
 
   return (
     <header className="sticky top-0 w-full z-40 bg-primary shadow-md flex justify-between items-center px-margin-mobile lg:px-margin-desktop h-20">
@@ -23,27 +12,6 @@ export default function TopNavBar() {
         <Link href="/" className="lg:hidden">
           <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
         </Link>
-        
-        {/* Desktop Nav Links (Hidden on mobile) */}
-        <nav className="hidden lg:flex items-center gap-6 pt-2">
-          {links.map((link) => {
-            const isActive = pathname === link.href || pathname?.startsWith(link.href + '/');
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={clsx(
-                  "font-body-md text-body-md transition-colors pb-1 scale-95 active:duration-100",
-                  isActive 
-                    ? "text-secondary-fixed border-b-2 border-secondary-fixed"
-                    : "text-on-primary-container hover:text-secondary"
-                )}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
       </div>
       
       <div className="flex items-center gap-4 lg:gap-6">
