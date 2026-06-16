@@ -20,7 +20,7 @@ export default function WalletPage() {
       </section>
 
       {/* Quick Action Grid */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Top Up (Primary Action) */}
         <button className="flex flex-col items-center justify-center p-6 bg-secondary-container rounded-lg hover:bg-secondary transition-colors group shadow-sm">
           <span className="material-symbols-outlined text-on-secondary-container group-hover:text-on-secondary mb-2 text-3xl transition-colors">add_circle</span>
@@ -35,11 +35,6 @@ export default function WalletPage() {
         <button className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary-container transition-all group shadow-sm">
           <span className="material-symbols-outlined text-primary-container mb-2 text-3xl">send</span>
           <span className="font-body-md text-body-md font-semibold text-on-surface">Send Coins</span>
-        </button>
-        {/* VTU/Bills */}
-        <button className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary-container transition-all group shadow-sm">
-          <span className="material-symbols-outlined text-primary-container mb-2 text-3xl">receipt_long</span>
-          <span className="font-body-md text-body-md font-semibold text-on-surface">VTU/Bills</span>
         </button>
       </section>
 
