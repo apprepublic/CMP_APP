@@ -87,51 +87,39 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (authError) {
       console.error("Auth error:", authError);
+      // If user already exists, try to sign in instead
+      if (authError.message?.includes("already been registered") || authError.message?.includes("User already exists")) {
+        return jsonResponse({ error: "This email is already registered. Please sign in instead." });
+      }
       return jsonResponse({ error: "Failed to create account: " + authError.message });
     }
 
     const userId = authData.user.id;
     console.log("Auth user created:", userId);
 
-    // Create profile
-    console.log("Creating user profile...");
-    const { error: profileError } = await supabase.from("User").insert({
-      id: userId,
-      email: pendingReg.email,
-      displayName: pendingReg.full_name,
-    });
-
-    if (profileError) {
-      console.error("Profile error:", profileError);
-      return jsonResponse({ error: "Failed to create profile: " + profileError.message });
-    }
-
-    // Create wallet
-    console.log("Creating wallet...");
-    const { error: walletError } = await supabase.from("Wallet").insert({
-      userId: userId,
-      coinBalance: 500,
-      lifetimeEarned: 500,
-      lifetimeSpent: 0,
-    });
-
-    if (walletError) {
-      console.error("Wallet error:", walletError);
-      return jsonResponse({ error: "Failed to create wallet: " + walletError.message });
-    }
-
-    // Create transaction
-    console.log("Creating transaction...");
-    const { data: walletData } = await supabase.from("Wallet").select("id").eq("userId", userId).single();
-    
-    if (walletData) {
-      await supabase.from("CoinTransaction").insert({
-        walletId: walletData.id,
-        type: "EARN",
-        amount: 500,
-        balanceAfter: 500,
-        description: "Signup bonus",
+    const { data: profileCheck } = await supabase.from("User").select("id").eq("id", userId).maybeSingle();
+    if (!profileCheck) {
+      const { error: profileError } = await supabase.from("User").insert({
+        id: userId,
+        email: pendingReg.email,
+        displayName: pendingReg.full_name,
       });
+      if (profileError) {
+        console.error("Profile error:", profileError);
+      }
+    }
+
+    const { data: walletCheck } = await supabase.from("Wallet").select("id").eq("userId", userId).maybeSingle();
+    if (!walletCheck) {
+      const { error: walletError } = await supabase.from("Wallet").insert({
+        userId: userId,
+        coinBalance: 500,
+        lifetimeEarned: 500,
+        lifetimeSpent: 0,
+      });
+      if (walletError) {
+        console.error("Wallet error:", walletError);
+      }
     }
 
     // Handle referral

@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check existing user
+    // Check existing user in both User table AND auth
     const { data: existing } = await supabase
       .from("User")
       .select("id")
@@ -52,6 +52,18 @@ const handler = async (req: Request): Promise<Response> => {
     if (existing) {
       return new Response(JSON.stringify({ error: "Email already exists" }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    
+    // Also check if there's a pending registration
+    const { data: existingPending } = await supabase
+      .from("pending_registrations")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+      
+    if (existingPending) {
+      // Delete old pending registration and create new one
+      await supabase.from("pending_registrations").delete().eq("email", email.toLowerCase());
     }
 
     // Create pending registration
