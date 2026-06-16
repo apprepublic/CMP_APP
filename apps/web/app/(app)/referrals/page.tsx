@@ -35,18 +35,7 @@ export default function ReferralsPage() {
 
   return (
     <div className="flex-1 w-full pb-24 md:pb-8">
-      {/* Page Header */}
-      <div className="py-8 md:py-12 max-w-container-max mx-auto px-margin-mobile lg:px-0">
-        <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-primary-container mb-4">Referral Network</h1>
-        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-          Build your creative empire. Earn passive income through our 3-tier commission structure:{' '}
-          <span className="font-semibold text-secondary-container">Level 1 (20%)</span>,{' '}
-          <span className="font-semibold text-secondary-container">Level 2 (10%)</span>, and{' '}
-          <span className="font-semibold text-secondary-container">Level 3 (5%)</span>.
-        </p>
-      </div>
-
-      <div className="max-w-container-max mx-auto px-margin-mobile lg:px-0 grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+      <div className="max-w-container-max mx-auto px-margin-mobile lg:px-0 grid grid-cols-1 lg:grid-cols-12 gap-gutter pt-8">
         {/* Left Column: Share & Stats */}
         <div className="lg:col-span-4 space-y-gutter">
           {/* Referral Share Card */}
