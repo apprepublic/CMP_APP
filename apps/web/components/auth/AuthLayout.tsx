@@ -65,7 +65,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">PLATFORM</h5>
             <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
               <li><Link className="hover:text-secondary-fixed transition-colors" href="#">How it Works</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/marketplace">Marketplace</Link></li>
+
               <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
               <li><Link className="hover:text-secondary-fixed transition-colors" href="/wallet">Store</Link></li>
             </ul>

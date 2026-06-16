@@ -5,7 +5,7 @@ const footerLinks = {
   platform: [
     { href: '/tasks', label: 'Earn Coins' },
     { href: '/music', label: 'Stream Music' },
-    { href: '/marketplace', label: 'Marketplace' },
+
     { href: '/contests', label: 'Contests' },
   ],
   company: [

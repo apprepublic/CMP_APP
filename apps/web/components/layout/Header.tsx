@@ -22,14 +22,14 @@ import { useState } from 'react';
 
 const publicNavItems = [
   { href: '/', label: 'Home', icon: Coins },
-  { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+
   { href: '/contests', label: 'Contests', icon: Trophy },
 ];
 
 const authenticatedNavItems = [
   { href: '/tasks', label: 'Earn', icon: Coins },
   { href: '/music', label: 'Music', icon: Music },
-  { href: '/marketplace', label: 'Shop', icon: ShoppingBag },
+
   { href: '/referrals', label: 'Refer', icon: Users },
   { href: '/contests', label: 'Contests', icon: Trophy },
 ];
