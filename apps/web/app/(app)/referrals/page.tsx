@@ -35,7 +35,7 @@ export default function ReferralsPage() {
 
   return (
     <div className="flex-1 w-full pb-24 md:pb-8">
-      <div className="max-w-container-max mx-auto px-margin-mobile lg:px-0 grid grid-cols-1 lg:grid-cols-12 gap-gutter pt-8">
+      <div className="max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop grid grid-cols-1 lg:grid-cols-12 gap-gutter pt-8">
         {/* Left Column: Share & Stats */}
         <div className="lg:col-span-4 space-y-gutter">
           {/* Referral Share Card */}
