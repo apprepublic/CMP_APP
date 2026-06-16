@@ -1,7 +1,7 @@
 'use client';
 
 import { usePlayer } from './PlayerProvider';
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Shuffle, Repeat } from 'lucide-react';
 
 function fmt(t: number) {
   if (!isFinite(t) || t < 0) t = 0;
@@ -13,74 +13,92 @@ function fmt(t: number) {
 export function PlayerBar() {
   const { current, isPlaying, progress, duration, volume, toggle, next, prev, seek, setVolume } = usePlayer();
 
-  // Nothing playing yet — render nothing so other pages aren't affected.
   if (!current) return null;
 
   const pct = duration ? (progress / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-[72px] md:bottom-0 left-0 w-full z-40 bg-neu-bg shadow-neu-raised border-t border-neu-bg-dark">
-      {/* Seek bar */}
-      <input
-        type="range"
-        min={0}
-        max={duration || 0}
-        value={progress}
-        onChange={(e) => seek(Number(e.target.value))}
-        aria-label="Seek"
-        className="absolute -top-1 left-0 w-full h-1 appearance-none bg-transparent cursor-pointer accent-neo-secondary"
-        style={{ background: `linear-gradient(to right, var(--neo-secondary) ${pct}%, transparent ${pct}%)` }}
-      />
-      <div className="max-w-container-max mx-auto w-full px-4 md:px-gutter h-20 flex items-center justify-between gap-4">
-        {/* Track info */}
-        <div className="flex items-center gap-3 w-1/3 min-w-[140px]">
-          <div className="w-12 h-12 rounded-md overflow-hidden bg-neu-bg shadow-neu-raised-sm shrink-0">
+    <div className="fixed bottom-16 lg:bottom-0 w-full lg:w-[calc(100%-16rem)] lg:left-64 z-40 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300">
+      {/* Progress Bar */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-surface-variant/20 cursor-pointer">
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          value={progress}
+          onChange={(e) => seek(Number(e.target.value))}
+          aria-label="Seek"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+        <div className="h-full bg-secondary-container relative" style={{ width: `${pct}%` }}>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-secondary-fixed rounded-full shadow-md scale-0 hover:scale-100 transition-transform pointer-events-none"></div>
+        </div>
+      </div>
+
+      <div className="h-[72px] px-4 md:px-6 flex items-center justify-between">
+        {/* Now Playing Info */}
+        <div className="flex items-center gap-4 w-1/3 min-w-[150px]">
+          <div className="w-12 h-12 rounded bg-surface-variant overflow-hidden shrink-0 shadow-sm border border-outline/10">
             {current.cover_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img className="w-full h-full object-cover" src={current.cover_url} alt={current.title} />
             )}
           </div>
-          <div className="hidden sm:flex flex-col overflow-hidden">
-            <span className="font-body-md text-body-md font-semibold text-neo-text-primary truncate">{current.title}</span>
-            <span className="font-body-sm text-body-sm text-neo-text-secondary truncate">
-              {current.artist?.stage_name ?? 'Unknown artist'}
-            </span>
+          <div className="truncate hidden sm:block">
+            <h5 className="font-body-md text-body-md font-semibold text-on-primary truncate">{current.title}</h5>
+            <p className="font-body-sm text-body-sm text-on-primary-container truncate">{current.artist?.stage_name ?? 'Unknown artist'}</p>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-3 md:gap-6 w-1/3">
-          <button onClick={prev} aria-label="Previous" className="text-neo-text-primary hover:text-neo-secondary transition-colors p-2 active:scale-95">
-            <SkipBack className="w-6 h-6" />
+        <div className="flex items-center justify-center gap-4 w-1/3">
+          <button className="text-on-primary-container hover:text-secondary transition-colors hidden md:block" aria-label="Shuffle">
+            <Shuffle className="w-5 h-5" />
           </button>
-          <button
+          <button onClick={prev} className="text-on-primary hover:text-secondary transition-colors" aria-label="Previous">
+            <span className="material-symbols-outlined text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>skip_previous</span>
+          </button>
+          <button 
             onClick={toggle}
+            className="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center hover:bg-secondary transition-colors hover:scale-105 shadow-md"
             aria-label={isPlaying ? 'Pause' : 'Play'}
-            className="w-12 h-12 inline-flex items-center justify-center rounded-xl bg-neo-secondary shadow-neu-raised-sm text-neo-primary hover:scale-105 transition-transform active:scale-95"
           >
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
+            {isPlaying ? (
+              <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>pause</span>
+            ) : (
+              <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+            )}
           </button>
-          <button onClick={next} aria-label="Next" className="text-neo-text-primary hover:text-neo-secondary transition-colors p-2 active:scale-95">
-            <SkipForward className="w-6 h-6" />
+          <button onClick={next} className="text-on-primary hover:text-secondary transition-colors" aria-label="Next">
+            <span className="material-symbols-outlined text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>skip_next</span>
+          </button>
+          <button className="text-on-primary-container hover:text-secondary transition-colors hidden md:block" aria-label="Repeat">
+            <Repeat className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Time + volume */}
-        <div className="flex items-center justify-end gap-3 w-1/3 min-w-[120px]">
-          <span className="hidden md:inline font-data-md text-data-md text-neo-text-secondary tabular-nums">
-            {fmt(progress)} / {fmt(duration)}
-          </span>
-          <Volume2 className="w-5 h-5 text-neo-text-secondary shrink-0" />
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={(e) => setVolume(Number(e.target.value))}
-            aria-label="Volume"
-            className="w-20 md:w-28 h-1 cursor-pointer accent-neo-secondary"
-          />
+        {/* Secondary Controls */}
+        <div className="flex items-center justify-end gap-4 w-1/3 text-on-primary-container hidden md:flex">
+          <span className="font-data-md text-data-md tabular-nums">{fmt(progress)} / {fmt(duration)}</span>
+          <button className="hover:text-secondary transition-colors">
+            <span className="material-symbols-outlined text-[20px]">queue_music</span>
+          </button>
+          <div className="flex items-center gap-2 w-24 relative">
+            <span className="material-symbols-outlined text-[20px]">volume_up</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              aria-label="Volume"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            <div className="h-1 bg-surface-variant/30 rounded-full w-full pointer-events-none">
+              <div className="h-full bg-secondary-container rounded-full" style={{ width: `${volume * 100}%` }}></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,22 +1,13 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
-import MobileNav from '@/components/layout/MobileNav';
-
-const noNavPaths = ['/onboarding', '/register', '/login', '/landing', '/'];
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const showNav = !noNavPaths.some(path => pathname === path || pathname?.startsWith(path + '/'));
-
   return (
-    <div className="min-h-screen bg-surface-container">
+    <DashboardLayout>
       {children}
-      {showNav && <MobileNav />}
-    </div>
+    </DashboardLayout>
   );
 }
