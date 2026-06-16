@@ -16,8 +16,10 @@ import { Footer } from '@/components/layout/Footer';
 const selfChromedPrefixes = [
   '/wallet',
   '/dashboard',
+  '/settings',
   '/login',
   '/register',
+  '/verify',
   '/tasks',
   '/music',
   '/marketplace',

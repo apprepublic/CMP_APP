@@ -48,17 +48,18 @@ export default function SettingsPage() {
       if (!authUser) return;
 
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('User' as any)
         .select('*')
         .eq('id', authUser.id)
         .single();
 
       if (profile) {
-        setFullName(profile.display_name || '');
-        setUsername(profile.username || '');
+        const p = profile as Record<string, any>;
+        setFullName(p.displayName || p.full_name || '');
+        setUsername(p.username || '');
         setEmail(authUser.email || '');
-        setBio(profile.bio || '');
-        setCountry(profile.country || 'NG');
+        setBio(p.bio || '');
+        setCountry(p.country || 'NG');
       }
     }
     loadProfile();
@@ -73,13 +74,13 @@ export default function SettingsPage() {
       if (!authUser) throw new Error('Not authenticated');
 
       const { error } = await supabase
-        .from('profiles')
+        .from('User' as any)
         .update({
-          display_name: fullName,
+          displayName: fullName,
           username: username,
           bio: bio,
           country: country,
-        })
+        } as any)
         .eq('id', authUser.id);
 
       if (error) throw error;
