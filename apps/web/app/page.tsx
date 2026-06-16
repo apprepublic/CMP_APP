@@ -282,7 +282,7 @@ export default function LandingPage() {
             />
             <button
               type="submit"
-              className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-body-md text-body-md px-12 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)] disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto"
+              className="bg-secondary-fixed hover:bg-secondary text-primary font-bold font-body-md text-body-md px-16 py-4 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)] disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto whitespace-nowrap"
             >
               {isSubmitting ? 'Submitting...' : 'Get Started'}
             </button>
