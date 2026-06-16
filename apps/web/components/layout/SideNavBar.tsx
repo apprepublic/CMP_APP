@@ -41,11 +41,6 @@ export default function SideNavBar() {
             alt="CMPapp"
             className={clsx("h-10 w-auto transition-all duration-300 shrink-0", isCollapsed && "h-8")}
           />
-          {!isCollapsed && (
-            <div className="overflow-hidden">
-              <div className="font-label-caps text-label-caps text-on-primary-container whitespace-nowrap">Creative Economy</div>
-            </div>
-          )}
         </Link>
       </div>
 
