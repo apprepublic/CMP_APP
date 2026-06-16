@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       const { data: emailData, error: emailError } = await resend.emails.send({
-        from: "CMPapp <onboarding@resend.dev>",
+        from: "CMPapp <noreply@cmpapp.ng>",
         to: [email],
         subject: "Verify your account",
         html: emailHtml,
