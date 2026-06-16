@@ -1,10 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useWithdrawStore } from '@/stores/withdrawStore';
 
 export default function WithdrawBankPage() {
-  const [selectedBank, setSelectedBank] = useState<string>('gtbank');
+  const router = useRouter();
+  const { amountCoins, selectedBank, setSelectedBank } = useWithdrawStore();
+  
+  // Set default if null
+  const [localBank, setLocalBank] = useState<string>(selectedBank || 'gtbank');
+
+  useEffect(() => {
+    if (amountCoins <= 0) {
+      router.replace('/wallet/withdraw');
+    }
+  }, [amountCoins, router]);
+
+  const convertedAmount = amountCoins * 10.50;
+  const processingFee = convertedAmount * 0.015; // 1.5% fee
+  const finalAmount = convertedAmount - processingFee;
+
+  const handleContinue = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setSelectedBank(localBank);
+    router.push('/wallet/withdraw/confirm');
+  };
 
   return (
     <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop flex justify-center items-center pb-24 md:pb-margin-desktop min-h-[calc(100vh-80px)]">
@@ -53,13 +75,13 @@ export default function WithdrawBankPage() {
           {/* Saved Bank Option 1 */}
           <label className="block cursor-pointer">
             <input 
-              checked={selectedBank === 'gtbank'} 
-              onChange={() => setSelectedBank('gtbank')}
+              checked={localBank === 'gtbank'} 
+              onChange={() => setLocalBank('gtbank')}
               className="peer sr-only" 
               name="bank" 
               type="radio"
             />
-            <div className={`flex items-center p-4 bg-surface-container-lowest rounded-lg transition-all ${selectedBank === 'gtbank' ? 'border-[2px] border-[#B8860B]' : 'border border-outline-variant/50 hover:border-outline'}`}>
+            <div className={`flex items-center p-4 bg-surface-container-lowest rounded-lg transition-all ${localBank === 'gtbank' ? 'border-[2px] border-[#B8860B]' : 'border border-outline-variant/50 hover:border-outline'}`}>
               <div className="w-10 h-10 rounded-full bg-[#E5F3FF] flex items-center justify-center text-primary-container mr-4 flex-shrink-0">
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance</span>
               </div>
@@ -67,8 +89,8 @@ export default function WithdrawBankPage() {
                 <div className="font-body-md text-body-md font-semibold text-on-surface">GTBank</div>
                 <div className="font-data-md text-data-md text-on-surface-variant mt-0.5">0123456789 • Alex O.</div>
               </div>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ml-4 flex-shrink-0 ${selectedBank === 'gtbank' ? 'border-2 border-[#B8860B]' : 'border border-outline-variant'}`}>
-                <div className={`w-3 h-3 rounded-full ${selectedBank === 'gtbank' ? 'bg-[#B8860B]' : 'bg-transparent'}`}></div>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ml-4 flex-shrink-0 ${localBank === 'gtbank' ? 'border-2 border-[#B8860B]' : 'border border-outline-variant'}`}>
+                <div className={`w-3 h-3 rounded-full ${localBank === 'gtbank' ? 'bg-[#B8860B]' : 'bg-transparent'}`}></div>
               </div>
             </div>
           </label>
@@ -76,13 +98,13 @@ export default function WithdrawBankPage() {
           {/* Saved Bank Option 2 */}
           <label className="block cursor-pointer">
             <input 
-              checked={selectedBank === 'access'} 
-              onChange={() => setSelectedBank('access')}
+              checked={localBank === 'access'} 
+              onChange={() => setLocalBank('access')}
               className="peer sr-only" 
               name="bank" 
               type="radio"
             />
-            <div className={`flex items-center p-4 bg-surface-container-lowest rounded-lg transition-all ${selectedBank === 'access' ? 'border-[2px] border-[#B8860B]' : 'border border-outline-variant/50 hover:border-outline'}`}>
+            <div className={`flex items-center p-4 bg-surface-container-lowest rounded-lg transition-all ${localBank === 'access' ? 'border-[2px] border-[#B8860B]' : 'border border-outline-variant/50 hover:border-outline'}`}>
               <div className="w-10 h-10 rounded-full bg-[#F3E5FF] flex items-center justify-center text-[#4A148C] mr-4 flex-shrink-0">
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance</span>
               </div>
@@ -90,8 +112,8 @@ export default function WithdrawBankPage() {
                 <div className="font-body-md text-body-md font-semibold text-on-surface">Access Bank</div>
                 <div className="font-data-md text-data-md text-on-surface-variant mt-0.5">0987654321 • Alexander O.</div>
               </div>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ml-4 flex-shrink-0 ${selectedBank === 'access' ? 'border-2 border-[#B8860B]' : 'border border-outline-variant'}`}>
-                <div className={`w-3 h-3 rounded-full ${selectedBank === 'access' ? 'bg-[#B8860B]' : 'bg-transparent'}`}></div>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ml-4 flex-shrink-0 ${localBank === 'access' ? 'border-2 border-[#B8860B]' : 'border border-outline-variant'}`}>
+                <div className={`w-3 h-3 rounded-full ${localBank === 'access' ? 'bg-[#B8860B]' : 'bg-transparent'}`}></div>
               </div>
             </div>
           </label>
@@ -111,7 +133,7 @@ export default function WithdrawBankPage() {
               <span className="font-body-sm text-body-sm text-on-surface-variant">Amount to withdraw</span>
               <div className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[#B8860B] text-sm">monetization_on</span>
-                <span className="font-data-md text-data-md text-on-surface">5,000</span>
+                <span className="font-data-md text-data-md text-on-surface">{amountCoins.toLocaleString()}</span>
               </div>
             </div>
             <div className="flex justify-between items-center">
@@ -120,16 +142,22 @@ export default function WithdrawBankPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="font-body-sm text-body-sm text-on-surface-variant">Converted Amount</span>
-              <span className="font-data-md text-data-md text-on-surface">₦52,500.00</span>
+              <span className="font-data-md text-data-md text-on-surface">
+                ₦{convertedAmount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-body-sm text-body-sm text-on-surface-variant">Processing Fee (1.5%)</span>
-              <span className="font-data-md text-data-md text-error-alert">- ₦787.50</span>
+              <span className="font-data-md text-data-md text-error-alert">
+                - ₦{processingFee.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
             </div>
             <div className="border-t border-dashed border-outline-variant/50 pt-3 mt-3">
               <div className="flex justify-between items-center">
                 <span className="font-body-md text-body-md font-semibold text-on-surface">You will receive</span>
-                <span className="font-data-lg text-data-lg text-success-verified">₦51,712.50</span>
+                <span className="font-data-lg text-data-lg text-success-verified">
+                  ₦{finalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
           </div>
@@ -140,9 +168,9 @@ export default function WithdrawBankPage() {
           <Link href="/wallet/withdraw" className="flex-1 py-3 px-4 rounded-lg border border-outline-variant text-on-surface font-body-md text-body-md font-semibold hover:bg-surface-variant/50 transition-colors">
             Back
           </Link>
-          <Link href="/wallet/withdraw/confirm" className="flex-[2] py-3 px-4 rounded-lg bg-primary text-on-primary font-body-md text-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center">
+          <button onClick={handleContinue} className="flex-[2] py-3 px-4 rounded-lg bg-primary text-on-primary font-body-md text-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center">
             Continue
-          </Link>
+          </button>
         </div>
 
         {/* Security Note */}

@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useWallet } from '@/lib/useWallet';
+import { useWithdrawStore } from '@/stores/withdrawStore';
 
 export default function WithdrawAmountPage() {
   const router = useRouter();
-  const availableBalance = 45200; // Simulated
-  const conversionRate = 10.50; // 1 CMP = 10.50 Naira (using 1 CMP = 1 Coin terminology here based on mockup, though mockup says 100 Coins = 1 Naira? Mockup says 100 Coins = ₦1, let's use that)
-  // Wait, the new mockup says "100 Coins = ₦1", so 1 Coin = 0.01 Naira.
-  const [coins, setCoins] = useState<string>('');
+  const { wallet, isLoading } = useWallet();
+  const availableBalance = wallet ? parseFloat(wallet.coin_balance || '0') : 0;
+  
+  const { amountCoins, setAmountCoins } = useWithdrawStore();
+  const [coins, setCoins] = useState<string>(amountCoins > 0 ? amountCoins.toString() : '');
 
   const parsedCoins = parseInt(coins) || 0;
   const isOverBalance = parsedCoins > availableBalance;
@@ -17,7 +20,8 @@ export default function WithdrawAmountPage() {
   const isValid = parsedCoins >= 100 && parsedCoins <= availableBalance;
   
   const nairaAmount = useMemo(() => {
-    return (parsedCoins / 100).toFixed(2);
+    // 1 Coin = ₦10.50
+    return (parsedCoins * 10.50).toFixed(2);
   }, [parsedCoins]);
 
   const formattedNaira = parseFloat(nairaAmount).toLocaleString('en-NG', {
@@ -28,6 +32,7 @@ export default function WithdrawAmountPage() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (isValid) {
+      setAmountCoins(parsedCoins);
       router.push('/wallet/withdraw/bank');
     }
   };
@@ -78,7 +83,9 @@ export default function WithdrawAmountPage() {
           <span className="font-body-md text-on-surface-variant">Available Balance</span>
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            <span className="font-data-lg text-data-lg text-on-surface">{availableBalance.toLocaleString()}</span>
+            <span className="font-data-lg text-data-lg text-on-surface">
+              {isLoading ? '...' : availableBalance.toLocaleString()}
+            </span>
           </div>
         </div>
 
@@ -113,7 +120,7 @@ export default function WithdrawAmountPage() {
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
             <div className="flex justify-between items-center mb-2">
               <span className="font-body-sm text-on-surface-variant">Conversion Rate</span>
-              <span className="font-data-md text-data-md text-on-surface-variant">100 Coins = ₦1</span>
+              <span className="font-data-md text-data-md text-on-surface-variant">1 CMP = ₦10.50</span>
             </div>
             <div className="flex justify-between items-end border-t border-outline-variant/20 pt-3">
               <span className="font-body-md text-on-surface">You will receive:</span>

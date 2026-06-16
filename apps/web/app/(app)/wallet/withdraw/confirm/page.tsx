@@ -1,34 +1,78 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useWithdrawStore } from '@/stores/withdrawStore';
+import { useWallet } from '@/lib/useWallet';
+import { processWithdrawal } from '@/lib/queries';
 
 export default function WithdrawConfirmPage() {
+  const router = useRouter();
+  const { amountCoins, selectedBank, setTransactionId } = useWithdrawStore();
+  const { wallet } = useWallet();
+  
   const [pin, setPin] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
   const maxPinLength = 4;
+
+  useEffect(() => {
+    if (amountCoins <= 0 || !selectedBank) {
+      router.replace('/wallet/withdraw');
+    }
+  }, [amountCoins, selectedBank, router]);
+
+  const convertedAmount = amountCoins * 10.50;
+  const processingFee = convertedAmount * 0.015; // 1.5% fee
+  const finalAmount = convertedAmount - processingFee;
 
   const handleNumClick = (num: string) => {
     if (pin.length < maxPinLength && !isLoading && !isSuccess) {
       setPin(prev => prev + num);
+      setErrorMsg(null);
     }
   };
 
   const handleDelClick = () => {
     if (pin.length > 0 && !isLoading && !isSuccess) {
       setPin(prev => prev.slice(0, -1));
+      setErrorMsg(null);
     }
   };
 
-  const handleSubmit = () => {
-    if (pin.length === maxPinLength) {
+  const handleSubmit = async () => {
+    if (pin.length === maxPinLength && wallet) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
+      setErrorMsg(null);
+      
+      try {
+        const bankName = selectedBank === 'gtbank' ? 'GTBank' : 'Access Bank';
+        
+        // Wait, for prototype we don't verify PIN against auth yet.
+        // But we do the transaction.
+        const txId = await processWithdrawal(wallet.id, amountCoins, {
+          name: bankName,
+          selected_bank_id: selectedBank,
+          final_naira: finalAmount,
+          fee_naira: processingFee
+        });
+        
         setIsSuccess(true);
-      }, 1500);
+        setTransactionId(txId);
+        
+        setTimeout(() => {
+          router.push('/wallet/receipt');
+        }, 1500);
+        
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Withdrawal failed. Please try again.');
+        setPin(''); // Reset PIN on error
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -51,9 +95,13 @@ export default function WithdrawConfirmPage() {
         </div>
         
         <h1 className="font-h3 text-h3 text-on-surface mb-2">Enter Security PIN</h1>
-        <p className="font-body-sm text-body-sm text-on-surface-variant mb-8 px-4">
-          Please enter your 4-digit security PIN to authorize this withdrawal of <strong className="text-on-surface">₦50,000</strong> to GTBank.
+        <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 px-4">
+          Please enter your 4-digit security PIN to authorize this withdrawal of <strong className="text-on-surface">₦{finalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</strong> to {selectedBank === 'gtbank' ? 'GTBank' : 'Access Bank'}.
         </p>
+
+        {errorMsg && (
+          <p className="font-body-sm text-error-alert mb-4">{errorMsg}</p>
+        )}
 
         {/* PIN Dots */}
         <div className="flex gap-4 mb-10">

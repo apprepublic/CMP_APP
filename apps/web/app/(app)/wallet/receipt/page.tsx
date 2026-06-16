@@ -1,8 +1,34 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useWithdrawStore } from '@/stores/withdrawStore';
 
 export default function TransactionReceiptPage() {
+  const router = useRouter();
+  const { amountCoins, selectedBank, transactionId, reset } = useWithdrawStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // If no transaction in store, maybe they refreshed. We could redirect or handle gracefully.
+    // For now we'll just show what's there.
+  }, []);
+
+  const handleReturn = (e: React.MouseEvent) => {
+    e.preventDefault();
+    reset();
+    router.push('/dashboard');
+  };
+
+  if (!mounted) return null; // Avoid hydration mismatch
+
+  const bankName = selectedBank === 'gtbank' ? 'GTBank' : (selectedBank === 'access' ? 'Access Bank' : 'Bank');
+  const convertedAmount = amountCoins * 10.50;
+  const processingFee = convertedAmount * 0.015;
+  const finalAmount = convertedAmount - processingFee;
+
   return (
     <div className="flex-1 w-full bg-surface-container-low min-h-[calc(100vh-64px)] overflow-x-hidden relative flex flex-col items-center justify-center p-gutter md:p-margin-desktop">
       {/* Ambient Background Accents */}
@@ -22,7 +48,9 @@ export default function TransactionReceiptPage() {
           </div>
           <div className="space-y-1">
             <p className="font-body-md text-body-md text-on-surface-variant uppercase tracking-wider">Withdrawal Successful</p>
-            <h2 className="font-data-lg text-[40px] leading-none text-primary font-bold tracking-tight">+₦45,000.00</h2>
+            <h2 className="font-data-lg text-[40px] leading-none text-primary font-bold tracking-tight">
+              +₦{finalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h2>
           </div>
         </div>
 
@@ -45,7 +73,9 @@ export default function TransactionReceiptPage() {
           <div className="flex justify-between items-center py-3 border-b border-outline-variant/10">
             <span className="font-body-sm text-body-sm text-on-surface-variant">Reference ID</span>
             <div className="flex items-center gap-2">
-              <span className="font-data-md text-data-md text-on-surface">TXN-98214-CMP</span>
+              <span className="font-data-md text-data-md text-on-surface">
+                {transactionId ? transactionId.substring(0, 13).toUpperCase() : 'TXN-PENDING'}
+              </span>
               <button className="text-outline hover:text-primary transition-colors">
                 <span className="material-symbols-outlined text-[16px]">content_copy</span>
               </button>
@@ -55,7 +85,9 @@ export default function TransactionReceiptPage() {
           {/* Date/Time Row */}
           <div className="flex justify-between items-center py-3 border-b border-outline-variant/10">
             <span className="font-body-sm text-body-sm text-on-surface-variant">Date &amp; Time</span>
-            <span className="font-body-sm text-body-sm text-on-surface font-medium">Oct 24, 2023 • 14:32 WAT</span>
+            <span className="font-body-sm text-body-sm text-on-surface font-medium">
+              {new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}
+            </span>
           </div>
 
           {/* Payment Method Row */}
@@ -74,7 +106,7 @@ export default function TransactionReceiptPage() {
             <span className="font-body-sm text-body-sm text-on-surface-variant">Destination</span>
             <span className="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-2">
               <span className="material-symbols-outlined text-outline">account_balance</span>
-              GTBank •••• 8912
+              {bankName}
             </span>
           </div>
         </div>
@@ -83,16 +115,18 @@ export default function TransactionReceiptPage() {
         <div className="w-full bg-surface-container rounded-xl p-4 border border-outline-variant/20">
           <div className="flex justify-between items-center mb-2">
             <span className="font-label-caps text-label-caps text-on-surface-variant">Conversion Rate</span>
-            <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦50.00</span>
+            <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="font-body-sm text-body-sm text-on-surface-variant">Coins Spent</span>
-            <span className="font-data-md text-data-md text-primary font-bold">-900 CMP</span>
+            <span className="font-data-md text-data-md text-primary font-bold">-{amountCoins.toLocaleString()} CMP</span>
           </div>
           <div className="w-full h-px bg-outline-variant/20 my-2"></div>
           <div className="flex justify-between items-center">
             <span className="font-body-sm text-body-sm text-on-surface-variant">Fee</span>
-            <span className="font-data-md text-data-md text-on-surface">₦0.00</span>
+            <span className="font-data-md text-data-md text-on-surface">
+              ₦{processingFee.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
         </div>
 
@@ -109,10 +143,10 @@ export default function TransactionReceiptPage() {
         </div>
 
         {/* Return Link */}
-        <Link href="/dashboard" className="font-body-sm text-body-sm text-outline hover:text-primary transition-colors mt-2 flex items-center gap-1">
+        <button onClick={handleReturn} className="font-body-sm text-body-sm text-outline hover:text-primary transition-colors mt-2 flex items-center gap-1">
           <span className="material-symbols-outlined text-[16px]">arrow_back</span>
           Return to Dashboard
-        </Link>
+        </button>
       </div>
     </div>
   );
