@@ -8,7 +8,7 @@ import { useWallet } from '@/lib/useWallet';
 function TopUpAmountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const method = searchParams.get('method') || 'paystack';
+  const method = searchParams?.get('method') || 'paystack';
   const { wallet } = useWallet();
 
   const [activeCurrency, setActiveCurrency] = useState<'usd' | 'cmp'>('usd');
