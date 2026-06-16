@@ -25,7 +25,7 @@ export default function WalletPage() {
         <div className="relative z-10">
           <h2 className="font-body-md text-body-md text-inverse-primary mb-2 opacity-80">Total Balance</h2>
           <div className="flex items-baseline space-x-3 mb-1">
-            <span className="material-symbols-outlined text-secondary-fixed text-4xl">toll</span>
+            <img src="/coin.png" alt="Coin" className="w-10 h-10 object-contain" />
             <span className="font-h1 text-h1 text-secondary-fixed tracking-tight">
               {walletLoading ? '...' : coinBalance.toLocaleString()}
             </span>

@@ -82,7 +82,7 @@ export default function WithdrawAmountPage() {
         <div className="bg-surface border border-outline-variant/30 rounded-lg p-4 mb-8 flex justify-between items-center">
           <span className="font-body-md text-on-surface-variant">Available Balance</span>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+            <img src="/coin.png" alt="Coin" className="w-5 h-5 object-contain" />
             <span className="font-data-lg text-data-lg text-on-surface">
               {isLoading ? '...' : availableBalance.toLocaleString()}
             </span>
@@ -95,7 +95,7 @@ export default function WithdrawAmountPage() {
             <label className="block font-label-caps text-label-caps text-on-surface" htmlFor="withdrawAmount">Amount to Withdraw (Coins)</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+                <img src="/coin.png" alt="Coin" className="w-5 h-5 object-contain" />
               </div>
               <input 
                 id="withdrawAmount" 

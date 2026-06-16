@@ -99,7 +99,7 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
                 </button>
                 <button className="flex items-center space-x-1 border border-secondary-container text-secondary-container px-3 py-1.5 rounded-full hover:bg-secondary-container hover:text-on-secondary-container transition-colors font-data-md text-data-md">
                   <span className="material-symbols-outlined text-[16px]">download</span>
-                  <span>+3 <span className="material-symbols-outlined text-[14px] inline-block align-text-bottom">monetization_on</span></span>
+                  <span className="flex items-center gap-1">+3 <img src="/coin.png" alt="Coin" className="w-3.5 h-3.5 object-contain" /></span>
                 </button>
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
                 </button>
                 <button className="flex items-center space-x-1 border border-secondary-container text-secondary-container px-3 py-1.5 rounded-full hover:bg-secondary-container hover:text-on-secondary-container transition-colors font-data-md text-data-md">
                   <span className="material-symbols-outlined text-[16px]">download</span>
-                  <span>+3 <span className="material-symbols-outlined text-[14px] inline-block align-text-bottom">monetization_on</span></span>
+                  <span className="flex items-center gap-1">+3 <img src="/coin.png" alt="Coin" className="w-3.5 h-3.5 object-contain" /></span>
                 </button>
               </div>
             </div>

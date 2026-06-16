@@ -1,18 +1,74 @@
 'use client';
 
 import Link from 'next/link';
+import { useUserStore } from '@/stores/userStore';
+import { useStreak } from '@/lib/hooks';
+import { useTasks } from '@/lib/hooks';
 
-const weekDays = [
-  { day: 'Mon', completed: true, reward: null },
-  { day: 'Tue', completed: true, reward: null },
-  { day: 'Wed', completed: true, reward: null },
-  { day: 'Thu', completed: true, reward: null },
-  { day: 'Fri', completed: false, current: true, reward: 50 },
-  { day: 'Sat', completed: false, reward: 50 },
-  { day: 'Sun', completed: false, milestone: true, reward: null },
+// Helper: build this week's day data based on current streak
+function buildWeekDays(currentStreak: number) {
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date();
+  const jsDay = today.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+  const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1; // 0=Mon ... 6=Sun
+
+  // How many days completed this week (capped by current streak and day-of-week)
+  const daysCompletedThisWeek = Math.min(currentStreak, mondayBasedToday);
+
+  return dayLabels.map((label, index) => {
+    const isMilestoneDay = index === 6; // Sunday is weekly milestone
+    const isToday = index === mondayBasedToday;
+    const isCompleted = index < daysCompletedThisWeek;
+
+    return {
+      day: label,
+      completed: isCompleted,
+      current: isToday && !isCompleted,
+      milestone: isMilestoneDay && !isCompleted && !isToday,
+      reward: isMilestoneDay ? null : 50,
+    };
+  });
+}
+
+// Milestone definitions
+const MILESTONES = [
+  { days: 7, reward: 2000, label: '7 Day Streak', icon: 'calendar_view_week' },
+  { days: 30, reward: 10000, label: '30 Day Streak', icon: 'calendar_month', page: '/tasks/milestone/30' },
+  { days: 60, reward: 25000, label: '60 Day Titan', icon: 'military_tech', page: '/tasks/milestone/60' },
 ];
 
 export default function StreakPage() {
+  const { user } = useUserStore();
+  const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+
+  const currentStreak = streak?.current_streak ?? 0;
+  const longestStreak = streak?.longest_streak ?? 0;
+
+  const weekDays = buildWeekDays(currentStreak);
+  const daysCompletedThisWeek = weekDays.filter(d => d.completed).length;
+  const jsDay = new Date().getDay();
+  const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
+  const dayOfWeek = mondayBasedToday + 1; // 1-indexed
+
+  // Weekly progress bar percentage
+  const progressPercent = Math.round((daysCompletedThisWeek / 7) * 100);
+
+  // Milestone status
+  function getMilestoneStatus(milestoneDays: number) {
+    if (currentStreak >= milestoneDays) return 'completed';
+    return 'locked';
+  }
+
+  function getMilestoneDaysLeft(milestoneDays: number) {
+    const left = milestoneDays - currentStreak;
+    return left > 0 ? left : 0;
+  }
+
+  // Pick 3 daily tasks for display
+  const dailyTasks = tasks.slice(0, 3);
+  const completedDailyCount = 0; // In a real app, track per-user task completions
+
   return (
     <div className="flex-1 w-full pb-24 lg:pb-8 min-h-screen">
       {/* Hero Section */}
@@ -30,7 +86,11 @@ export default function StreakPage() {
               <span className="material-symbols-outlined text-secondary-fixed text-4xl mr-4" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
               <div>
                 <p className="font-label-caps text-label-caps text-on-primary-container uppercase">Current Streak</p>
-                <p className="font-h2 text-h2 text-secondary-fixed">12 Days</p>
+                {streakLoading ? (
+                  <div className="h-8 w-20 bg-on-primary-fixed-variant/20 animate-pulse rounded mt-1" />
+                ) : (
+                  <p className="font-h2 text-h2 text-secondary-fixed">{currentStreak} {currentStreak === 1 ? 'Day' : 'Days'}</p>
+                )}
               </div>
             </div>
           </div>
@@ -44,12 +104,12 @@ export default function StreakPage() {
           <div className="lg:col-span-2 bg-surface-alt rounded-xl p-6 border border-outline-variant/30 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-h3 text-h3 text-on-surface">This Week</h3>
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Day 5 of 7</span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">Day {dayOfWeek} of 7</span>
             </div>
             <div className="flex justify-between items-center relative overflow-x-auto pb-4">
               {/* Progress Line */}
               <div className="absolute top-1/2 left-0 w-full min-w-[300px] h-1 bg-surface-container-high -z-10 -translate-y-1/2 rounded-full"></div>
-              <div className="absolute top-1/2 left-0 w-[57%] h-1 bg-[#B8860B] -z-10 -translate-y-1/2 rounded-full"></div>
+              <div className="absolute top-1/2 left-0 h-1 bg-[#B8860B] -z-10 -translate-y-1/2 rounded-full" style={{ width: `${progressPercent}%` }}></div>
               
               {weekDays.map((day) => (
                 <div key={day.day} className="flex flex-col items-center gap-2 z-10 px-2">
@@ -64,7 +124,7 @@ export default function StreakPage() {
                     </div>
                   ) : day.milestone ? (
                     <div className="w-10 h-10 rounded-full bg-surface-container-high border-2 border-surface-alt flex items-center justify-center border-dashed border-[#B8860B]/50">
-                      <span className="material-symbols-outlined text-[#B8860B]/50 text-sm">monetization_on</span>
+                      <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain opacity-50" />
                     </div>
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border-2 border-surface-alt">
@@ -83,32 +143,39 @@ export default function StreakPage() {
           <div className="bg-surface-alt rounded-xl p-6 border border-outline-variant/30 flex flex-col shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
             <h3 className="font-h3 text-h3 text-on-surface mb-6">Milestones</h3>
             <div className="space-y-4 flex-1">
-              {/* 7 Day Milestone */}
-              <div className="flex items-center p-3 bg-surface rounded-lg border border-outline/10">
-                <div className="w-12 h-12 rounded-full bg-secondary-container/20 flex items-center justify-center mr-4">
-                  <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_view_week</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-body-md text-body-md font-semibold text-on-surface">7 Day Streak</p>
-                  <p className="font-data-md text-data-md text-secondary mt-1">🪙 2,000</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-label-caps text-label-caps text-outline">2 Days left</p>
-                </div>
-              </div>
-              {/* 30 Day Milestone */}
-              <div className="flex items-center p-3 bg-surface rounded-lg border border-outline/10 opacity-70">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mr-4">
-                  <span className="material-symbols-outlined text-on-surface-variant">calendar_month</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-body-md text-body-md font-semibold text-on-surface">30 Day Streak</p>
-                  <p className="font-data-md text-data-md text-on-surface-variant mt-1">🪙 10,000</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-label-caps text-label-caps text-outline">18 Days left</p>
-                </div>
-              </div>
+              {MILESTONES.map((milestone) => {
+                const status = getMilestoneStatus(milestone.days);
+                const daysLeft = getMilestoneDaysLeft(milestone.days);
+                const isCompleted = status === 'completed';
+
+                const content = (
+                  <div className={`flex items-center p-3 bg-surface rounded-lg border border-outline/10 transition-colors ${isCompleted ? 'hover:bg-surface-container-lowest' : 'opacity-70'}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${isCompleted ? 'bg-secondary-container/20' : 'bg-surface-container-high'}`}>
+                      <span className={`material-symbols-outlined ${isCompleted ? 'text-[#B8860B]' : 'text-on-surface-variant'}`} style={isCompleted ? { fontVariationSettings: "'FILL' 1" } : undefined}>{milestone.icon}</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-body-md text-body-md font-semibold text-on-surface">{milestone.label}</p>
+                      <p className={`font-data-md text-data-md mt-1 ${isCompleted ? 'text-secondary' : 'text-on-surface-variant'}`}>🪙 {milestone.reward.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      {isCompleted ? (
+                        <span className="font-label-caps text-label-caps text-success-verified flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                          Done
+                        </span>
+                      ) : (
+                        <p className="font-label-caps text-label-caps text-outline">{daysLeft} {daysLeft === 1 ? 'Day' : 'Days'} left</p>
+                      )}
+                    </div>
+                  </div>
+                );
+
+                return isCompleted && milestone.page ? (
+                  <Link key={milestone.days} href={milestone.page}>{content}</Link>
+                ) : (
+                  <div key={milestone.days}>{content}</div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -117,40 +184,31 @@ export default function StreakPage() {
           {/* Daily Tasks */}
           <div className="lg:col-span-2 bg-surface-alt rounded-xl p-6 border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-h3 text-h3 text-on-surface">Today's Tasks</h3>
-              <span className="bg-[#B8860B] text-primary font-label-caps text-label-caps px-2 py-1 rounded">1/3 Completed</span>
+              <h3 className="font-h3 text-h3 text-on-surface">Today&apos;s Tasks</h3>
+              <span className="bg-[#B8860B] text-primary font-label-caps text-label-caps px-2 py-1 rounded">
+                {completedDailyCount}/{dailyTasks.length} Completed
+              </span>
             </div>
             <div className="space-y-3">
-              {/* Task 1 (Completed) */}
-              <div className="flex items-center p-4 bg-surface rounded-lg border-l-4 border-success-verified">
-                <div className="mr-4">
-                  <span className="material-symbols-outlined text-success-verified" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-body-md text-body-md font-semibold text-on-surface line-through text-outline">Listen to 3 new tracks</p>
-                </div>
-                <span className="font-data-md text-data-md text-outline">🪙 10</span>
-              </div>
-              {/* Task 2 (Pending) */}
-              <div className="flex items-center p-4 bg-surface rounded-lg border-l-4 border-outline/20">
-                <div className="mr-4">
-                  <span className="material-symbols-outlined text-outline">radio_button_unchecked</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-body-md text-body-md font-semibold text-on-surface">Share a playlist</p>
-                </div>
-                <span className="font-data-md text-data-md text-[#B8860B]">🪙 25</span>
-              </div>
-              {/* Task 3 (Pending) */}
-              <div className="flex items-center p-4 bg-surface rounded-lg border-l-4 border-outline/20">
-                <div className="mr-4">
-                  <span className="material-symbols-outlined text-outline">radio_button_unchecked</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-body-md text-body-md font-semibold text-on-surface">Purchase a digital collectible</p>
-                </div>
-                <span className="font-data-md text-data-md text-[#B8860B]">🪙 50</span>
-              </div>
+              {tasksLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-16 bg-surface animate-pulse rounded-lg" />
+                ))
+              ) : dailyTasks.length === 0 ? (
+                <div className="py-8 text-center text-on-surface-variant">No tasks available today.</div>
+              ) : (
+                dailyTasks.map((task, index) => (
+                  <div key={task.id} className="flex items-center p-4 bg-surface rounded-lg border-l-4 border-outline/20">
+                    <div className="mr-4">
+                      <span className="material-symbols-outlined text-outline">radio_button_unchecked</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-body-md text-body-md font-semibold text-on-surface">{task.title}</p>
+                    </div>
+                    <span className="font-data-md text-data-md text-[#B8860B]">🪙 {task.coin_reward}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -175,6 +233,36 @@ export default function StreakPage() {
                 <span className="font-data-md text-data-md">🪙 500</span>
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-surface-alt rounded-xl p-5 border border-outline-variant/30 text-center">
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-2">Current</p>
+            <p className="font-h2 text-h2 text-primary">{currentStreak}</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">days</p>
+          </div>
+          <div className="bg-surface-alt rounded-xl p-5 border border-outline-variant/30 text-center">
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-2">Best</p>
+            <p className="font-h2 text-h2 text-[#B8860B]">{longestStreak}</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">days</p>
+          </div>
+          <div className="bg-surface-alt rounded-xl p-5 border border-outline-variant/30 text-center">
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-2">Next Milestone</p>
+            <p className="font-h2 text-h2 text-primary-container">
+              {currentStreak < 7 ? 7 : currentStreak < 30 ? 30 : currentStreak < 60 ? 60 : '✓'}
+            </p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              {currentStreak >= 60 ? 'All done!' : 'days'}
+            </p>
+          </div>
+          <div className="bg-surface-alt rounded-xl p-5 border border-outline-variant/30 text-center">
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-2">Progress</p>
+            <p className="font-h2 text-h2 text-success-verified">
+              {currentStreak >= 60 ? 100 : Math.round((currentStreak / 60) * 100)}%
+            </p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">to Titan</p>
           </div>
         </div>
       </div>

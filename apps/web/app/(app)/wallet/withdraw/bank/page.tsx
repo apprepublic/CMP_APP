@@ -131,8 +131,8 @@ export default function WithdrawBankPage() {
           <div className="space-y-3 bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/20">
             <div className="flex justify-between items-center">
               <span className="font-body-sm text-body-sm text-on-surface-variant">Amount to withdraw</span>
-              <div className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[#B8860B] text-sm">monetization_on</span>
+              <div className="flex items-center gap-2">
+                <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain" />
                 <span className="font-data-md text-data-md text-on-surface">{amountCoins.toLocaleString()}</span>
               </div>
             </div>

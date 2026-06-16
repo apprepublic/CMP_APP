@@ -23,23 +23,6 @@ export default function DashboardPage() {
       {/* Desktop Header Area (Hero background) */}
       <div className="hidden lg:block h-64 bg-primary-container w-full relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-        <div className="absolute top-0 right-0 p-8 flex items-center gap-6 z-10">
-          <div className="flex items-center gap-2 bg-surface-container-low/10 border-[1.5px] border-[#B8860B] rounded-full px-4 py-2 backdrop-blur-sm">
-            <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            <span className="font-data-md text-data-md text-[#B8860B] text-lg">{walletLoading ? '...' : coinBalance.toLocaleString()} Coins</span>
-          </div>
-          <button className="text-on-primary hover:text-[#B8860B] transition-colors relative">
-            <span className="material-symbols-outlined text-2xl">notifications</span>
-            <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
-          </button>
-          <button className="w-10 h-10 rounded-full border-2 border-outline overflow-hidden hover:border-[#B8860B] transition-colors bg-surface-dim">
-            {avatarUrl ? (
-              <img alt="User Profile" className="w-full h-full object-cover" src={avatarUrl} />
-            ) : (
-              <span className="material-symbols-outlined text-on-surface w-full h-full flex items-center justify-center">person</span>
-            )}
-          </button>
-        </div>
         <div className="absolute bottom-12 left-10 z-10">
           <h2 className="font-h1 text-h1 text-on-primary mb-2">Welcome Back, {displayName}.</h2>
           <p className="font-body-lg text-body-lg text-on-primary-container">Let's grow your creative enterprise today.</p>

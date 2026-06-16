@@ -1,8 +1,26 @@
 'use client';
 
 import Link from 'next/link';
+import { useUserStore } from '@/stores/userStore';
+import { useStreak } from '@/lib/hooks';
 
 export default function Milestone60Page() {
+  const { user } = useUserStore();
+  const { data: streak, isLoading } = useStreak(user?.id || '');
+
+  const currentStreak = streak?.current_streak ?? 0;
+  const hasReached60 = currentStreak >= 60;
+  const progressTo60 = Math.min(100, Math.round((currentStreak / 60) * 100));
+  const daysLeft = Math.max(0, 60 - currentStreak);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 w-full flex items-center justify-center min-h-[calc(100vh-64px)]">
+        <span className="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 w-full overflow-x-hidden pb-24 md:pb-0 relative min-h-[calc(100vh-64px)]">
       {/* Background Decor */}
@@ -15,9 +33,13 @@ export default function Milestone60Page() {
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-4 mt-8">
           <p className="font-label-caps text-label-caps text-[#B8860B] uppercase tracking-widest mb-2">Creative Growth</p>
-          <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-primary-container mb-4 tracking-tight">Road to Titan</h1>
+          <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-primary-container mb-4 tracking-tight">
+            {hasReached60 ? 'Titan Unlocked!' : 'Road to Titan'}
+          </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-            You're halfway there. Reach the 60-day streak to achieve Titan status, unlocking the Creator Tier and the ultimate 25,000 CMP bonus.
+            {hasReached60 
+              ? "You've achieved legendary status. 60 consecutive days of dedication to the creative economy. You are a Titan."
+              : `You're ${daysLeft} days away. Reach the 60-day streak to achieve Titan status, unlocking the Creator Tier and the ultimate 25,000 CMP bonus.`}
           </p>
         </div>
 
@@ -25,15 +47,16 @@ export default function Milestone60Page() {
         <div className="flex justify-center my-8">
           <div className="relative group">
             {/* Glow effect behind badge */}
-            <div className="absolute inset-0 rounded-full animate-pulse blur-[30px] bg-secondary-container/40 z-0"></div>
+            <div className={`absolute inset-0 rounded-full animate-pulse blur-[30px] ${hasReached60 ? 'bg-[#B8860B]/40' : 'bg-secondary-container/40'} z-0`}></div>
             
             <div className="w-48 h-48 rounded-full border-4 border-surface-alt bg-primary-container flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
               <div className="absolute inset-0 bg-gradient-to-br from-primary-container to-primary-fixed-dim/40"></div>
               
               <div className="relative z-20 flex flex-col items-center">
                 <span className="material-symbols-outlined text-[72px] text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
-                <span className="font-label-caps text-[10px] text-on-primary uppercase tracking-[0.2em] mt-2 opacity-80">Locked</span>
+                <span className="font-label-caps text-[10px] text-on-primary uppercase tracking-[0.2em] mt-2 opacity-80">
+                  {hasReached60 ? 'Unlocked' : 'Locked'}
+                </span>
               </div>
             </div>
             
@@ -47,15 +70,17 @@ export default function Milestone60Page() {
           <div className="flex justify-between items-end mb-4">
             <div>
               <h3 className="font-h3 text-h3 text-on-surface mb-1">Titan Milestone</h3>
-              <p className="font-body-sm text-body-sm text-on-surface-variant">30 days left to unlock</p>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                {hasReached60 ? 'Milestone achieved!' : `${daysLeft} days left to unlock`}
+              </p>
             </div>
             <div className="text-right">
-              <span className="font-data-lg text-h2 text-primary-container">50%</span>
+              <span className="font-data-lg text-h2 text-primary-container">{progressTo60}%</span>
             </div>
           </div>
           
           <div className="w-full h-4 bg-surface-container-high rounded-full overflow-hidden mb-6 relative shadow-inner">
-            <div className="h-full bg-gradient-to-r from-primary to-[#B8860B] rounded-full relative" style={{ width: '50%' }}>
+            <div className="h-full bg-gradient-to-r from-primary to-[#B8860B] rounded-full relative" style={{ width: `${progressTo60}%` }}>
               {/* Shimmer effect */}
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_infinite]"></div>
             </div>
@@ -63,7 +88,7 @@ export default function Milestone60Page() {
           
           <div className="flex justify-between text-on-surface-variant font-data-md text-data-md">
             <span>Day 0</span>
-            <span className="text-primary font-bold">Day 30 (You)</span>
+            <span className="text-primary font-bold">Day {currentStreak} (You)</span>
             <span>Day 60</span>
           </div>
           
@@ -78,9 +103,15 @@ export default function Milestone60Page() {
               </div>
             </div>
             
-            <Link href="/dashboard" className="w-full sm:w-auto bg-primary text-on-primary font-body-md text-body-md font-medium py-3 px-8 rounded-lg hover:bg-on-primary-fixed transition-colors text-center shadow-sm">
-              Keep Grinding
-            </Link>
+            {hasReached60 ? (
+              <button className="w-full sm:w-auto bg-[#B8860B] text-primary font-body-md text-body-md font-medium py-3 px-8 rounded-lg hover:bg-[#8B6914] transition-colors text-center shadow-sm">
+                Claim Reward
+              </button>
+            ) : (
+              <Link href="/tasks/streak" className="w-full sm:w-auto bg-primary text-on-primary font-body-md text-body-md font-medium py-3 px-8 rounded-lg hover:bg-on-primary-fixed transition-colors text-center shadow-sm">
+                Keep Grinding
+              </Link>
+            )}
           </div>
         </div>
       </div>

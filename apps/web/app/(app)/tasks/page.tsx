@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useTasks } from '@/lib/hooks';
 
 export default function EarnMarketplacePage() {
@@ -21,11 +22,20 @@ export default function EarnMarketplacePage() {
   return (
     <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full">
       {/* Header Section */}
-      <div className="mb-10 mt-6 lg:mt-0">
-        <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-primary mb-4">Task Marketplace</h1>
-        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-          Complete verified tasks to earn premium rewards and build your creative capital. Watch out for Ad-Gated premium tasks for higher payouts.
-        </p>
+      <div className="mb-10 mt-6 lg:mt-0 flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div>
+          <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-primary mb-4">Task Marketplace</h1>
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+            Complete verified tasks to earn premium rewards and build your creative capital. Watch out for Ad-Gated premium tasks for higher payouts.
+          </p>
+        </div>
+        <Link 
+          href="/tasks/streak"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary rounded-xl font-body-md text-body-md font-semibold transition-colors shadow-sm whitespace-nowrap self-start md:self-auto w-full md:w-auto"
+        >
+          <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+          Daily Streak & Rewards
+        </Link>
       </div>
 
       {/* Filter Tabs */}

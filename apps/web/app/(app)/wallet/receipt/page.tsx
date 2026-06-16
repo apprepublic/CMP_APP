@@ -94,8 +94,8 @@ export default function TransactionReceiptPage() {
           <div className="flex justify-between items-center py-3 border-b border-outline-variant/10">
             <span className="font-body-sm text-body-sm text-on-surface-variant">Source</span>
             <span className="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full border-[1.5px] border-secondary flex items-center justify-center bg-transparent">
-                <span className="material-symbols-outlined text-[12px] text-secondary">monetization_on</span>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center bg-transparent">
+                <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain" />
               </span>
               CMP Coins
             </span>
