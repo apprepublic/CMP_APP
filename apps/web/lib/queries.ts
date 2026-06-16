@@ -100,6 +100,16 @@ export interface CoinTransaction {
   created_at: string;
 }
 
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export interface Streak {
   id: string;
   user_id: string;
@@ -331,4 +341,27 @@ export async function logSongPlay(songId: string, secondsPlayed: number): Promis
     seconds_played: Math.round(secondsPlayed),
     is_rewarded: secondsPlayed >= 30,
   });
+}
+
+/* ------------------------ NOTIFICATIONS ----------------------- */
+
+export async function getNotifications(userId: string): Promise<AppNotification[]> {
+  return unwrap<AppNotification[]>(
+    await db
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20)
+  );
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const { error } = await db.from('notifications').update({ is_read: true }).eq('id', id);
+  if (error) console.error('Failed to mark notification read:', error);
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  const { error } = await db.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false);
+  if (error) console.error('Failed to mark all notifications read:', error);
 }

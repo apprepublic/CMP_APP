@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useUserStore } from '@/stores/userStore';
 import { useWallet } from '@/lib/useWallet';
+import NotificationDropdown from './NotificationDropdown';
+import UserMenuDropdown from './UserMenuDropdown';
 
 export default function TopNavBar() {
   const { user } = useUserStore();
@@ -28,12 +30,8 @@ export default function TopNavBar() {
           </span>
         </div>
         
-        <button className="text-on-primary lg:text-on-primary-container hover:text-secondary transition-colors scale-95 active:duration-100">
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
-        <button className="text-on-primary lg:text-on-primary-container hover:text-secondary transition-colors scale-95 active:duration-100">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>account_circle</span>
-        </button>
+        <NotificationDropdown />
+        <UserMenuDropdown />
       </div>
     </header>
   );

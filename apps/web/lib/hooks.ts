@@ -17,6 +17,7 @@ import {
   getStreak,
   getReferralStats,
   getReferrals,
+  getNotifications,
 } from './queries';
 
 /**
@@ -62,3 +63,6 @@ export const useReferralStats = (userId: string) =>
 
 export const useReferrals = (userId: string) =>
   useQuery({ queryKey: ['referrals', userId], queryFn: () => getReferrals(userId), enabled: !!userId });
+
+export const useNotifications = (userId: string) =>
+  useQuery({ queryKey: ['notifications', userId], queryFn: () => getNotifications(userId), enabled: !!userId });
