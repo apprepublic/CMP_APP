@@ -72,7 +72,7 @@ export default function StreakPage() {
   return (
     <div className="flex-1 w-full pb-24 lg:pb-8 min-h-screen">
       {/* Hero Section */}
-      <section className="bg-primary-container text-on-primary w-full px-margin-mobile md:px-margin-desktop py-12 lg:py-16 relative overflow-hidden -mx-margin-mobile lg:-mx-gutter lg:-mt-16 mb-8 w-[calc(100%+32px)] lg:w-[calc(100%+48px)]">
+      <section className="bg-primary-container text-on-primary w-full px-margin-mobile md:px-margin-desktop py-12 lg:py-16 relative overflow-hidden mb-8">
         {/* Background Texture */}
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
         <div className="relative z-10 max-w-container-max mx-auto">
@@ -97,7 +97,7 @@ export default function StreakPage() {
         </div>
       </section>
 
-      <div className="max-w-container-max mx-auto space-y-8">
+      <div className="max-w-container-max mx-auto space-y-8 px-margin-mobile md:px-margin-desktop">
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* The 7-Day Progress Track (Spans 2 columns on desktop) */}
