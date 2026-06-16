@@ -73,7 +73,7 @@ export default function SettingsPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { error } = (await supabase
         .from('User' as any)
         .update({
           displayName: fullName,
@@ -81,7 +81,7 @@ export default function SettingsPage() {
           bio: bio,
           country: country,
         } as any)
-        .eq('id', authUser.id);
+        .eq('id', authUser.id)) as { error: any };
 
       if (error) throw error;
       setSaveMessage('Profile updated successfully!');
