@@ -2,6 +2,10 @@
 
 import Link from 'next/link';
 
+export function generateStaticParams() {
+  return [];
+}
+
 export default function StorefrontPage({ params }: { params: { id: string } }) {
   // Mock data for the store
   const store = {
