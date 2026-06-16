@@ -13,7 +13,7 @@ export default function DashboardPage() {
   
   const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
 
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
   const coinBalance = wallet?.coin_balance ?? 0;
   const avatarUrl = null;
   const currentStreak = streak?.current_streak || 0;
@@ -24,7 +24,7 @@ export default function DashboardPage() {
       <div className="hidden lg:block h-64 bg-primary-container w-full relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
         <div className="absolute bottom-12 left-10 z-10">
-          <h2 className="font-h1 text-h1 text-on-primary mb-2">Welcome Back, {displayName}.</h2>
+          <h2 className="font-h1 text-h1 text-on-primary mb-2">Welcome Back, {firstName}.</h2>
           <p className="font-body-lg text-body-lg text-on-primary-container">Let's grow your creative enterprise today.</p>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function DashboardPage() {
       <div className="px-margin-mobile md:px-margin-desktop py-8 lg:-mt-16 relative z-20 max-w-container-max mx-auto space-y-12">
         {/* Mobile Welcome */}
         <div className="lg:hidden mb-6 mt-4">
-          <h2 className="font-h1-mobile text-h1-mobile text-on-surface">Hi, {displayName}</h2>
+          <h2 className="font-h1-mobile text-h1-mobile text-on-surface">Hi, {firstName}</h2>
           <p className="font-body-md text-body-md text-on-surface-variant">Here is your daily summary.</p>
         </div>
 
