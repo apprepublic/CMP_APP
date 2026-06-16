@@ -13,9 +13,9 @@ export default function DashboardPage() {
   
   const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
 
-  const displayName = user?.displayName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const coinBalance = wallet?.coin_balance ?? 0;
-  const avatarUrl = user?.user_metadata?.avatar_url || null;
+  const avatarUrl = null;
   const currentStreak = streak?.current_streak || 0;
 
   return (
