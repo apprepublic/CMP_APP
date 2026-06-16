@@ -81,8 +81,12 @@ export const useUserStore = create<UserStore>()(
             isLoading: false,
           });
         } catch (error) {
-          set({ isLoading: false });
-          throw error;
+          // API server may be down — continue with Supabase auth as source of truth
+          set({
+            user: null,
+            isAuthenticated: true,
+            isLoading: false,
+          });
         }
       },
 

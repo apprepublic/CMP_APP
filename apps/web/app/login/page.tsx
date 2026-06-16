@@ -40,6 +40,7 @@ export default function LoginPage() {
           }
         } catch {
           // API server may be down — Supabase auth is the source of truth
+          // Continue with login using Supabase session
         }
 
         await login({ email, password });
