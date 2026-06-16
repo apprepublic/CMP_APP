@@ -9,8 +9,8 @@ import { useUserStore } from '@/stores/userStore';
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const amountStr = searchParams.get('amount') || '0';
-  const method = searchParams.get('method') || 'paystack';
+  const amountStr = searchParams?.get('amount') || '0';
+  const method = searchParams?.get('method') || 'paystack';
   const { wallet } = useWallet();
   const { user } = useUserStore();
 
