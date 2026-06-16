@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { AuthHeader } from '@/components/auth-header';
 
 interface AuthLayoutProps {
@@ -36,15 +37,29 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </motion.div>
 
       {/* Right Side: Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 pt-20 lg:pt-32">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="w-full max-w-md"
-        >
-          {children}
-        </motion.div>
+      <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 md:p-12 pt-20 lg:pt-32 relative min-h-screen">
+        <div className="flex-1 flex flex-col items-center justify-center w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="w-full max-w-md"
+          >
+            {children}
+          </motion.div>
+        </div>
+        
+        {/* Auth Footer */}
+        <div className="w-full text-center mt-12 pb-4">
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
+            &copy; {new Date().getFullYear()} CMPapp. All rights reserved.
+          </p>
+          <div className="flex justify-center gap-4 mt-2 font-body-sm text-body-sm text-on-surface-variant">
+            <Link href="/terms" className="hover:text-primary-container transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-primary-container transition-colors">Privacy Policy</Link>
+            <Link href="/support" className="hover:text-primary-container transition-colors">Support</Link>
+          </div>
+        </div>
       </div>
     </div>
   );
