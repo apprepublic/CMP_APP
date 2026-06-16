@@ -76,6 +76,7 @@ export default function SettingsPage() {
       // @ts-ignore - Supabase type inference doesn't work with custom tables
       const { error } = await supabase
         .from('User')
+        // @ts-ignore
         .update({
           displayName: fullName,
           username: username,
