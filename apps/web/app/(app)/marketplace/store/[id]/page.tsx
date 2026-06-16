@@ -1,9 +1,7 @@
 import Link from 'next/link';
 
-export const dynamicParams = true;
-
 export function generateStaticParams() {
-  return [];
+  return [{ id: 'example-store' }];
 }
 
 export default function StorefrontPage({ params }: { params: { id: string } }) {
