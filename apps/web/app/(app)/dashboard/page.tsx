@@ -12,9 +12,9 @@ export default function DashboardPage() {
   const { wallet, loading: walletLoading } = useWallet();
   const { user } = useUserStore();
 
-  const displayName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'User';
-  const coinBalance = wallet?.coin_balance ?? 0;
-  const avatarUrl = user?.user_metadata?.avatar_url || null;
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const coinBalance = wallet?.coinBalance ?? 0;
+  const avatarUrl = null;
 
   return (
     <div className="flex-1 w-full pb-24 md:pb-0 min-h-screen relative z-0">
