@@ -48,14 +48,14 @@ export default function SettingsPage() {
       if (!authUser) return;
 
       const { data: profile } = await supabase
-        .from('User' as any)
+        .from('users' as any)
         .select('*')
         .eq('id', authUser.id)
         .single();
 
       if (profile) {
         const p = profile as Record<string, any>;
-        setFullName(p.displayName || p.full_name || '');
+        setFullName(p.full_name || p.displayName || '');
         setUsername(p.username || '');
         setEmail(authUser.email || '');
         setBio(p.bio || '');
@@ -75,10 +75,10 @@ export default function SettingsPage() {
 
       // @ts-ignore - Supabase type inference doesn't work with custom tables
       const { error } = await supabase
-        .from('User')
+        .from('users')
         // @ts-ignore
         .update({
-          displayName: fullName,
+          full_name: fullName,
           username: username,
           bio: bio,
           country: country,

@@ -97,40 +97,40 @@ const handler = async (req: Request): Promise<Response> => {
     const userId = authData.user.id;
     console.log("Auth user created:", userId);
 
-    const { data: profileCheck } = await supabase.from("User").select("id").eq("id", userId).maybeSingle();
+    const { data: profileCheck } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
     if (!profileCheck) {
-      const { error: profileError } = await supabase.from("User").insert({
+      const { error: profileError } = await supabase.from("users").insert({
         id: userId,
         email: pendingReg.email,
-        displayName: pendingReg.full_name,
+        full_name: pendingReg.full_name,
       });
       if (profileError) {
         console.error("Profile error:", profileError);
+        return jsonResponse({ error: "Failed to create profile: " + profileError.message });
       }
     }
 
-    const { data: walletCheck } = await supabase.from("Wallet").select("id").eq("userId", userId).maybeSingle();
+    const { data: walletCheck } = await supabase.from("wallets").select("id").eq("user_id", userId).maybeSingle();
     if (!walletCheck) {
-      const { error: walletError } = await supabase.from("Wallet").insert({
-        userId: userId,
-        coinBalance: 500,
-        lifetimeEarned: 500,
-        lifetimeSpent: 0,
+      const { error: walletError } = await supabase.from("wallets").insert({
+        user_id: userId,
+        coin_balance: "500",
+        lifetime_earned: "500",
+        lifetime_spent: "0",
       });
       if (walletError) {
         console.error("Wallet error:", walletError);
+        return jsonResponse({ error: "Failed to create wallet: " + walletError.message });
       }
     }
 
-    // Handle referral
     if (pendingReg.referral_code) {
       const { data: referrer } = await supabase
-        .from("Wallet").select("userId").eq("referralCode", pendingReg.referral_code).single();
+        .from("wallets").select("user_id").eq("referral_code", pendingReg.referral_code).single();
       if (referrer) {
-        await supabase.from("Referral").insert({
-          referrerId: referrer.userId,
-          referredUserId: userId,
-          referralCode: pendingReg.referral_code,
+        await supabase.from("referrals").insert({
+          referrer_id: referrer.user_id,
+          referred_user_id: userId,
           status: "pending",
         });
       }
