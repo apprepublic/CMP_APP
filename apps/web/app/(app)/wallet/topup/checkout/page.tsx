@@ -39,6 +39,7 @@ function CheckoutContent() {
 
         // In a real app, this would happen in a secure backend webhook
         // For the demo, we update it from the client directly.
+        // @ts-ignore
         const { error: walletError } = await supabase
           .from('wallets')
           .update({ coin_balance: newBalance } as any)
