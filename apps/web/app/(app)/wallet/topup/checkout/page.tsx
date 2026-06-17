@@ -41,7 +41,7 @@ function CheckoutContent() {
         // For the demo, we update it from the client directly.
         const { error: walletError } = await supabase
           .from('wallets')
-          .update({ coin_balance: newBalance })
+          .update({ coin_balance: newBalance } as any)
           .eq('id', wallet.id);
 
         if (!walletError) {
@@ -52,7 +52,7 @@ function CheckoutContent() {
             amount: coinsToAdd,
             balance_after: newBalance.toString(),
             description: `Top up via ${method}`,
-          });
+          } as any);
         }
       }
     } catch (error) {

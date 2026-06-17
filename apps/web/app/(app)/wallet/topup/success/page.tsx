@@ -7,8 +7,8 @@ import { useUserStore } from '@/stores/userStore';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const coins = searchParams.get('coins') || '0';
-  const method = searchParams.get('method') || 'paystack';
+  const coins = searchParams?.get('coins') || '0';
+  const method = searchParams?.get('method') || 'paystack';
   const { user } = useUserStore();
   
   const [showConfetti, setShowConfetti] = useState(false);
