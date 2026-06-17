@@ -5,6 +5,9 @@ import { useFeaturedSongs, useTasks, useStreak } from '@/lib/hooks';
 import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
 export default function DashboardPage() {
   const { data: songs = [], isLoading: songsLoading } = useFeaturedSongs();
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
@@ -13,7 +16,22 @@ export default function DashboardPage() {
   
   const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
 
-  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
+  const [firstName, setFirstName] = useState(
+    user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'User'
+  );
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const authUser = data.user;
+      if (authUser) {
+        const meta = authUser.user_metadata;
+        const name = meta?.full_name || meta?.displayName || authUser.email?.split('@')[0] || 'User';
+        if (name && name !== 'User') {
+          setFirstName(name.split(' ')[0]);
+        }
+      }
+    });
+  }, [user]);
   const coinBalance = wallet?.coin_balance ?? 0;
   const avatarUrl = null;
   const currentStreak = streak?.current_streak || 0;
