@@ -42,9 +42,9 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check existing user in both User table AND auth
+    // Check existing user in User table
     const { data: existing } = await supabase
-      .from("users")
+      .from("User")
       .select("id")
       .eq("email", email.toLowerCase())
       .maybeSingle();

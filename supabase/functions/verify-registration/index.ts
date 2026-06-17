@@ -97,17 +97,33 @@ const handler = async (req: Request): Promise<Response> => {
     const userId = authData.user.id;
     console.log("Auth user created:", userId);
 
-    const { data: profileCheck } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
+    // Generate username from email or full name
+    const baseUsername = pendingReg.full_name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30);
+    const username = `${baseUsername}_${userId.slice(0, 4)}`; // Add unique suffix
+
+    // Check if profile already exists
+    const { data: profileCheck } = await supabase.from("profiles").select("id").eq("id", userId).maybeSingle();
     if (!profileCheck) {
-      const { error: profileError } = await supabase.from("users").insert({
+      // Find referrer if referral code was used
+      let referredBy: string | null = null;
+      if (pendingReg.referral_code) {
+        const { data: referrer } = await supabase
+          .from("profiles").select("id").eq("referral_code", pendingReg.referral_code).maybeSingle();
+        referredBy = referrer?.id || null;
+      }
+
+      const { error: profileError } = await supabase.from("profiles").insert({
         id: userId,
-        email: pendingReg.email,
         full_name: pendingReg.full_name,
+        username: username,
+        referral_code: pendingReg.referral_code || undefined, // Let DB generate if not provided
+        referred_by: referredBy,
       });
       if (profileError) {
         console.error("Profile error:", profileError);
         return jsonResponse({ error: "Failed to create profile: " + profileError.message });
       }
+      console.log("Profile created for user:", userId);
     }
 
     const { data: walletCheck } = await supabase.from("wallets").select("id").eq("user_id", userId).maybeSingle();
@@ -122,18 +138,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.error("Wallet error:", walletError);
         return jsonResponse({ error: "Failed to create wallet: " + walletError.message });
       }
-    }
-
-    if (pendingReg.referral_code) {
-      const { data: referrer } = await supabase
-        .from("wallets").select("user_id").eq("referral_code", pendingReg.referral_code).single();
-      if (referrer) {
-        await supabase.from("referrals").insert({
-          referrer_id: referrer.user_id,
-          referred_user_id: userId,
-          status: "pending",
-        });
-      }
+      console.log("Wallet created for user:", userId);
     }
 
     // Delete pending registration
