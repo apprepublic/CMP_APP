@@ -144,15 +144,15 @@ export const useUserStore = create<UserStore>()(
               id: authUser.id,
               email: authUser.email || null,
               phone: '', // Not stored in profiles
-              displayName: profile.full_name || authUser.email || '',
-              username: profile.username || '',
+              displayName: (profile as any).full_name || authUser.email || '',
+              username: (profile as any).username || '',
               role: 'USER',
               kycStatus: 'NONE',
-              referralCode: profile.referral_code || '',
+              referralCode: (profile as any).referral_code || '',
               wallet: wallet ? {
-                coinBalance: Number(wallet.coinBalance) || 0,
-                lifetimeEarned: Number(wallet.lifetimeEarned) || 0,
-                lifetimeSpent: Number(wallet.lifetimeSpent) || 0,
+                coinBalance: Number((wallet as any).coinBalance) || 0,
+                lifetimeEarned: Number((wallet as any).lifetimeEarned) || 0,
+                lifetimeSpent: Number((wallet as any).lifetimeSpent) || 0,
               } : undefined,
             };
             set({ user, isAuthenticated: true });
