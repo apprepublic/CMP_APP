@@ -7,7 +7,7 @@
 -- Insert sample articles
 INSERT INTO articles (id, title, slug, excerpt, content, author_id, category, read_time_minutes, view_count, is_published, published_at, created_at, updated_at) VALUES
   (gen_random_uuid(), 
-   'Beginner's Guide to Earning Coins Online', 
+   'Beginner''s Guide to Earning Coins Online', 
    'beginners-guide-earning-coins-online',
    'Learn the fundamentals of earning CMP Coins through various activities on our platform.',
    '# Beginner''s Guide to Earning Coins Online
