@@ -126,13 +126,41 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Profile created for user:", userId);
     }
 
-    const { data: walletCheck } = await supabase.from("wallets").select("id").eq("user_id", userId).maybeSingle();
+    // Generate a referral code for the User record
+    const userReferralCode = `${baseUsername.slice(0, 4).toUpperCase()}${userId.slice(0, 4).toUpperCase()}`;
+
+    // Insert into "User" table (required by Wallet FK constraint)
+    // @ts-ignore
+    const { data: userCheck } = await supabase.from("User").select("id").eq("id", userId).maybeSingle();
+    if (!userCheck) {
+      const { error: userError } = await supabase.from("User").insert({
+        id: userId,
+        email: pendingReg.email,
+        phone: `pending_${userId.slice(0, 8)}`,
+        displayName: pendingReg.full_name,
+        username: username,
+        referralCode: userReferralCode,
+        emailVerified: true,
+        updatedAt: new Date().toISOString(),
+      });
+      if (userError) {
+        console.error("User table error:", userError);
+      } else {
+        console.log("User record created:", userId);
+      }
+    }
+
+    const { data: walletCheck } = await supabase.from("Wallet").select("id").eq("userId", userId).maybeSingle();
     if (!walletCheck) {
-      const { error: walletError } = await supabase.from("wallets").insert({
-        user_id: userId,
-        coin_balance: "500",
-        lifetime_earned: "500",
-        lifetime_spent: "0",
+      const { error: walletError } = await supabase.from("Wallet").insert({
+        id: crypto.randomUUID(),
+        userId: userId,
+        coinBalance: 500,
+        pendingCoins: 0,
+        lifetimeEarned: 500,
+        lifetimeSpent: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       if (walletError) {
         console.error("Wallet error:", walletError);

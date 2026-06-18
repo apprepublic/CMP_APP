@@ -42,14 +42,11 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check existing user in User table
-    const { data: existing } = await supabase
-      .from("User")
-      .select("id")
-      .eq("email", email.toLowerCase())
-      .maybeSingle();
+    // Check existing user in auth.users (source of truth for registered emails)
+    const { data: existingAuthUsers, error: authListError } = await supabase.auth.admin.listUsers();
+    const existingUser = (existingAuthUsers?.users || []).find(u => u.email?.toLowerCase() === email.toLowerCase());
 
-    if (existing) {
+    if (existingUser) {
       return new Response(JSON.stringify({ error: "Email already exists" }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
