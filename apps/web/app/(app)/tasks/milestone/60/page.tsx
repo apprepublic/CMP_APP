@@ -1,14 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useUserStore } from '@/stores/userStore';
 import { useStreak } from '@/lib/hooks';
 
 export default function Milestone60Page() {
-  const { user } = useUserStore();
-  const { data: streak, isLoading } = useStreak(user?.id || '');
+  const { data: streakResp, isLoading } = useStreak();
+  const streak = streakResp?.streak;
 
-  const currentStreak = streak?.current_streak ?? 0;
+  const currentStreak = streak?.currentStreak ?? 0;
   const hasReached60 = currentStreak >= 60;
   const progressTo60 = Math.min(100, Math.round((currentStreak / 60) * 100));
   const daysLeft = Math.max(0, 60 - currentStreak);

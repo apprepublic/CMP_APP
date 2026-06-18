@@ -273,11 +273,13 @@ model Task {
   title           String
   description     String
   type            TaskType
+  category        String    @default("ENGAGEMENT")
   coinReward      Int
   dailyLimit      Int       @default(1)
   requiresAdGate  Boolean   @default(true)
   linkedArticleId String?   @unique
   isActive        Boolean   @default(true)
+  sortOrder       Int       @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -286,21 +288,21 @@ model Task {
 
   @@index([type])
   @@index([isActive])
+  @@index([category])
 }
 
 model TaskCompletion {
   id          String    @id @default(cuid())
   userId      String
-  taskId      String
+  taskId      String?
   coinsEarned Int
   proofData   Json?
   adWatched   Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
   user        User      @relation(fields: [userId], references: [id])
-  task        Task      @relation(fields: [taskId], references: [id])
+  task        Task?     @relation(fields: [taskId], references: [id])
 
-  @@unique([userId, taskId, createdAt])
   @@index([userId])
   @@index([taskId])
   @@index([createdAt])
@@ -324,6 +326,7 @@ model StreakRecord {
 model Article {
   id              String    @id @default(cuid())
   title           String
+  slug            String    @unique
   content         String    @db.Text
   excerpt         String?
   coverImageUrl   String?
@@ -344,6 +347,7 @@ model Article {
   @@index([category])
   @@index([isPublished])
   @@index([publishedAt])
+  @@index([slug])
 }
 
 // ===========================================

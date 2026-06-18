@@ -167,19 +167,38 @@ class ApiService {
   }
 
   // Tasks
-  async getTasks(type?: string) {
-    const params = type ? `?type=${type}` : '';
-    return this.request<{ tasks: any[] }>(`/api/tasks${params}`);
+  async getTasks(type?: string, category?: string) {
+    const params = new URLSearchParams();
+    if (type) params.set('type', type);
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    return this.request<{ tasks: any[] }>(`/api/tasks${qs ? `?${qs}` : ''}`);
   }
 
   async getDailyTasks() {
     return this.request<{ tasks: any[] }>('/api/tasks/daily');
   }
 
+  async getStreak() {
+    return this.request<{ streak: any }>('/api/tasks/streak');
+  }
+
+  async buyStreakFreeze() {
+    return this.request<{ message: string; freezesOwned: number }>('/api/tasks/streak/freeze', {
+      method: 'POST',
+    });
+  }
+
   async completeTask(taskId: string, adWatched = true) {
-    return this.request<{ coinsEarned: number }>(`/api/tasks/${taskId}/complete`, {
+    return this.request<{ coinsEarned: number; message: string }>(`/api/tasks/${taskId}/complete`, {
       method: 'POST',
       body: JSON.stringify({ adWatched }),
+    });
+  }
+
+  async claimArticle(articleId: string) {
+    return this.request<{ coinsEarned: number; message: string }>(`/api/tasks/article/${articleId}/claim`, {
+      method: 'POST',
     });
   }
 
@@ -280,6 +299,10 @@ class ApiService {
 
   async getArticle(id: string) {
     return this.request<{ article: any }>(`/api/articles/${id}`);
+  }
+
+  async getArticleBySlug(slug: string) {
+    return this.request<{ article: any }>(`/api/articles/slug/${slug}`);
   }
 }
 

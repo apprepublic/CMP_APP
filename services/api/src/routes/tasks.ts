@@ -9,16 +9,19 @@ const router = Router();
 
 // Get all available tasks
 router.get('/', async (req: Request, res: Response) => {
-  const { type, available } = req.query;
+  const { type, category } = req.query;
 
   const where: any = { isActive: true };
   if (type) {
     where.type = type;
   }
+  if (category) {
+    where.category = String(category).toUpperCase();
+  }
 
   const tasks = await prisma.task.findMany({
     where,
-    orderBy: { coinReward: 'desc' }
+    orderBy: { sortOrder: 'asc' }
   });
 
   res.json({ tasks });
@@ -33,9 +36,9 @@ router.get('/daily', authenticate, async (req: Request, res: Response) => {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // Get all active tasks
   const tasks = await prisma.task.findMany({
     where: { isActive: true },
+    orderBy: { sortOrder: 'asc' },
     include: {
       completions: {
         where: {
@@ -45,6 +48,9 @@ router.get('/daily', authenticate, async (req: Request, res: Response) => {
             lt: tomorrow
           }
         }
+      },
+      linkedArticle: {
+        select: { id: true, slug: true, title: true }
       }
     }
   });
@@ -54,9 +60,11 @@ router.get('/daily', authenticate, async (req: Request, res: Response) => {
     title: task.title,
     description: task.description,
     type: task.type,
+    category: task.category,
     coinReward: task.coinReward,
     requiresAdGate: task.requiresAdGate,
     dailyLimit: task.dailyLimit,
+    linkedArticle: task.linkedArticle,
     completedToday: task.completions.length,
     isLocked: task.completions.length >= task.dailyLimit,
     canComplete: task.completions.length < task.dailyLimit
@@ -70,7 +78,12 @@ router.get('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const task = await prisma.task.findUnique({
-    where: { id }
+    where: { id },
+    include: {
+      linkedArticle: {
+        select: { id: true, slug: true, title: true }
+      }
+    }
   });
 
   if (!task) {
@@ -99,7 +112,6 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
     throw new AppError('Task not found or inactive', 404);
   }
 
-  // Check daily limit
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -117,12 +129,10 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
     throw new AppError('Daily limit reached for this task', 400);
   }
 
-  // If task requires ad gate, verify ad was watched
   if (task.requiresAdGate && !data.adWatched) {
     throw new AppError('Ad must be watched to complete this task', 400);
   }
 
-  // Get user wallet
   const wallet = await prisma.wallet.findUnique({
     where: { userId: authReq.user!.id }
   });
@@ -131,7 +141,6 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
     throw new AppError('Wallet not found', 404);
   }
 
-  // Credit coins
   const newBalance = wallet.coinBalance + BigInt(task.coinReward);
 
   await prisma.$transaction([
@@ -166,7 +175,6 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
     })
   ]);
 
-  // Process referral earnings
   const user = await prisma.user.findUnique({
     where: { id: authReq.user!.id },
     include: {
@@ -208,7 +216,6 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
     }
   }
 
-  // Update streak
   await updateStreak(authReq.user!.id);
 
   res.json({
@@ -230,13 +237,15 @@ router.post('/article/:articleId/read', authenticate, async (req: Request, res: 
     throw new AppError('Article not found', 404);
   }
 
-  // Check if already read today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
   const existingRead = await prisma.taskCompletion.findFirst({
     where: {
       userId: authReq.user!.id,
+      createdAt: { gte: today, lt: tomorrow },
       proofData: {
         path: ['articleId'],
         equals: articleId
@@ -248,7 +257,6 @@ router.post('/article/:articleId/read', authenticate, async (req: Request, res: 
     throw new AppError('Article already read today', 400);
   }
 
-  // Mark as in progress - actual completion happens when user reaches 100%
   res.json({
     message: 'Article reading started',
     coinReward: article.coinReward
@@ -261,11 +269,32 @@ router.post('/article/:articleId/claim', authenticate, async (req: Request, res:
   const { articleId } = req.params;
 
   const article = await prisma.article.findUnique({
-    where: { id: articleId }
+    where: { id: articleId },
+    include: { linkedTask: true }
   });
 
   if (!article || !article.isPublished) {
     throw new AppError('Article not found', 404);
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const existingClaim = await prisma.taskCompletion.findFirst({
+    where: {
+      userId: authReq.user!.id,
+      createdAt: { gte: today, lt: tomorrow },
+      proofData: {
+        path: ['articleId'],
+        equals: articleId
+      }
+    }
+  });
+
+  if (existingClaim) {
+    throw new AppError('Article already claimed today', 400);
   }
 
   const wallet = await prisma.wallet.findUnique({
@@ -282,7 +311,7 @@ router.post('/article/:articleId/claim', authenticate, async (req: Request, res:
     prisma.taskCompletion.create({
       data: {
         userId: authReq.user!.id,
-        taskId: '', // Will be linked via metadata
+        taskId: article.linkedTask?.id ?? null,
         coinsEarned: article.coinReward,
         proofData: {
           articleId,
@@ -311,19 +340,112 @@ router.post('/article/:articleId/claim', authenticate, async (req: Request, res:
     })
   ]);
 
+  await updateStreak(authReq.user!.id);
+
   res.json({
     message: 'Coins claimed',
     coinsEarned: article.coinReward
   });
 });
 
+// --- Streak endpoints ---
+
+router.get('/streak', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as unknown as AuthRequest;
+
+  let streak = await prisma.streakRecord.findUnique({
+    where: { userId: authReq.user!.id }
+  });
+
+  if (!streak) {
+    streak = await prisma.streakRecord.create({
+      data: { userId: authReq.user!.id }
+    });
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const completionsToday = await prisma.taskCompletion.count({
+    where: {
+      userId: authReq.user!.id,
+      createdAt: { gte: today, lt: tomorrow }
+    }
+  });
+
+  res.json({
+    streak: {
+      currentStreak: streak.currentStreak,
+      longestStreak: streak.longestStreak,
+      lastActiveDate: streak.lastActiveDate,
+      freezesOwned: streak.freezesOwned,
+      tasksCompletedToday: completionsToday
+    }
+  });
+});
+
+router.post('/streak/freeze', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as unknown as AuthRequest;
+  const FREEZE_PRICE = 500;
+
+  const wallet = await prisma.wallet.findUnique({
+    where: { userId: authReq.user!.id }
+  });
+
+  if (!wallet) {
+    throw new AppError('Wallet not found', 404);
+  }
+
+  if (wallet.coinBalance < BigInt(FREEZE_PRICE)) {
+    throw new AppError('Insufficient balance', 400);
+  }
+
+  const newBalance = wallet.coinBalance - BigInt(FREEZE_PRICE);
+
+  const streak = await prisma.streakRecord.upsert({
+    where: { userId: authReq.user!.id },
+    create: { userId: authReq.user!.id, freezesOwned: 1 },
+    update: { freezesOwned: { increment: 1 } }
+  });
+
+  await prisma.$transaction([
+    prisma.wallet.update({
+      where: { id: wallet.id },
+      data: {
+        coinBalance: { decrement: BigInt(FREEZE_PRICE) },
+        lifetimeSpent: { increment: BigInt(FREEZE_PRICE) }
+      }
+    }),
+    prisma.coinTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'STREAK_FREEZE',
+        amount: BigInt(-FREEZE_PRICE),
+        balanceAfter: newBalance,
+        description: 'Purchased streak freeze'
+      }
+    })
+  ]);
+
+  res.json({
+    message: 'Streak freeze purchased',
+    freezesOwned: streak.freezesOwned + 1
+  });
+});
+
 // Helper function to update streak
 async function updateStreak(userId: string) {
-  const streak = await prisma.streakRecord.findUnique({
+  let streak = await prisma.streakRecord.findUnique({
     where: { userId }
   });
 
-  if (!streak) return;
+  if (!streak) {
+    streak = await prisma.streakRecord.create({
+      data: { userId }
+    });
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -334,7 +456,6 @@ async function updateStreak(userId: string) {
   let bonusCoins = 0;
 
   if (!lastActive) {
-    // First activity
     newStreak = 1;
   } else {
     const lastActiveDay = new Date(lastActive);
@@ -343,18 +464,21 @@ async function updateStreak(userId: string) {
     const daysDiff = Math.floor((today.getTime() - lastActiveDay.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysDiff === 0) {
-      // Same day, no change
       return;
     } else if (daysDiff === 1) {
-      // Consecutive day
+      newStreak = streak.currentStreak + 1;
+    } else if (daysDiff > 1 && streak.freezesOwned > 0) {
+      const freezesUsed = Math.min(daysDiff - 1, streak.freezesOwned);
+      await prisma.streakRecord.update({
+        where: { userId },
+        data: { freezesOwned: { decrement: freezesUsed } }
+      });
       newStreak = streak.currentStreak + 1;
     } else {
-      // Streak broken
       newStreak = 1;
     }
   }
 
-  // Check for milestone bonus
   const milestoneBonuses: Record<number, number> = {
     7: 2000,
     14: 5000,
@@ -381,7 +505,6 @@ async function updateStreak(userId: string) {
     data: updates
   });
 
-  // Add bonus if milestone reached
   if (bonusCoins > 0) {
     const wallet = await prisma.wallet.findUnique({ where: { userId } });
     if (wallet) {

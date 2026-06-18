@@ -1,22 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useUserStore } from '@/stores/userStore';
-import { useStreak } from '@/lib/hooks';
-import { useTasks } from '@/lib/hooks';
+import { useStreak, useDailyTasks, useBuyStreakFreeze } from '@/lib/hooks';
 
-// Helper: build this week's day data based on current streak
 function buildWeekDays(currentStreak: number) {
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const today = new Date();
-  const jsDay = today.getDay(); // 0=Sun, 1=Mon ... 6=Sat
-  const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1; // 0=Mon ... 6=Sun
+  const jsDay = today.getDay();
+  const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
 
-  // How many days completed this week (capped by current streak and day-of-week)
   const daysCompletedThisWeek = Math.min(currentStreak, mondayBasedToday);
 
   return dayLabels.map((label, index) => {
-    const isMilestoneDay = index === 6; // Sunday is weekly milestone
+    const isMilestoneDay = index === 6;
     const isToday = index === mondayBasedToday;
     const isCompleted = index < daysCompletedThisWeek;
 
@@ -30,7 +26,6 @@ function buildWeekDays(currentStreak: number) {
   });
 }
 
-// Milestone definitions
 const MILESTONES = [
   { days: 7, reward: 2000, label: '7 Day Streak', icon: 'calendar_view_week' },
   { days: 30, reward: 10000, label: '30 Day Streak', icon: 'calendar_month', page: '/tasks/milestone/30' },
@@ -38,23 +33,26 @@ const MILESTONES = [
 ];
 
 export default function StreakPage() {
-  const { user } = useUserStore();
-  const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: streakResp, isLoading: streakLoading } = useStreak();
+  const { data: dailyResp, isLoading: tasksLoading } = useDailyTasks();
+  const buyFreeze = useBuyStreakFreeze();
 
-  const currentStreak = streak?.current_streak ?? 0;
-  const longestStreak = streak?.longest_streak ?? 0;
+  const streak = streakResp?.streak;
+  const dailyTasks = dailyResp?.tasks ?? [];
+
+  const currentStreak = streak?.currentStreak ?? 0;
+  const longestStreak = streak?.longestStreak ?? 0;
+  const freezesOwned = streak?.freezesOwned ?? 0;
+  const tasksCompletedToday = streak?.tasksCompletedToday ?? 0;
 
   const weekDays = buildWeekDays(currentStreak);
   const daysCompletedThisWeek = weekDays.filter(d => d.completed).length;
   const jsDay = new Date().getDay();
   const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
-  const dayOfWeek = mondayBasedToday + 1; // 1-indexed
+  const dayOfWeek = mondayBasedToday + 1;
 
-  // Weekly progress bar percentage
   const progressPercent = Math.round((daysCompletedThisWeek / 7) * 100);
 
-  // Milestone status
   function getMilestoneStatus(milestoneDays: number) {
     if (currentStreak >= milestoneDays) return 'completed';
     return 'locked';
@@ -65,15 +63,17 @@ export default function StreakPage() {
     return left > 0 ? left : 0;
   }
 
-  // Pick 3 daily tasks for display
-  const dailyTasks = tasks.slice(0, 3);
-  const completedDailyCount = 0; // In a real app, track per-user task completions
+  const dailyTasksForDisplay = dailyTasks.slice(0, 3);
+
+  const handleBuyFreeze = async () => {
+    try {
+      await buyFreeze.mutateAsync();
+    } catch {}
+  };
 
   return (
     <div className="flex-1 w-full pb-24 lg:pb-8 min-h-screen">
-      {/* Hero Section */}
       <section className="bg-primary-container text-on-primary w-full px-margin-mobile md:px-margin-desktop py-12 lg:py-16 relative overflow-hidden mb-8">
-        {/* Background Texture */}
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
         <div className="relative z-10 max-w-container-max mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -98,16 +98,13 @@ export default function StreakPage() {
       </section>
 
       <div className="max-w-container-max mx-auto space-y-8 px-margin-mobile md:px-margin-desktop">
-        {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* The 7-Day Progress Track (Spans 2 columns on desktop) */}
           <div className="lg:col-span-2 bg-surface-alt rounded-xl p-6 border border-outline-variant/30 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-h3 text-h3 text-on-surface">This Week</h3>
               <span className="font-body-sm text-body-sm text-on-surface-variant">Day {dayOfWeek} of 7</span>
             </div>
             <div className="flex justify-between items-center relative overflow-x-auto pb-4">
-              {/* Progress Line */}
               <div className="absolute top-1/2 left-0 w-full min-w-[300px] h-1 bg-surface-container-high -z-10 -translate-y-1/2 rounded-full"></div>
               <div className="absolute top-1/2 left-0 h-1 bg-[#B8860B] -z-10 -translate-y-1/2 rounded-full" style={{ width: `${progressPercent}%` }}></div>
               
@@ -139,7 +136,6 @@ export default function StreakPage() {
             </div>
           </div>
 
-          {/* Milestone Rewards */}
           <div className="bg-surface-alt rounded-xl p-6 border border-outline-variant/30 flex flex-col shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
             <h3 className="font-h3 text-h3 text-on-surface mb-6">Milestones</h3>
             <div className="space-y-4 flex-1">
@@ -181,12 +177,11 @@ export default function StreakPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Daily Tasks */}
           <div className="lg:col-span-2 bg-surface-alt rounded-xl p-6 border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-h3 text-h3 text-on-surface">Today&apos;s Tasks</h3>
+              <h3 className="font-h3 text-h3 text-on-surface">Today's Tasks</h3>
               <span className="bg-[#B8860B] text-primary font-label-caps text-label-caps px-2 py-1 rounded">
-                {completedDailyCount}/{dailyTasks.length} Completed
+                {tasksCompletedToday}/{dailyTasksForDisplay.length} Completed
               </span>
             </div>
             <div className="space-y-3">
@@ -194,27 +189,27 @@ export default function StreakPage() {
                 Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="h-16 bg-surface animate-pulse rounded-lg" />
                 ))
-              ) : dailyTasks.length === 0 ? (
+              ) : dailyTasksForDisplay.length === 0 ? (
                 <div className="py-8 text-center text-on-surface-variant">No tasks available today.</div>
               ) : (
-                dailyTasks.map((task, index) => (
+                dailyTasksForDisplay.map((task: any) => (
                   <div key={task.id} className="flex items-center p-4 bg-surface rounded-lg border-l-4 border-outline/20">
                     <div className="mr-4">
-                      <span className="material-symbols-outlined text-outline">radio_button_unchecked</span>
+                      <span className="material-symbols-outlined text-outline">
+                        {task.isLocked ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
                     </div>
                     <div className="flex-1">
                       <p className="font-body-md text-body-md font-semibold text-on-surface">{task.title}</p>
                     </div>
-                    <span className="font-data-md text-data-md text-[#B8860B]">🪙 {task.coin_reward}</span>
+                    <span className="font-data-md text-data-md text-[#B8860B]">🪙 {task.coinReward}</span>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Streak Freeze */}
           <div className="bg-primary text-on-primary rounded-xl p-6 relative overflow-hidden flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-            {/* Subtle pattern background */}
             <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%, #fff), repeating-linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%, #fff)', backgroundPosition: '0 0, 10px 10px', backgroundSize: '20px 20px' }}></div>
             <div className="relative z-10 mb-6">
               <div className="flex justify-between items-start mb-2">
@@ -226,17 +221,26 @@ export default function StreakPage() {
             <div className="relative z-10 mt-auto bg-surface-tint/20 rounded-lg p-4 border border-outline/20">
               <div className="flex justify-between items-center mb-4">
                 <span className="font-label-caps text-label-caps text-on-primary-container uppercase">Inventory</span>
-                <span className="font-h3 text-h3 font-bold text-on-primary">0</span>
+                <span className="font-h3 text-h3 font-bold text-on-primary">{freezesOwned}</span>
               </div>
-              <button className="w-full bg-surface text-primary font-body-md text-body-md font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors">
-                <span>Buy for</span>
-                <span className="font-data-md text-data-md">🪙 500</span>
+              <button
+                onClick={handleBuyFreeze}
+                disabled={buyFreeze.isPending}
+                className="w-full bg-surface text-primary font-body-md text-body-md font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {buyFreeze.isPending ? (
+                  <span>Buying...</span>
+                ) : (
+                  <>
+                    <span>Buy for</span>
+                    <span className="font-data-md text-data-md">🪙 500</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-surface-alt rounded-xl p-5 border border-outline-variant/30 text-center">
             <p className="font-label-caps text-label-caps text-on-surface-variant mb-2">Current</p>

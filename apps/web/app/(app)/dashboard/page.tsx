@@ -10,11 +10,14 @@ import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
   const { data: songs = [], isLoading: songsLoading } = useFeaturedSongs();
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: tasksResp, isLoading: tasksLoading } = useTasks();
+  const tasks = tasksResp?.tasks ?? [];
   const { wallet, loading: walletLoading } = useWallet();
   const { user } = useUserStore();
   
-  const { data: streak, isLoading: streakLoading } = useStreak(user?.id || '');
+  const { data: streakResp, isLoading: streakLoading } = useStreak();
+  const currentStreak = streakResp?.streak?.currentStreak ?? 0;
+  const coinBalance = wallet?.coin_balance ?? 0;
 
   const [firstName, setFirstName] = useState(
     user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'User'
@@ -32,9 +35,6 @@ export default function DashboardPage() {
       }
     });
   }, [user]);
-  const coinBalance = wallet?.coin_balance ?? 0;
-  const avatarUrl = null;
-  const currentStreak = streak?.current_streak || 0;
 
   return (
     <div className="flex-1 w-full pb-24 md:pb-0 min-h-screen relative z-0">
@@ -179,17 +179,17 @@ export default function DashboardPage() {
                 ) : (
                   tasks.slice(0, 3).map((task: any) => (
                     <div key={task.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-alt transition-colors group border border-transparent hover:border-outline-variant/30">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
-                          <span className="material-symbols-outlined text-sm">
-                            {task.category === 'CONTENT' ? 'article' : task.category === 'ENGAGEMENT' ? 'play_circle' : task.category === 'SURVEY' ? 'poll' : 'share'}
-                          </span>
+<div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
+                            <span className="material-symbols-outlined text-sm">
+                              {task.type === 'READ_ARTICLE' ? 'article' : task.type === 'WATCH_VIDEO' ? 'play_circle' : task.type === 'COMPLETE_SURVEY' ? 'poll' : task.type === 'SHARE_SOCIAL' ? 'share' : 'quickreply'}
+                            </span>
+                          </div>
+                          <div>
+                            <h4 className="font-body-md text-body-md font-medium text-on-background line-clamp-1">{task.title}</h4>
+                            <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">+{task.coinReward} Coins</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-body-md text-body-md font-medium text-on-background line-clamp-1">{task.title}</h4>
-                          <p className="font-body-sm text-body-sm text-on-surface-variant text-xs">+{task.coin_reward} Coins</p>
-                        </div>
-                      </div>
                       <Link href="/tasks" className="bg-[#B8860B] hover:bg-[#8B6914] text-primary font-label-caps text-label-caps px-4 py-2 rounded-lg transition-colors shadow-sm ml-2 shrink-0">
                         Start
                       </Link>

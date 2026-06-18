@@ -1,29 +1,21 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from './api';
 import {
   getSongs,
   getFeaturedSongs,
   getArtists,
   getArtistBySlug,
-  getArticles,
-  getArticleBySlug,
   getStores,
   getStoreBySlug,
   getProducts,
   getContests,
-  getTasks,
   getTransactions,
-  getStreak,
   getReferralStats,
   getReferrals,
   getNotifications,
 } from './queries';
-
-/**
- * Thin React Query hooks. Pages call these instead of holding mock arrays.
- * Loading/empty/error states are derived from the returned status flags.
- */
 
 export const useSongs = (opts: { genre?: string; search?: string } = {}) =>
   useQuery({ queryKey: ['songs', opts], queryFn: () => getSongs(opts) });
@@ -36,11 +28,6 @@ export const useArtists = () => useQuery({ queryKey: ['artists'], queryFn: () =>
 export const useArtist = (slug: string) =>
   useQuery({ queryKey: ['artist', slug], queryFn: () => getArtistBySlug(slug), enabled: !!slug });
 
-export const useArticles = () => useQuery({ queryKey: ['articles'], queryFn: () => getArticles() });
-
-export const useArticle = (slug: string) =>
-  useQuery({ queryKey: ['article', slug], queryFn: () => getArticleBySlug(slug), enabled: !!slug });
-
 export const useStores = () => useQuery({ queryKey: ['stores'], queryFn: getStores });
 
 export const useStore = (slug: string) =>
@@ -50,13 +37,56 @@ export const useProducts = () => useQuery({ queryKey: ['products'], queryFn: () 
 
 export const useContests = () => useQuery({ queryKey: ['contests'], queryFn: getContests });
 
-export const useTasks = () => useQuery({ queryKey: ['tasks'], queryFn: getTasks });
+export const useTasks = (category?: string) =>
+  useQuery({ queryKey: ['tasks', category], queryFn: () => api.getTasks(undefined, category) });
+
+export const useDailyTasks = () =>
+  useQuery({ queryKey: ['tasks', 'daily'], queryFn: () => api.getDailyTasks() });
+
+export const useStreak = () =>
+  useQuery({ queryKey: ['streak'], queryFn: () => api.getStreak() });
+
+export const useCompleteTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, adWatched = true }: { taskId: string; adWatched?: boolean }) =>
+      api.completeTask(taskId, adWatched),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+};
+
+export const useClaimArticle = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ articleId }: { articleId: string }) => api.claimArticle(articleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+};
+
+export const useBuyStreakFreeze = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.buyStreakFreeze(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+};
+
+export const useArticle = (slug: string) =>
+  useQuery({ queryKey: ['article', slug], queryFn: () => api.getArticleBySlug(slug), enabled: !!slug });
 
 export const useTransactions = (walletId: string) => 
   useQuery({ queryKey: ['transactions', walletId], queryFn: () => getTransactions(walletId), enabled: !!walletId });
-
-export const useStreak = (userId: string) =>
-  useQuery({ queryKey: ['streak', userId], queryFn: () => getStreak(userId), enabled: !!userId });
 
 export const useReferralStats = (userId: string) =>
   useQuery({ queryKey: ['referralStats', userId], queryFn: () => getReferralStats(userId), enabled: !!userId });

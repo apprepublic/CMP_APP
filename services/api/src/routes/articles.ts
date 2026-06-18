@@ -27,6 +27,7 @@ router.get('/', async (req: Request, res: Response) => {
       select: {
         id: true,
         title: true,
+        slug: true,
         excerpt: true,
         coverImageUrl: true,
         category: true,
@@ -57,6 +58,30 @@ router.get('/', async (req: Request, res: Response) => {
       totalPages: Math.ceil(total / Number(limit))
     }
   });
+});
+
+// Get article by slug
+router.get('/slug/:slug', async (req: Request, res: Response) => {
+  const { slug } = req.params;
+
+  const article = await prisma.article.findUnique({
+    where: { slug },
+    include: {
+      author: {
+        select: {
+          id: true,
+          displayName: true,
+          username: true
+        }
+      }
+    }
+  });
+
+  if (!article || !article.isPublished) {
+    throw new AppError('Article not found', 404);
+  }
+
+  res.json({ article });
 });
 
 // Get article by ID
@@ -130,6 +155,7 @@ router.get('/category/:category', async (req: Request, res: Response) => {
 // Create article (admin only)
 const createArticleSchema = z.object({
   title: z.string().min(5).max(200),
+  slug: z.string().min(3).max(200).optional(),
   content: z.string().min(100),
   excerpt: z.string().max(300).optional(),
   coverImageUrl: z.string().url().optional(),
@@ -147,6 +173,7 @@ router.post('/', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), async (req: Re
   const article = await prisma.article.create({
     data: {
       ...data,
+      slug: data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
       authorId: authReq.user!.id,
       publishedAt: data.isPublished ? new Date() : null
     }
