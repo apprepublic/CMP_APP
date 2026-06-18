@@ -209,6 +209,14 @@ class ApiService {
     participantThreshold: number;
     totalBudget: number;
     expiresAt?: string;
+    socialRequirements?: {
+      platform?: string;
+      actions?: string[];
+      targetUrl?: string;
+      commentText?: string;
+      minCommentLength?: number;
+      requiresScreenshot?: boolean;
+    };
   }) {
     return this.request<{ task: any; totalCost: number; coinPerParticipant: number }>('/api/tasks/create', {
       method: 'POST',
