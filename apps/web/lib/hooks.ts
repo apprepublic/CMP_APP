@@ -92,6 +92,14 @@ export const usePostTask = () => {
       participantThreshold: number;
       totalBudget: number;
       expiresAt?: string;
+      socialRequirements?: {
+        platform?: string;
+        actions?: string[];
+        targetUrl?: string;
+        commentText?: string;
+        minCommentLength?: number;
+        requiresScreenshot?: boolean;
+      };
     }) => api.createPostedTask(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
