@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { usePostTask, useWallet } from '@/lib/hooks';
-import { useWallet as useWalletStore } from '@/stores/userStore';
+import { usePostTask } from '@/lib/hooks';
+import { useWallet } from '@/lib/useWallet';
 
 const TASK_TYPES = [
   { value: 'READ_ARTICLE', label: 'Read Article', icon: 'article', minBudget: 1000 },
@@ -41,7 +41,7 @@ export default function PostTaskPage() {
   const router = useRouter();
   const postTask = usePostTask();
   const { wallet } = useWallet();
-  const coinBalance = Number(wallet?.coin_balance ?? 0);
+  const coinBalance = Number(wallet?.coinBalance ?? 0);
 
   const [formData, setFormData] = useState({
     title: '',
