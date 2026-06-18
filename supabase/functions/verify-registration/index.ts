@@ -116,31 +116,6 @@ const handler = async (req: Request): Promise<Response> => {
         id: userId,
         full_name: pendingReg.full_name,
         username: username,
-        referral_code: pendingReg.referral_code || undefined, // Let DB generate if not provided
-        referred_by: referredBy,
-      });
-      if (profileError) {
-        console.error("Profile error:", profileError);
-        return jsonResponse({ error: "Failed to create profile: " + profileError.message });
-      }
-      console.log("Profile created for user:", userId);
-    }
-
-    // Check if profile already exists
-    const { data: profileCheck } = await supabase.from("profiles").select("id").eq("id", userId).maybeSingle();
-    if (!profileCheck) {
-      // Find referrer if referral code was used
-      let referredBy: string | null = null;
-      if (pendingReg.referral_code) {
-        const { data: referrer } = await supabase
-          .from("profiles").select("id").eq("referral_code", pendingReg.referral_code).maybeSingle();
-        referredBy = referrer?.id || null;
-      }
-
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: userId,
-        full_name: pendingReg.full_name,
-        username: username,
         referral_code: pendingReg.referral_code || undefined,
         referred_by: referredBy,
       });
