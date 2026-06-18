@@ -142,7 +142,7 @@ export const useUserStore = create<UserStore>()(
           if (profile) {
             const user: User = {
               id: authUser.id,
-              email: authUser.email,
+              email: authUser.email || null,
               phone: '', // Not stored in profiles
               displayName: profile.full_name || authUser.email || '',
               username: profile.username || '',
