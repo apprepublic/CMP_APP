@@ -126,29 +126,29 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Profile created for user:", userId);
     }
 
-    // Generate a referral code for the User record
-    const userReferralCode = `${baseUsername.slice(0, 4).toUpperCase()}${userId.slice(0, 4).toUpperCase()}`;
-
-    // Insert into "User" table (required by Wallet FK constraint)
-    // @ts-ignore
-    const { data: userCheck } = await supabase.from("User").select("id").eq("id", userId).maybeSingle();
-    if (!userCheck) {
-      const { error: userError } = await supabase.from("User").insert({
-        id: userId,
-        email: pendingReg.email,
-        phone: `pending_${userId.slice(0, 8)}`,
-        displayName: pendingReg.full_name,
-        username: username,
-        referralCode: userReferralCode,
-        emailVerified: true,
-        updatedAt: new Date().toISOString(),
-      });
-      if (userError) {
-        console.error("User table error:", userError);
-        return jsonResponse({ error: "Failed to create user record: " + userError.message });
-      } else {
-        console.log("User record created:", userId);
+    // Check if profile already exists
+    const { data: profileCheck } = await supabase.from("profiles").select("id").eq("id", userId).maybeSingle();
+    if (!profileCheck) {
+      // Find referrer if referral code was used
+      let referredBy: string | null = null;
+      if (pendingReg.referral_code) {
+        const { data: referrer } = await supabase
+          .from("profiles").select("id").eq("referral_code", pendingReg.referral_code).maybeSingle();
+        referredBy = referrer?.id || null;
       }
+
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: userId,
+        full_name: pendingReg.full_name,
+        username: username,
+        referral_code: pendingReg.referral_code || undefined,
+        referred_by: referredBy,
+      });
+      if (profileError) {
+        console.error("Profile error:", profileError);
+        return jsonResponse({ error: "Failed to create profile: " + profileError.message });
+      }
+      console.log("Profile created for user:", userId);
     }
 
     const { data: walletCheck } = await supabase.from("Wallet").select("id").eq("userId", userId).maybeSingle();
