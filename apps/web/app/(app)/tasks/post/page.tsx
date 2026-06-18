@@ -41,7 +41,7 @@ export default function PostTaskPage() {
   const router = useRouter();
   const postTask = usePostTask();
   const { wallet } = useWallet();
-  const coinBalance = Number(wallet?.coinBalance ?? 0);
+  const coinBalance = Number(wallet?.coin_balance ?? 0);
 
   const [formData, setFormData] = useState({
     title: '',
