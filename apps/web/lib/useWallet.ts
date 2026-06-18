@@ -38,13 +38,13 @@ export function useWallet() {
           setWallet(null);
         } else {
           setWallet({
-            id: data.id,
-            user_id: data.userId,
-            coin_balance: data.coinBalance,
-            lifetime_earned: data.lifetimeEarned,
-            lifetime_spent: data.lifetimeSpent,
-            created_at: data.createdAt,
-            updated_at: data.updatedAt,
+            id: (data as any).id,
+            user_id: (data as any).userId,
+            coin_balance: (data as any).coinBalance,
+            lifetime_earned: (data as any).lifetimeEarned,
+            lifetime_spent: (data as any).lifetimeSpent,
+            created_at: (data as any).createdAt,
+            updated_at: (data as any).updatedAt,
           } as Wallet);
         }
         setLoading(false);
