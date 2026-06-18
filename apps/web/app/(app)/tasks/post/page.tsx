@@ -10,9 +10,28 @@ const TASK_TYPES = [
   { value: 'READ_ARTICLE', label: 'Read Article', icon: 'article', minBudget: 1000 },
   { value: 'WATCH_VIDEO', label: 'Watch Video', icon: 'play_circle', minBudget: 2000 },
   { value: 'SHARE_SOCIAL', label: 'Share on Social', icon: 'share', minBudget: 3000 },
+  { value: 'SOCIAL_ENGAGEMENT', label: 'Social Engagement', icon: 'thumb_up', minBudget: 2000 },
   { value: 'COMPLETE_SURVEY', label: 'Complete Survey', icon: 'poll', minBudget: 5000 },
   { value: 'APP_DOWNLOAD', label: 'App Download', icon: 'download', minBudget: 10000 },
   { value: 'VOTE', label: 'Vote/Poll', icon: 'how_to_vote', minBudget: 1000 },
+];
+
+const SOCIAL_PLATFORMS = [
+  { value: 'TWITTER', label: 'Twitter/X', icon: 'tag' },
+  { value: 'INSTAGRAM', label: 'Instagram', icon: 'photo_camera' },
+  { value: 'TIKTOK', label: 'TikTok', icon: 'music_note' },
+  { value: 'YOUTUBE', label: 'YouTube', icon: 'play_circle' },
+  { value: 'FACEBOOK', label: 'Facebook', icon: 'facebook' },
+  { value: 'LINKEDIN', label: 'LinkedIn', icon: 'work' },
+];
+
+const SOCIAL_ACTIONS = [
+  { value: 'LIKE', label: 'Like', icon: 'thumb_up' },
+  { value: 'COMMENT', label: 'Comment', icon: 'comment' },
+  { value: 'SHARE', label: 'Share', icon: 'share' },
+  { value: 'RETWEET', label: 'Retweet/Repost', icon: 'repeat' },
+  { value: 'FOLLOW', label: 'Follow', icon: 'person_add' },
+  { value: 'SUBSCRIBE', label: 'Subscribe', icon: 'subscriptions' },
 ];
 
 const CREATION_FEE = 500;
@@ -30,8 +49,14 @@ export default function PostTaskPage() {
     type: 'READ_ARTICLE',
     participantThreshold: 100,
     totalBudget: 5000,
+    targetUrl: '',
+    commentText: '',
+    minCommentLength: 10,
+    requiresScreenshot: false,
   });
 
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('TWITTER');
+  const [selectedActions, setSelectedActions] = useState<string[]>(['LIKE']);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
 
@@ -44,13 +69,19 @@ export default function PostTaskPage() {
   }, [formData.totalBudget]);
 
   const isValid = useMemo(() => {
-    return (
+    const baseValid = (
       formData.title.length >= 5 &&
       formData.description.length >= 20 &&
       coinPerParticipant >= MIN_COIN_PER_PARTICIPANT &&
       totalCost <= coinBalance
     );
-  }, [formData, coinPerParticipant, totalCost, coinBalance]);
+
+    if (formData.type === 'SOCIAL_ENGAGEMENT') {
+      return baseValid && formData.targetUrl.length > 0 && selectedActions.length > 0;
+    }
+
+    return baseValid;
+  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions]);
 
   useEffect(() => {
     const minBudget = TASK_TYPES.find(t => t.value === formData.type)?.minBudget ?? 1000;
@@ -64,6 +95,14 @@ export default function PostTaskPage() {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const toggleAction = (action: string) => {
+    setSelectedActions(prev => 
+      prev.includes(action) 
+        ? prev.filter(a => a !== action)
+        : [...prev, action]
+    );
   };
 
   const handleSubmit = async () => {
@@ -81,6 +120,12 @@ export default function PostTaskPage() {
     if (totalCost > coinBalance) {
       newErrors.balance = 'Insufficient balance';
     }
+    if (formData.type === 'SOCIAL_ENGAGEMENT' && !formData.targetUrl) {
+      newErrors.targetUrl = 'Target URL is required for social engagement tasks';
+    }
+    if (formData.type === 'SOCIAL_ENGAGEMENT' && selectedActions.length === 0) {
+      newErrors.actions = 'Select at least one action';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -94,6 +139,14 @@ export default function PostTaskPage() {
         type: formData.type,
         participantThreshold: formData.participantThreshold,
         totalBudget: formData.totalBudget,
+        socialRequirements: formData.type === 'SOCIAL_ENGAGEMENT' ? {
+          platform: selectedPlatform,
+          actions: selectedActions,
+          targetUrl: formData.targetUrl,
+          commentText: formData.commentText || undefined,
+          minCommentLength: formData.minCommentLength,
+          requiresScreenshot: formData.requiresScreenshot,
+        } : undefined,
       });
       router.push('/tasks/posted?success=created');
     } catch (err: any) {
@@ -104,6 +157,8 @@ export default function PostTaskPage() {
       }
     }
   };
+
+  const isSocialEngagement = formData.type === 'SOCIAL_ENGAGEMENT';
 
   return (
     <main className="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full">
@@ -143,7 +198,7 @@ export default function PostTaskPage() {
             type="text"
             value={formData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
-            placeholder="e.g., Watch our new music video"
+            placeholder="e.g., Engage with our latest content"
             className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
           />
           {errors.title && <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.title}</p>}
@@ -191,6 +246,120 @@ export default function PostTaskPage() {
             ))}
           </div>
         </div>
+
+        {isSocialEngagement && (
+          <div className="bg-surface rounded-xl p-6 border border-[#B8860B]/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">thumb_up</span>
+              Social Engagement Requirements
+            </h3>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Platform *</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {SOCIAL_PLATFORMS.map((platform) => (
+                    <button
+                      key={platform.value}
+                      onClick={() => setSelectedPlatform(platform.value)}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        selectedPlatform === platform.value
+                          ? 'border-[#B8860B] bg-[#B8860B]/10'
+                          : 'border-outline-variant/30 hover:border-outline-variant/50'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-xl mb-1 block">{platform.icon}</span>
+                      <span className="font-body-sm text-body-sm text-on-surface">{platform.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Required Actions * (Select multiple)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {SOCIAL_ACTIONS.map((action) => (
+                    <button
+                      key={action.value}
+                      onClick={() => toggleAction(action.value)}
+                      className={`p-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                        selectedActions.includes(action.value)
+                          ? 'border-[#B8860B] bg-[#B8860B]/10'
+                          : 'border-outline-variant/30 hover:border-outline-variant/50'
+                      }`}
+                    >
+                      <span className={`material-symbols-outlined ${selectedActions.includes(action.value) ? 'text-[#B8860B]' : 'text-on-surface-variant'}`}>
+                        {selectedActions.includes(action.value) ? 'check_box' : 'check_box_outline_blank'}
+                      </span>
+                      <span className="font-body-md text-body-md text-on-surface">{action.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {errors.actions && <p className="text-error-alert font-body-sm text-body-sm mt-2">{errors.actions}</p>}
+              </div>
+
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Target URL *</label>
+                <input
+                  type="url"
+                  value={formData.targetUrl}
+                  onChange={(e) => handleInputChange('targetUrl', e.target.value)}
+                  placeholder="https://twitter.com/yourprofile/status/..."
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                {errors.targetUrl && <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.targetUrl}</p>}
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Link to the post/profile participants need to engage with
+                </p>
+              </div>
+
+              {selectedActions.includes('COMMENT') && (
+                <div className="bg-surface-container-high rounded-lg p-4 space-y-4">
+                  <div>
+                    <label className="block font-body-md text-body-md text-on-surface mb-2">Suggested Comment Text (Optional)</label>
+                    <textarea
+                      value={formData.commentText}
+                      onChange={(e) => handleInputChange('commentText', e.target.value)}
+                      placeholder="Enter a suggested comment participants can use..."
+                      rows={3}
+                      className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] resize-none"
+                    />
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                      Participants can use this or write their own
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block font-body-md text-body-md text-on-surface mb-2">Minimum Comment Length</label>
+                    <input
+                      type="number"
+                      value={formData.minCommentLength}
+                      onChange={(e) => handleInputChange('minCommentLength', Math.max(1, parseInt(e.target.value) || 1))}
+                      min={1}
+                      max={500}
+                      className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                    />
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                      Minimum characters required for a valid comment
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="screenshot"
+                  checked={formData.requiresScreenshot}
+                  onChange={(e) => handleInputChange('requiresScreenshot', e.target.checked)}
+                  className="w-5 h-5 rounded border-outline-variant/30 text-[#B8860B] focus:ring-[#B8860B]"
+                />
+                <label htmlFor="screenshot" className="font-body-md text-body-md text-on-surface">
+                  Require screenshot as proof
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -297,6 +466,35 @@ export default function PostTaskPage() {
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Description</p>
                 <p className="font-body-md text-body-md text-on-surface">{formData.description}</p>
               </div>
+              {isSocialEngagement && (
+                <div className="bg-surface rounded-lg p-4 space-y-3">
+                  <p className="font-label-caps text-label-caps text-[#B8860B] uppercase">Social Requirements</p>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">
+                      {SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.icon}
+                    </span>
+                    <span className="font-body-md text-body-md text-on-surface">
+                      {SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.label}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Actions</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedActions.map(action => (
+                        <span key={action} className="bg-[#B8860B]/10 text-[#B8860B] font-body-sm text-body-sm px-2 py-1 rounded">
+                          {SOCIAL_ACTIONS.find(a => a.value === action)?.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {formData.targetUrl && (
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Target URL</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.targetUrl}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Type</p>

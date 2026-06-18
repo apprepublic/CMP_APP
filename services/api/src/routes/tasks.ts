@@ -440,11 +440,19 @@ router.post('/streak/freeze', authenticate, async (req: Request, res: Response) 
 const createPostedTaskSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(20).max(1000),
-  type: z.enum(['READ_ARTICLE', 'WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE']),
+  type: z.enum(['READ_ARTICLE', 'WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE', 'SOCIAL_ENGAGEMENT']),
   category: z.string().optional().default('USER_CREATED'),
   participantThreshold: z.number().min(10).max(10000),
   totalBudget: z.number().min(1000).max(1000000),
-  expiresAt: z.string().optional()
+  expiresAt: z.string().optional(),
+  socialRequirements: z.object({
+    platform: z.enum(['TWITTER', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'FACEBOOK', 'LINKEDIN']).optional(),
+    actions: z.array(z.enum(['LIKE', 'COMMENT', 'SHARE', 'RETWEET', 'FOLLOW', 'SUBSCRIBE'])).optional(),
+    targetUrl: z.string().url().optional(),
+    commentText: z.string().min(5).max(500).optional(),
+    minCommentLength: z.number().min(1).max(500).optional(),
+    requiresScreenshot: z.boolean().default(false),
+  }).optional(),
 });
 
 router.post('/create', authenticate, async (req: Request, res: Response) => {

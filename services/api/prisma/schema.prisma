@@ -61,6 +61,7 @@ enum TaskType {
   COMPLETE_SURVEY
   APP_DOWNLOAD
   VOTE
+  SOCIAL_ENGAGEMENT
 }
 
 enum WithdrawalStatus {
