@@ -29,15 +29,23 @@ export function useWallet() {
 
     setLoading(true);
     supabase
-      .from('wallets')
-      .select('*')
-      .eq('user_id', user.id)
+      .from('Wallet')
+      .select('id, userId, coinBalance, lifetimeEarned, lifetimeSpent, createdAt, updatedAt')
+      .eq('userId', user.id)
       .single()
       .then(({ data, error }) => {
         if (error || !data) {
           setWallet(null);
         } else {
-          setWallet(data as Wallet);
+          setWallet({
+            id: data.id,
+            user_id: data.userId,
+            coin_balance: data.coinBalance,
+            lifetime_earned: data.lifetimeEarned,
+            lifetime_spent: data.lifetimeSpent,
+            created_at: data.createdAt,
+            updated_at: data.updatedAt,
+          } as Wallet);
         }
         setLoading(false);
       });
