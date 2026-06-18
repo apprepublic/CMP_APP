@@ -1,10 +1,22 @@
 'use client';
 
+import { useEffect } from 'react';
 import SideNavBar from './SideNavBar';
 import TopNavBar from './TopNavBar';
 import BottomNavBar from './BottomNavBar';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { useUserStore } from '@/stores/userStore';
 import clsx from 'clsx';
+
+function UserFetcher() {
+  const { fetchUser } = useUserStore();
+  
+  useEffect(() => {
+    fetchUser();
+  }, []);
+  
+  return null;
+}
 
 export default function DashboardLayout({
   children,
@@ -15,6 +27,7 @@ export default function DashboardLayout({
 
   return (
     <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex">
+      <UserFetcher />
       <SideNavBar />
 
       <div

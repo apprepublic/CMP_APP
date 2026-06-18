@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -120,12 +121,42 @@ export const useUserStore = create<UserStore>()(
       },
 
       fetchUser: async () => {
-        const token = api.getToken();
-        if (!token) return;
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) return;
 
         try {
-          const { user } = await api.getMe();
-          set({ user, isAuthenticated: true });
+          // Fetch profile from Supabase
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, full_name, username, referral_code')
+            .eq('id', authUser.id)
+            .single();
+
+          // Fetch wallet from Supabase
+          const { data: wallet } = await supabase
+            .from('Wallet')
+            .select('coinBalance, lifetimeEarned, lifetimeSpent')
+            .eq('userId', authUser.id)
+            .single();
+
+          if (profile) {
+            const user: User = {
+              id: authUser.id,
+              email: authUser.email,
+              phone: '', // Not stored in profiles
+              displayName: profile.full_name || authUser.email || '',
+              username: profile.username || '',
+              role: 'USER',
+              kycStatus: 'NONE',
+              referralCode: profile.referral_code || '',
+              wallet: wallet ? {
+                coinBalance: Number(wallet.coinBalance) || 0,
+                lifetimeEarned: Number(wallet.lifetimeEarned) || 0,
+                lifetimeSpent: Number(wallet.lifetimeSpent) || 0,
+              } : undefined,
+            };
+            set({ user, isAuthenticated: true });
+          }
         } catch {
           get().logout();
         }
