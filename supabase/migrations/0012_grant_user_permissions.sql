@@ -1,0 +1,23 @@
+-- Grant service_role access to Prisma-created tables
+GRANT ALL ON "User" TO service_role;
+GRANT ALL ON "Wallet" TO service_role;
+GRANT ALL ON "Referral" TO service_role;
+GRANT ALL ON "Article" TO service_role;
+GRANT ALL ON "TaskCompletion" TO service_role;
+GRANT ALL ON "Product" TO service_role;
+GRANT ALL ON "ProductCategory" TO service_role;
+GRANT ALL ON "BusinessProfile" TO service_role;
+GRANT ALL ON "ArtistProfile" TO service_role;
+GRANT ALL ON "VoteCast" TO service_role;
+GRANT ALL ON "ContestEntry" TO service_role;
+GRANT ALL ON "Contest" TO service_role;
+GRANT ALL ON "CoinTransaction" TO service_role;
+GRANT ALL ON "Notification" TO service_role;
+GRANT ALL ON "Order" TO service_role;
+GRANT ALL ON "VtuTransaction" TO service_role;
+GRANT ALL ON "AdminAction" TO service_role;
+GRANT ALL ON "KycRecord" TO service_role;
+GRANT ALL ON "UserVerification" TO service_role;
+GRANT ALL ON "StreakRecord" TO service_role;
+GRANT ALL ON "Song" TO service_role;
+GRANT ALL ON "SongStream" TO service_role;
