@@ -202,6 +202,37 @@ class ApiService {
     });
   }
 
+  async createPostedTask(data: {
+    title: string;
+    description: string;
+    type: string;
+    participantThreshold: number;
+    totalBudget: number;
+    expiresAt?: string;
+  }) {
+    return this.request<{ task: any; totalCost: number; coinPerParticipant: number }>('/api/tasks/create', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPostedTasks() {
+    return this.request<{ tasks: any[] }>('/api/tasks/posted');
+  }
+
+  async activatePostedTask(id: string) {
+    return this.request<{ task: any }>(`/api/tasks/posted/${id}/activate`, {
+      method: 'POST',
+    });
+  }
+
+  async completePostedTask(id: string, proofData?: any) {
+    return this.request<{ coinsEarned: number; message: string }>(`/api/tasks/posted/${id}/complete`, {
+      method: 'POST',
+      body: JSON.stringify({ proofData }),
+    });
+  }
+
   // Music
   async getSongs(page = 1, limit = 20, genre?: string, search?: string) {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });

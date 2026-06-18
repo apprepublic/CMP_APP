@@ -82,6 +82,50 @@ export const useBuyStreakFreeze = () => {
   });
 };
 
+export const usePostTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      title: string;
+      description: string;
+      type: string;
+      participantThreshold: number;
+      totalBudget: number;
+      expiresAt?: string;
+    }) => api.createPostedTask(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
+    },
+  });
+};
+
+export const usePostedTasks = () =>
+  useQuery({ queryKey: ['postedTasks'], queryFn: () => api.getPostedTasks() });
+
+export const useActivatePostedTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.activatePostedTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
+    },
+  });
+};
+
+export const useCompletePostedTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, proofData }: { id: string; proofData?: any }) =>
+      api.completePostedTask(id, proofData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
+    },
+  });
+};
+
 export const useArticle = (slug: string) =>
   useQuery({ queryKey: ['article', slug], queryFn: () => api.getArticleBySlug(slug), enabled: !!slug });
 

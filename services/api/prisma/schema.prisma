@@ -158,6 +158,9 @@ model User {
 
   notifications Notification[]
 
+  postedTasks   UserPostedTask[]
+  completedUserTasks UserTaskCompletion[]
+
   @@index([phone])
   @@index([email])
   @@index([referralCode])
@@ -306,6 +309,56 @@ model TaskCompletion {
   @@index([userId])
   @@index([taskId])
   @@index([createdAt])
+}
+
+model UserPostedTask {
+  id                  String   @id @default(cuid())
+  creatorId           String
+  title               String
+  description         String
+  type                TaskType
+  category            String   @default("USER_CREATED")
+  participantThreshold Int     @default(100)
+  totalBudget         Int
+  coinPerParticipant  Int
+  creationFee         Int      @default(500)
+  status              UserTaskStatus
+  currentParticipants Int      @default(0)
+  isActive            Boolean  @default(false)
+  expiresAt           DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  creator           User           @relation(fields: [creatorId], references: [id])
+  completions       UserTaskCompletion[]
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([isActive])
+}
+
+enum UserTaskStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+model UserTaskCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  postedTaskId String
+  completedAt DateTime @default(now())
+  coinsEarned Int
+  proofData   Json?
+
+  user       User           @relation(fields: [userId], references: [id])
+  postedTask UserPostedTask @relation(fields: [postedTaskId], references: [id])
+
+  @@unique([userId, postedTaskId])
+  @@index([userId])
+  @@index([postedTaskId])
 }
 
 model StreakRecord {

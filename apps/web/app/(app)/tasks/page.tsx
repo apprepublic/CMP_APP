@@ -56,13 +56,29 @@ export default function EarnMarketplacePage() {
             Complete verified tasks to earn premium rewards and build your creative capital. Watch out for Ad-Gated premium tasks for higher payouts.
           </p>
         </div>
-        <Link 
-          href="/tasks/streak"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary rounded-xl font-body-md text-body-md font-semibold transition-colors shadow-sm whitespace-nowrap self-start md:self-auto w-full md:w-auto"
-        >
-          <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-          Daily Streak & Rewards
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link 
+            href="/tasks/post"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#B8860B] text-primary hover:bg-[#8B6914] rounded-xl font-body-md text-body-md font-semibold transition-colors shadow-sm whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined">add_task</span>
+            Post a Task
+          </Link>
+          <Link 
+            href="/tasks/posted"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface-alt text-on-surface hover:bg-surface-dim rounded-xl font-body-md text-body-md font-semibold transition-colors shadow-sm border border-outline-variant/30 whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined">list_alt</span>
+            My Tasks
+          </Link>
+          <Link 
+            href="/tasks/streak"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary rounded-xl font-body-md text-body-md font-semibold transition-colors shadow-sm whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+            Daily Streak & Rewards
+          </Link>
+        </div>
       </div>
 
       <div className="flex overflow-x-auto pb-4 mb-8 gap-4 hide-scrollbar border-b border-outline-variant/30">
