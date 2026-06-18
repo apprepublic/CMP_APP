@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS public.pending_registrations (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Drop indexes if they exist before recreating
+DROP INDEX IF EXISTS idx_pending_registrations_email;
+DROP INDEX IF EXISTS idx_pending_registrations_token;
+
 CREATE INDEX idx_pending_registrations_email ON public.pending_registrations(email);
 CREATE INDEX idx_pending_registrations_token ON public.pending_registrations(verification_token);
 
