@@ -22,11 +22,13 @@ export function useWallet() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
+      console.log('useWallet: No user');
       setWallet(null);
       setLoading(false);
       return;
     }
 
+    console.log('useWallet: Fetching wallet for user', user.id);
     setLoading(true);
     supabase
       .from('Wallet')
@@ -34,9 +36,14 @@ export function useWallet() {
       .eq('userId', user.id)
       .single()
       .then(({ data, error }) => {
-        if (error || !data) {
+        if (error) {
+          console.error('useWallet: Error fetching wallet', error);
+          setWallet(null);
+        } else if (!data) {
+          console.log('useWallet: No wallet data found');
           setWallet(null);
         } else {
+          console.log('useWallet: Wallet data found', data);
           setWallet({
             id: (data as any).id,
             user_id: (data as any).userId,
