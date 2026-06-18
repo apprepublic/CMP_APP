@@ -145,6 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
       if (userError) {
         console.error("User table error:", userError);
+        return jsonResponse({ error: "Failed to create user record: " + userError.message });
       } else {
         console.log("User record created:", userId);
       }
