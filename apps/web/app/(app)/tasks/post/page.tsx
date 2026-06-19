@@ -45,6 +45,23 @@ export default function PostTaskPage() {
   const postTask = usePostTask();
   const { wallet } = useWallet();
   const coinBalance = Number(wallet?.coin_balance ?? 0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      setAuthChecked(true);
+      
+      if (!user) {
+        // Redirect to login if not authenticated
+        router.push('/login?redirect=/tasks/post');
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   const [formData, setFormData] = useState({
     type: 'READ_ARTICLE',
@@ -383,6 +400,26 @@ export default function PostTaskPage() {
         </div>
       </div>
 
+      {!authChecked ? (
+        <div className="text-center py-10">
+          <span className="material-symbols-outlined text-4xl text-on-surface-variant animate-spin mb-4">progress_activity</span>
+          <p className="text-on-surface-variant">Loading...</p>
+        </div>
+      ) : !isAuthenticated ? (
+        <div className="bg-error-alert/10 border border-error-alert/30 rounded-xl p-6 text-center">
+          <span className="material-symbols-outlined text-4xl text-error-alert mb-4">lock</span>
+          <h3 className="font-h3 text-h3 text-on-surface mb-2">Sign In Required</h3>
+          <p className="font-body-md text-body-md text-on-surface-variant mb-4">
+            You need to sign in to create tasks and upload files.
+          </p>
+          <button
+            onClick={() => router.push('/login?redirect=/tasks/post')}
+            className="bg-[#B8860B] text-primary font-body-md text-body-md px-6 py-3 rounded-lg hover:bg-[#8B6914] transition-colors"
+          >
+            Sign In
+          </button>
+        </div>
+      ) : (
       <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/30 space-y-6">
         {/* Auto-generated Title & Description Preview */}
         <div className="bg-surface rounded-xl p-6 border border-outline-variant/20">
@@ -716,6 +753,11 @@ export default function PostTaskPage() {
                         type="file"
                         accept=".mp3,audio/mpeg"
                         onChange={(e) => {
+                          if (!isAuthenticated) {
+                            setErrors({ submit: 'Please sign in to upload files' });
+                            router.push('/login?redirect=/tasks/post');
+                            return;
+                          }
                           const file = e.target.files?.[0];
                           if (file) {
                             if (file.size > 50 * 1024 * 1024) {
@@ -809,6 +851,11 @@ export default function PostTaskPage() {
                         type="file"
                         accept="image/*"
                         onChange={(e) => {
+                          if (!isAuthenticated) {
+                            setErrors({ submit: 'Please sign in to upload files' });
+                            router.push('/login?redirect=/tasks/post');
+                            return;
+                          }
                           const file = e.target.files?.[0];
                           if (file) {
                             if (file.size > 10 * 1024 * 1024) {
@@ -1129,9 +1176,10 @@ export default function PostTaskPage() {
           </button>
         </div>
       </div>
+      )}
 
       {/* Preview Modal */}
-      {showPreview && !showSuccess && (
+      {showPreview && !showSuccess && isAuthenticated && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-surface-container-lowest rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h2 className="font-h2 text-h2 text-on-surface mb-4">Preview Task</h2>

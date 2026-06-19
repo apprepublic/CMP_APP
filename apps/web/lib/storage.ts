@@ -25,9 +25,20 @@ export async function uploadFile(
   path?: string
 ): Promise<UploadResult> {
   try {
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return {
+        success: false,
+        error: 'You must be logged in to upload files. Please sign in and try again.',
+      };
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = path ? `${path}/${fileName}` : fileName;
+
+    console.log(`[Storage] Uploading to ${bucket}/${filePath}...`);
 
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -37,10 +48,10 @@ export async function uploadFile(
       });
 
     if (error) {
-      console.error('Upload error:', error);
+      console.error('[Storage] Upload error:', error);
       return {
         success: false,
-        error: error.message,
+        error: error.message || 'Upload failed. Please try again.',
       };
     }
 
@@ -49,12 +60,14 @@ export async function uploadFile(
       data: { publicUrl },
     } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
+    console.log(`[Storage] Upload successful: ${publicUrl}`);
+
     return {
       success: true,
       url: publicUrl,
     };
   } catch (err: any) {
-    console.error('Upload error:', err);
+    console.error('[Storage] Upload error:', err);
     return {
       success: false,
       error: err.message || 'Upload failed',
