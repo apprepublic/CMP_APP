@@ -209,13 +209,32 @@ class ApiService {
     participantThreshold: number;
     totalBudget: number;
     expiresAt?: string;
-    socialRequirements?: {
+    taskRequirements?: {
+      // Social engagement
       platform?: string;
       actions?: string[];
       targetUrl?: string;
       commentText?: string;
       minCommentLength?: number;
       requiresScreenshot?: boolean;
+      // Read article
+      articleUrl?: string;
+      minReadTime?: number;
+      // Watch video
+      videoUrl?: string;
+      minWatchTime?: number;
+      // App download
+      appStoreUrl?: string;
+      requiresReview?: boolean;
+      minRating?: number;
+      // Survey
+      surveyUrl?: string;
+      minQuestions?: number;
+      // Share social
+      sharePlatform?: string;
+      shareMessage?: string;
+      requiresHashtag?: boolean;
+      hashtag?: string;
     };
   }) {
     return this.request<{ task: any; totalCost: number; coinPerParticipant: number }>('/api/tasks/create', {
