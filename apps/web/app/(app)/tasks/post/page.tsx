@@ -119,12 +119,17 @@ export default function PostTaskPage() {
       totalCost <= coinBalance
     );
 
+    // Check if uploading for music tasks
+    if (formData.type === 'STREAM_MUSIC' && uploading) {
+      return false;
+    }
+
     if (formData.type === 'SOCIAL_ENGAGEMENT') {
       return baseValid && formData.targetUrl.length > 0 && selectedActions.length > 0;
     }
 
     return baseValid;
-  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions]);
+  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading]);
 
   useEffect(() => {
     const minBudget = TASK_TYPES.find(t => t.value === formData.type)?.minBudget ?? 1000;
@@ -239,6 +244,10 @@ export default function PostTaskPage() {
         }
         if (!formData.genre) {
           newErrors.genre = 'Genre is required';
+        }
+        // Prevent preview if still uploading
+        if (uploading) {
+          newErrors.submit = 'Please wait for file upload to complete';
         }
         break;
       case 'SOCIAL_ENGAGEMENT':
@@ -666,21 +675,36 @@ export default function PostTaskPage() {
                   {formData.audioFile ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-[#B8860B]">audio_file</span>
+                        {uploading && uploadProgress.audio < 100 ? (
+                          <span className="material-symbols-outlined text-[#B8860B] animate-spin">progress_activity</span>
+                        ) : (
+                          <span className="material-symbols-outlined text-success-verified">check_circle</span>
+                        )}
                         <div>
                           <p className="font-body-md text-body-md text-on-surface">{formData.audioFile.name}</p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
                             {(formData.audioFile.size / (1024 * 1024)).toFixed(2)} MB
+                            {uploading && uploadProgress.audio < 100 ? (
+                              <span className="ml-2 text-[#B8860B]">
+                                - Uploading {uploadProgress.audio}%
+                              </span>
+                            ) : uploadProgress.audio === 100 ? (
+                              <span className="ml-2 text-success-verified">
+                                - Upload Complete
+                              </span>
+                            ) : null}
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('audioFile', null)}
-                        className="text-error-alert hover:underline font-body-sm text-body-sm"
-                      >
-                        Remove
-                      </button>
+                      {!uploading && (
+                        <button
+                          type="button"
+                          onClick={() => handleInputChange('audioFile', null)}
+                          className="text-error-alert hover:underline font-body-sm text-body-sm"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center">
@@ -739,6 +763,11 @@ export default function PostTaskPage() {
                   {formData.coverImageFile ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
+                        {uploading && uploadProgress.cover < 100 ? (
+                          <span className="material-symbols-outlined text-[#B8860B] animate-spin">progress_activity</span>
+                        ) : (
+                          <span className="material-symbols-outlined text-success-verified">check_circle</span>
+                        )}
                         <img
                           src={URL.createObjectURL(formData.coverImageFile)}
                           alt="Cover preview"
@@ -748,16 +777,27 @@ export default function PostTaskPage() {
                           <p className="font-body-md text-body-md text-on-surface">{formData.coverImageFile.name}</p>
                           <p className="font-body-sm text-body-sm text-on-surface-variant">
                             {(formData.coverImageFile.size / (1024 * 1024)).toFixed(2)} MB
+                            {uploading && uploadProgress.cover < 100 ? (
+                              <span className="ml-2 text-[#B8860B]">
+                                - Uploading {uploadProgress.cover}%
+                              </span>
+                            ) : uploadProgress.cover === 100 ? (
+                              <span className="ml-2 text-success-verified">
+                                - Upload Complete
+                              </span>
+                            ) : null}
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('coverImageFile', null)}
-                        className="text-error-alert hover:underline font-body-sm text-body-sm"
-                      >
-                        Remove
-                      </button>
+                      {!uploading && (
+                        <button
+                          type="button"
+                          onClick={() => handleInputChange('coverImageFile', null)}
+                          className="text-error-alert hover:underline font-body-sm text-body-sm"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center">
@@ -1073,16 +1113,25 @@ export default function PostTaskPage() {
         <div className="flex gap-4 pt-4">
           <button
             onClick={() => setShowPreview(true)}
-            disabled={!isValid || postTask.isPending}
+            disabled={!isValid || postTask.isPending || uploading}
             className="flex-1 bg-[#B8860B] text-primary font-body-md text-body-md py-4 rounded-lg hover:bg-[#8B6914] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {postTask.isPending ? 'Creating...' : 'Preview & Post'}
+            {uploading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                Uploading... {uploadProgress.audio > 0 ? `Audio ${uploadProgress.audio}%` : ''}{uploadProgress.cover > 0 ? `Cover ${uploadProgress.cover}%` : ''}
+              </span>
+            ) : postTask.isPending ? (
+              'Creating...'
+            ) : (
+              'Preview & Post'
+            )}
           </button>
         </div>
       </div>
 
       {/* Preview Modal */}
-      {showPreview && (
+      {showPreview && !showSuccess && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-surface-container-lowest rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h2 className="font-h2 text-h2 text-on-surface mb-4">Preview Task</h2>
