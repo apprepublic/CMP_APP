@@ -165,7 +165,7 @@ export default function DashboardPage() {
             <section className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 sticky top-24 shadow-[0_4px_20px_rgba(0,0,0,0.02)]" id="daily-tasks">
               <div className="flex items-center gap-2 mb-6 pb-4 border-b border-outline-variant/20">
                 <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>task_alt</span>
-                <h3 className="font-h3 text-h3 text-on-background text-lg">Daily Quick Earn</h3>
+                <h3 className="font-h3 text-h3 text-on-background text-lg">Daily Quick Tasks</h3>
               </div>
               <div className="space-y-4">
                 {tasksLoading ? (
