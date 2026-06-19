@@ -62,6 +62,7 @@ enum TaskType {
   APP_DOWNLOAD
   VOTE
   SOCIAL_ENGAGEMENT
+  STREAM_MUSIC
 }
 
 enum WithdrawalStatus {
@@ -330,12 +331,21 @@ model UserPostedTask {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
+  // Music upload fields (for STREAM_MUSIC type)
+  audioUrl            String?
+  coverImageUrl       String?
+  genre               String?
+  durationSeconds     Int?
+  isDownloadEnabled   Boolean  @default(false)
+  songId              String?  @unique  // Links to Song model if created
+  
   creator           User           @relation(fields: [creatorId], references: [id])
   completions       UserTaskCompletion[]
 
   @@index([creatorId])
   @@index([status])
   @@index([isActive])
+  @@index([type])
 }
 
 enum UserTaskStatus {

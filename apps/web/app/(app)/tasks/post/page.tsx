@@ -14,6 +14,7 @@ const TASK_TYPES = [
   { value: 'COMPLETE_SURVEY', label: 'Complete Survey', icon: 'poll', minBudget: 5000 },
   { value: 'APP_DOWNLOAD', label: 'App Download', icon: 'download', minBudget: 10000 },
   { value: 'VOTE', label: 'Vote/Poll', icon: 'how_to_vote', minBudget: 1000 },
+  { value: 'STREAM_MUSIC', label: 'Stream Music', icon: 'music_note', minBudget: 5000 },
 ];
 
 const SOCIAL_PLATFORMS = [
@@ -72,6 +73,12 @@ export default function PostTaskPage() {
     shareMessage: '',
     requiresHashtag: false,
     hashtag: '',
+    // Music stream fields
+    audioUrl: '',
+    coverImageUrl: '',
+    genre: '',
+    durationSeconds: 180,
+    isDownloadEnabled: false,
   });
 
   const [selectedPlatform, setSelectedPlatform] = useState<string>('TWITTER');
@@ -170,6 +177,14 @@ export default function PostTaskPage() {
           newErrors.hashtag = 'Hashtag is required';
         }
         break;
+      case 'STREAM_MUSIC':
+        if (!formData.audioUrl) {
+          newErrors.audioUrl = 'Audio file URL is required';
+        }
+        if (!formData.genre) {
+          newErrors.genre = 'Genre is required';
+        }
+        break;
       case 'SOCIAL_ENGAGEMENT':
         if (!formData.targetUrl) {
           newErrors.targetUrl = 'Target URL is required';
@@ -218,6 +233,12 @@ export default function PostTaskPage() {
           shareMessage: formData.shareMessage || undefined,
           requiresHashtag: formData.requiresHashtag,
           hashtag: formData.hashtag || undefined,
+          // Music stream
+          audioUrl: formData.audioUrl || undefined,
+          coverImageUrl: formData.coverImageUrl || undefined,
+          genre: formData.genre || undefined,
+          durationSeconds: formData.durationSeconds,
+          isDownloadEnabled: formData.isDownloadEnabled,
         },
       });
       router.push('/tasks/posted?success=created');
@@ -546,6 +567,99 @@ export default function PostTaskPage() {
           </div>
         )}
 
+        {formData.type === 'STREAM_MUSIC' && (
+          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">music_note</span>
+              Music Upload & Streaming Settings
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Audio File (MP3 URL) *</label>
+                <input
+                  type="url"
+                  value={formData.audioUrl}
+                  onChange={(e) => handleInputChange('audioUrl', e.target.value)}
+                  placeholder="https://storage.supabase.co/music/your-song.mp3"
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Upload your MP3 file to Supabase Storage or provide a direct URL
+                </p>
+              </div>
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Album Art URL</label>
+                <input
+                  type="url"
+                  value={formData.coverImageUrl}
+                  onChange={(e) => handleInputChange('coverImageUrl', e.target.value)}
+                  placeholder="https://storage.supabase.co/covers/your-cover.jpg"
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Cover art for your track (recommended: 1000x1000px)
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-body-md text-body-md text-on-surface mb-2">Genre</label>
+                  <select
+                    value={formData.genre}
+                    onChange={(e) => handleInputChange('genre', e.target.value)}
+                    className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                  >
+                    <option value="">Select Genre</option>
+                    <option value="Afrobeats">Afrobeats</option>
+                    <option value="Hip Hop">Hip Hop</option>
+                    <option value="R&B">R&B</option>
+                    <option value="Pop">Pop</option>
+                    <option value="Gospel">Gospel</option>
+                    <option value="Highlife">Highlife</option>
+                    <option value="Fuji">Fuji</option>
+                    <option value="Amapiano">Amapiano</option>
+                    <option value="Jazz">Jazz</option>
+                    <option value="Rock">Rock</option>
+                    <option value="Electronic">Electronic</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-body-md text-body-md text-on-surface mb-2">Duration (seconds)</label>
+                  <input
+                    type="number"
+                    value={formData.durationSeconds}
+                    onChange={(e) => handleInputChange('durationSeconds', Math.max(30, parseInt(e.target.value) || 30))}
+                    min={30}
+                    max={7200}
+                    className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                  />
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                    Length of the track
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isDownloadEnabled"
+                  checked={formData.isDownloadEnabled}
+                  onChange={(e) => handleInputChange('isDownloadEnabled', e.target.checked)}
+                  className="w-5 h-5 rounded border-outline-variant/30 text-[#B8860B] focus:ring-[#B8860B]"
+                />
+                <label htmlFor="isDownloadEnabled" className="font-body-md text-body-md text-on-surface">
+                  Allow users to download this track
+                </label>
+              </div>
+              <div className="bg-[#B8860B]/10 border border-[#B8860B]/30 rounded-lg p-4">
+                <p className="font-body-sm text-body-sm text-[#B8860B]">
+                  <strong>Note:</strong> Your track will appear in the Music section. Users will earn coins by streaming. 
+                  Each stream pays the coin reward you set above from your budget.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isSocialEngagement && (
           <div className="bg-surface rounded-xl p-6 border border-[#B8860B]/30">
             <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
@@ -847,6 +961,44 @@ export default function PostTaskPage() {
                         <p className="font-body-md text-body-md text-on-surface">{formData.hashtag}</p>
                       </div>
                     )}
+                  </>
+                )}
+                
+                {formData.type === 'STREAM_MUSIC' && (
+                  <>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Audio File</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.audioUrl}</p>
+                    </div>
+                    {formData.coverImageUrl && (
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Cover Art</p>
+                        <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.coverImageUrl}</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Genre</p>
+                        <p className="font-body-md text-body-md text-on-surface">{formData.genre}</p>
+                      </div>
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Duration</p>
+                        <p className="font-body-md text-body-md text-on-surface">
+                          {Math.floor(formData.durationSeconds / 60)}:{(formData.durationSeconds % 60).toString().padStart(2, '0')}
+                        </p>
+                      </div>
+                    </div>
+                    {formData.isDownloadEnabled && (
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Download</p>
+                        <p className="font-body-md text-body-md text-success-verified">Enabled</p>
+                      </div>
+                    )}
+                    <div className="bg-[#B8860B]/10 border border-[#B8860B]/30 rounded-lg p-3">
+                      <p className="font-body-sm text-body-sm text-[#B8860B]">
+                        This track will appear in the Music section. Users earn {coinPerParticipant} coins per stream.
+                      </p>
+                    </div>
                   </>
                 )}
                 
