@@ -118,6 +118,12 @@ export const usePostTask = () => {
         shareMessage?: string;
         requiresHashtag?: boolean;
         hashtag?: string;
+        // Music stream
+        audioUrl?: string;
+        coverImageUrl?: string;
+        genre?: string;
+        durationSeconds?: number;
+        isDownloadEnabled?: boolean;
       };
     }) => api.createPostedTask(data),
     onSuccess: () => {
