@@ -9,7 +9,7 @@ export default function BottomNavBar() {
 
   const links = [
     { href: '/dashboard', label: 'Home', icon: 'home' },
-    { href: '/tasks', label: 'Earn', icon: 'paid' },
+    { href: '/tasks', label: 'Tasks', icon: 'task' },
     { href: '/music', label: 'Music', icon: 'music_note' },
     { href: '/referrals', label: 'Refer', icon: 'groups' },
     { href: '/wallet', label: 'Wallet', icon: 'wallet' },

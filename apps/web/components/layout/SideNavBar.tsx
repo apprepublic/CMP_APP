@@ -21,7 +21,7 @@ export default function SideNavBar() {
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { href: '/tasks', label: 'Earn', icon: 'monetization_on' },
+    { href: '/tasks', label: 'Tasks', icon: 'task' },
     { href: '/music', label: 'Music', icon: 'library_music' },
     { href: '/referrals', label: 'Referrals', icon: 'groups' },
     { href: '/wallet', label: 'Wallet', icon: 'account_balance_wallet' },
@@ -40,7 +40,7 @@ export default function SideNavBar() {
           <img
             src="/logo.png"
             alt="CMPapp"
-            className={clsx("h-10 w-auto transition-all duration-300 shrink-0", isCollapsed && "h-8")}
+            className={clsx("h-10 w-auto transition-all duration-300 shrink-0 object-contain", isCollapsed && "h-8")}
           />
         </Link>
       </div>

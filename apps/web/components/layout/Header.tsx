@@ -27,7 +27,7 @@ const publicNavItems = [
 ];
 
 const authenticatedNavItems = [
-  { href: '/tasks', label: 'Earn', icon: Coins },
+  { href: '/tasks', label: 'Tasks', icon: Coins },
   { href: '/music', label: 'Music', icon: Music },
 
   { href: '/referrals', label: 'Refer', icon: Users },
