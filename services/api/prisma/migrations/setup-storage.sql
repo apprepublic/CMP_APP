@@ -3,60 +3,75 @@
 -- ============================================
 -- Run this in Supabase Dashboard > SQL Editor
 -- This creates buckets and configures RLS policies
+-- Works with standard user permissions
 -- ============================================
 
 -- Step 1: Create Storage Buckets
 -- ============================================
+-- Note: If you get "already exists" errors, that's fine - buckets already exist!
 
 -- Create music bucket for audio files and cover art
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'music',
-  'music',
-  true,
-  52428800, -- 50MB in bytes
-  ARRAY['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
-)
-ON CONFLICT (id) DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'music') THEN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'music',
+      'music',
+      true,
+      52428800, -- 50MB in bytes
+      ARRAY['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    );
+  END IF;
+END $$;
 
 -- Create task-attachments bucket for general task files
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'task-attachments',
-  'task-attachments',
-  false,
-  104857600, -- 100MB in bytes
-  ARRAY['image/*', 'application/pdf', 'text/*', 'application/json']
-)
-ON CONFLICT (id) DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'task-attachments') THEN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'task-attachments',
+      'task-attachments',
+      false,
+      104857600, -- 100MB in bytes
+      ARRAY['image/*', 'application/pdf', 'text/*', 'application/json']
+    );
+  END IF;
+END $$;
 
 -- Create profile-photos bucket for user avatars
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'profile-photos',
-  'profile-photos',
-  true,
-  10485760, -- 10MB in bytes
-  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-)
-ON CONFLICT (id) DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'profile-photos') THEN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'profile-photos',
+      'profile-photos',
+      true,
+      10485760, -- 10MB in bytes
+      ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    );
+  END IF;
+END $$;
 
 -- Create cover-photos bucket for user/artist covers
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'cover-photos',
-  'cover-photos',
-  true,
-  10485760, -- 10MB in bytes
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
-)
-ON CONFLICT (id) DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'cover-photos') THEN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'cover-photos',
+      'cover-photos',
+      true,
+      10485760, -- 10MB in bytes
+      ARRAY['image/jpeg', 'image/png', 'image/webp']
+    );
+  END IF;
+END $$;
 
 -- Step 2: Configure RLS Policies for Music Bucket
 -- ============================================
-
--- Enable RLS on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Allow public read access to music bucket
 -- This allows anyone to stream music and view cover art
@@ -108,8 +123,7 @@ WITH CHECK (
   auth.role() = 'authenticated'
 );
 
--- Policy 2: Allow users to read task attachments they have access to
--- (For now, allow all authenticated users - can be refined later)
+-- Policy 2: Allow authenticated users to read task attachments
 DROP POLICY IF EXISTS "Allow authenticated read task-attachments" ON storage.objects;
 CREATE POLICY "Allow authenticated read task-attachments"
 ON storage.objects FOR SELECT
@@ -203,30 +217,14 @@ USING (
   auth.uid() = owner
 );
 
--- Step 6: Create Helper Functions (Optional but Recommended)
+-- ============================================
+-- Setup Complete!
+-- ============================================
+-- Your storage buckets are now ready to use.
+-- Test the setup by uploading a file through the app.
 -- ============================================
 
--- Function to get current user's storage prefix
--- This helps organize files by user
-CREATE OR REPLACE FUNCTION get_user_storage_prefix()
-RETURNS TEXT AS $$
-BEGIN
-  RETURN 'users/' || auth.uid()::text;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Function to check if user owns a file
-CREATE OR REPLACE FUNCTION is_file_owner(file_path TEXT)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN auth.uid()::text = split_part(file_path, '/', 2);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Step 7: Verification Queries
--- ============================================
-
--- Verify buckets were created
+-- Verification: List all buckets
 SELECT 
   id,
   name,
@@ -237,34 +235,13 @@ SELECT
 FROM storage.buckets
 ORDER BY name;
 
--- Verify policies were created
+-- Verification: List all policies
 SELECT 
-  schemaname,
-  tablename,
   policyname,
-  permissive,
-  roles,
+  tablename,
   cmd,
-  qual,
-  with_check
+  roles
 FROM pg_policies
 WHERE tablename = 'objects'
+  AND schemaname = 'storage'
 ORDER BY policyname;
-
--- Show bucket statistics
-SELECT 
-  b.name as bucket_name,
-  COUNT(o.id) as file_count,
-  SUM(o.metadata->>'size')::BIGINT as total_size_bytes,
-  pg_size_pretty(SUM(o.metadata->>'size')::BIGINT) as total_size_pretty
-FROM storage.buckets b
-LEFT JOIN storage.objects o ON b.id = o.bucket_id
-GROUP BY b.name
-ORDER BY b.name;
-
--- ============================================
--- Setup Complete!
--- ============================================
--- Your storage buckets are now ready to use.
--- Test the setup by uploading a file through the app.
--- ============================================
