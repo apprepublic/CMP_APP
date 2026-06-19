@@ -85,6 +85,8 @@ export default function PostTaskPage() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ audio: 0, cover: 0 });
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -325,7 +327,10 @@ export default function PostTaskPage() {
           isDownloadEnabled: formData.isDownloadEnabled,
         },
       });
-      router.push('/tasks/posted?success=created');
+      
+      // Success - show success modal
+      setShowPreview(false);
+      setShowSuccess(true);
     } catch (err: any) {
       setUploading(false);
       if (err.message?.includes('top up')) {
@@ -1284,6 +1289,107 @@ export default function PostTaskPage() {
                 className="flex-1 bg-[#B8860B] text-primary font-body-md text-body-md py-3 rounded-lg hover:bg-[#8B6914] transition-colors disabled:opacity-50"
               >
                 {postTask.isPending ? 'Posting...' : 'Confirm & Post'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest rounded-xl p-8 max-w-md w-full text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto bg-success-verified/10 rounded-full flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-5xl text-success-verified">
+                  check_circle
+                </span>
+              </div>
+              <h2 className="font-h2 text-h2 text-on-surface mb-2">Task Posted Successfully!</h2>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                Your task has been created and is now live.
+              </p>
+            </div>
+
+            <div className="bg-surface rounded-lg p-4 mb-6">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">Task Type:</span>
+                  <span className="font-body-sm text-body-sm text-on-surface font-semibold">
+                    {TASK_TYPES.find(t => t.value === formData.type)?.label}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">Participants:</span>
+                  <span className="font-body-sm text-body-sm text-on-surface font-semibold">
+                    {formData.participantThreshold.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">Budget:</span>
+                  <span className="font-body-sm text-body-sm text-on-surface font-semibold">
+                    {formData.totalBudget.toLocaleString()} 🪙
+                  </span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-outline-variant/20">
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">Coin per Participant:</span>
+                  <span className="font-body-sm text-body-sm text-secondary font-bold">
+                    {coinPerParticipant.toLocaleString()} 🪙
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowSuccess(false);
+                  router.push('/tasks');
+                }}
+                className="w-full bg-[#B8860B] text-primary font-body-md text-body-md py-3 rounded-lg hover:bg-[#8B6914] transition-colors"
+              >
+                View All Tasks
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuccess(false);
+                  // Reset form to create another task
+                  setFormData({
+                    type: 'READ_ARTICLE',
+                    participantThreshold: 100,
+                    totalBudget: 5000,
+                    targetUrl: '',
+                    commentText: '',
+                    minCommentLength: 10,
+                    requiresScreenshot: false,
+                    articleUrl: '',
+                    minReadTime: 2,
+                    videoUrl: '',
+                    minWatchTime: 30,
+                    appStoreUrl: '',
+                    requiresReview: false,
+                    minRating: 4,
+                    surveyUrl: '',
+                    minQuestions: 5,
+                    sharePlatform: 'TWITTER',
+                    shareMessage: '',
+                    requiresHashtag: false,
+                    hashtag: '',
+                    audioFile: null,
+                    audioUrl: '',
+                    coverImageFile: null,
+                    coverImageUrl: '',
+                    genre: '',
+                    durationSeconds: 180,
+                    isDownloadEnabled: false,
+                  });
+                  setSelectedPlatform('TWITTER');
+                  setSelectedActions(['LIKE']);
+                  setErrors({});
+                }}
+                className="w-full bg-surface-container-high text-on-surface font-body-md text-body-md py-3 rounded-lg hover:bg-surface-container-highest transition-colors"
+              >
+                Create Another Task
               </button>
             </div>
           </div>
