@@ -17,12 +17,12 @@ const TASK_TYPES = [
 ];
 
 const SOCIAL_PLATFORMS = [
-  { value: 'TWITTER', label: 'Twitter/X', icon: 'tag' },
-  { value: 'INSTAGRAM', label: 'Instagram', icon: 'photo_camera' },
-  { value: 'TIKTOK', label: 'TikTok', icon: 'music_note' },
-  { value: 'YOUTUBE', label: 'YouTube', icon: 'play_circle' },
-  { value: 'FACEBOOK', label: 'Facebook', icon: 'facebook' },
-  { value: 'LINKEDIN', label: 'LinkedIn', icon: 'work' },
+  { value: 'TWITTER', label: 'Twitter/X', logo: '/platform-logos/twitter-alt.svg', color: '#000000' },
+  { value: 'INSTAGRAM', label: 'Instagram', logo: '/platform-logos/instagram.svg', color: '#E4405F' },
+  { value: 'TIKTOK', label: 'TikTok', logo: '/platform-logos/tik-tok.svg', color: '#000000' },
+  { value: 'YOUTUBE', label: 'YouTube', logo: '/platform-logos/youtube-circle.svg', color: '#FF0000' },
+  { value: 'FACEBOOK', label: 'Facebook', logo: '/platform-logos/facebook.svg', color: '#1877F2' },
+  { value: 'LINKEDIN', label: 'LinkedIn', logo: '/platform-logos/linkedin.svg', color: '#0A66C2' },
 ];
 
 const SOCIAL_ACTIONS = [
@@ -262,14 +262,19 @@ export default function PostTaskPage() {
                     <button
                       key={platform.value}
                       onClick={() => setSelectedPlatform(platform.value)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
                         selectedPlatform === platform.value
                           ? 'border-[#B8860B] bg-[#B8860B]/10'
                           : 'border-outline-variant/30 hover:border-outline-variant/50'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-xl mb-1 block">{platform.icon}</span>
-                      <span className="font-body-sm text-body-sm text-on-surface">{platform.label}</span>
+                      <img
+                        src={platform.logo}
+                        alt={platform.label}
+                        className="w-8 h-8 object-contain"
+                        style={{ filter: selectedPlatform === platform.value ? 'none' : 'grayscale(100%)' }}
+                      />
+                      <span className="font-body-xs text-body-xs text-on-surface text-center">{platform.label}</span>
                     </button>
                   ))}
                 </div>
@@ -470,9 +475,11 @@ export default function PostTaskPage() {
                 <div className="bg-surface rounded-lg p-4 space-y-3">
                   <p className="font-label-caps text-label-caps text-[#B8860B] uppercase">Social Requirements</p>
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">
-                      {SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.icon}
-                    </span>
+                    <img
+                      src={SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.logo || ''}
+                      alt={selectedPlatform}
+                      className="w-6 h-6 object-contain"
+                    />
                     <span className="font-body-md text-body-md text-on-surface">
                       {SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.label}
                     </span>
