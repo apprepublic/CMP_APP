@@ -92,34 +92,16 @@ export const usePostTask = () => {
       participantThreshold: number;
       totalBudget: number;
       expiresAt?: string;
-      taskRequirements?: {
-        // Social engagement
+      socialRequirements?: {
         platform?: string;
         actions?: string[];
         targetUrl?: string;
         commentText?: string;
         minCommentLength?: number;
         requiresScreenshot?: boolean;
-        // Read article
-        articleUrl?: string;
-        minReadTime?: number;
-        // Watch video
-        videoUrl?: string;
-        minWatchTime?: number;
-        // App download
-        appStoreUrl?: string;
-        requiresReview?: boolean;
-        minRating?: number;
-        // Survey
-        surveyUrl?: string;
-        minQuestions?: number;
-        // Share social
-        sharePlatform?: string;
-        shareMessage?: string;
-        requiresHashtag?: boolean;
-        hashtag?: string;
-        // Music stream
-        audioUrl?: string;
+      };
+      musicMetadata?: {
+        audioUrl: string;
         coverImageUrl?: string;
         genre?: string;
         durationSeconds?: number;

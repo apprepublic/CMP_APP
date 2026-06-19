@@ -313,56 +313,48 @@ export default function PostTaskPage() {
 
       setUploading(false);
 
-      await postTask.mutateAsync({
+      const payload: any = {
         title,
         description,
         type: formData.type,
         participantThreshold: formData.participantThreshold,
         totalBudget: formData.totalBudget,
-        taskRequirements: {
-          // Social engagement
+      };
+
+      if (formData.type === 'SOCIAL_ENGAGEMENT') {
+        payload.socialRequirements = {
           platform: selectedPlatform,
           actions: selectedActions,
-          targetUrl: formData.targetUrl,
+          targetUrl: formData.targetUrl || undefined,
           commentText: formData.commentText || undefined,
           minCommentLength: formData.minCommentLength,
           requiresScreenshot: formData.requiresScreenshot,
-          // Read article
-          articleUrl: formData.articleUrl || undefined,
-          minReadTime: formData.minReadTime,
-          // Watch video
-          videoUrl: formData.videoUrl || undefined,
-          minWatchTime: formData.minWatchTime,
-          // App download
-          appStoreUrl: formData.appStoreUrl || undefined,
-          requiresReview: formData.requiresReview,
-          minRating: formData.minRating,
-          // Survey
-          surveyUrl: formData.surveyUrl || undefined,
-          minQuestions: formData.minQuestions,
-          // Share social
-          sharePlatform: formData.sharePlatform,
-          shareMessage: formData.shareMessage || undefined,
-          requiresHashtag: formData.requiresHashtag,
-          hashtag: formData.hashtag || undefined,
-          // Music stream
-          audioUrl: audioUrl || undefined,
+        };
+      }
+
+      if (formData.type === 'STREAM_MUSIC') {
+        payload.musicMetadata = {
+          audioUrl: audioUrl,
           coverImageUrl: coverImageUrl || undefined,
           genre: formData.genre || undefined,
           durationSeconds: formData.durationSeconds,
           isDownloadEnabled: formData.isDownloadEnabled,
-        },
-      });
+        };
+      }
+
+      await postTask.mutateAsync(payload);
       
       // Success - show success modal
       setShowPreview(false);
       setShowSuccess(true);
     } catch (err: any) {
       setUploading(false);
-      if (err.message?.includes('top up')) {
-        router.push('/wallet?topup=required');
+      console.error('Task creation error:', err);
+      const message = err?.response?.data?.error || err?.message || 'Failed to create task';
+      if (message.includes('top up') || message.includes('Insufficient balance')) {
+        setErrors({ submit: 'Insufficient balance. Please top up your wallet.' });
       } else {
-        setErrors({ submit: err.message || 'Failed to create task' });
+        setErrors({ submit: message });
       }
     }
   };

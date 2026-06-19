@@ -439,7 +439,7 @@ router.post('/streak/freeze', authenticate, async (req: Request, res: Response) 
 
 const createPostedTaskSchema = z.object({
   title: z.string().min(5).max(200),
-  description: z.string().min(20).max(1000),
+  description: z.string().min(5).max(1000),
   type: z.enum(['READ_ARTICLE', 'WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE', 'SOCIAL_ENGAGEMENT', 'STREAM_MUSIC']),
   category: z.string().optional().default('USER_CREATED'),
   participantThreshold: z.number().min(10).max(10000),
@@ -448,18 +448,19 @@ const createPostedTaskSchema = z.object({
   socialRequirements: z.object({
     platform: z.enum(['TWITTER', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'FACEBOOK', 'LINKEDIN']).optional(),
     actions: z.array(z.enum(['LIKE', 'COMMENT', 'SHARE', 'RETWEET', 'FOLLOW', 'SUBSCRIBE'])).optional(),
-    targetUrl: z.string().url().optional(),
-    commentText: z.string().min(5).max(500).optional(),
+    targetUrl: z.string().optional(),
+    commentText: z.string().min(1).max(500).optional(),
     minCommentLength: z.number().min(1).max(500).optional(),
     requiresScreenshot: z.boolean().default(false),
   }).optional(),
   musicMetadata: z.object({
-    audioUrl: z.string().url(),
-    coverImageUrl: z.string().url().optional(),
+    audioUrl: z.string(),
+    coverImageUrl: z.string().optional(),
     genre: z.string().optional(),
     durationSeconds: z.number().optional(),
     isDownloadEnabled: z.boolean().default(false),
   }).optional(),
+  taskRequirements: z.record(z.unknown()).optional(),
 });
 
 router.post('/create', authenticate, async (req: Request, res: Response) => {
@@ -501,32 +502,27 @@ router.post('/create', authenticate, async (req: Request, res: Response) => {
       throw new AppError('Music tasks require audioUrl in musicMetadata', 400);
     }
 
-    // Check if user has artist profile
     const artistProfile = await prisma.artistProfile.findUnique({
       where: { userId: authReq.user!.id }
     });
 
-    if (!artistProfile) {
-      throw new AppError('Must have artist profile to post music streaming tasks', 403);
+    if (artistProfile) {
+      const song = await prisma.song.create({
+        data: {
+          artistId: artistProfile.id,
+          title: data.title,
+          slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now(),
+          description: data.description,
+          audioUrl: data.musicMetadata.audioUrl,
+          coverUrl: data.musicMetadata.coverImageUrl,
+          genre: data.musicMetadata.genre || 'Unknown',
+          durationSeconds: data.musicMetadata.durationSeconds || 0,
+          coinReward: coinPerParticipant,
+          isPublished: true
+        }
+      });
+      songId = song.id;
     }
-
-    // Create Song record
-    const song = await prisma.song.create({
-      data: {
-        artistId: artistProfile.id,
-        title: data.title,
-        slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        description: data.description,
-        audioUrl: data.musicMetadata.audioUrl,
-        coverUrl: data.musicMetadata.coverImageUrl,
-        genre: data.musicMetadata.genre || 'Unknown',
-        durationSeconds: data.musicMetadata.durationSeconds || 0,
-        coinReward: coinPerParticipant,
-        isPublished: true
-      }
-    });
-
-    songId = song.id;
   }
 
   const postedTask = await prisma.userPostedTask.create({
