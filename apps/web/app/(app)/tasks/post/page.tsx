@@ -49,10 +49,29 @@ export default function PostTaskPage() {
     type: 'READ_ARTICLE',
     participantThreshold: 100,
     totalBudget: 5000,
+    // Social engagement fields
     targetUrl: '',
     commentText: '',
     minCommentLength: 10,
     requiresScreenshot: false,
+    // Read article fields
+    articleUrl: '',
+    minReadTime: 2,
+    // Watch video fields
+    videoUrl: '',
+    minWatchTime: 30,
+    // App download fields
+    appStoreUrl: '',
+    requiresReview: false,
+    minRating: 4,
+    // Survey fields
+    surveyUrl: '',
+    minQuestions: 5,
+    // Share social fields
+    sharePlatform: 'TWITTER',
+    shareMessage: '',
+    requiresHashtag: false,
+    hashtag: '',
   });
 
   const [selectedPlatform, setSelectedPlatform] = useState<string>('TWITTER');
@@ -120,11 +139,45 @@ export default function PostTaskPage() {
     if (totalCost > coinBalance) {
       newErrors.balance = 'Insufficient balance';
     }
-    if (formData.type === 'SOCIAL_ENGAGEMENT' && !formData.targetUrl) {
-      newErrors.targetUrl = 'Target URL is required for social engagement tasks';
-    }
-    if (formData.type === 'SOCIAL_ENGAGEMENT' && selectedActions.length === 0) {
-      newErrors.actions = 'Select at least one action';
+
+    // Task-specific validation
+    switch (formData.type) {
+      case 'READ_ARTICLE':
+        if (!formData.articleUrl) {
+          newErrors.articleUrl = 'Article URL is required';
+        }
+        break;
+      case 'WATCH_VIDEO':
+        if (!formData.videoUrl) {
+          newErrors.videoUrl = 'Video URL is required';
+        }
+        break;
+      case 'APP_DOWNLOAD':
+        if (!formData.appStoreUrl) {
+          newErrors.appStoreUrl = 'App Store URL is required';
+        }
+        break;
+      case 'COMPLETE_SURVEY':
+        if (!formData.surveyUrl) {
+          newErrors.surveyUrl = 'Survey URL is required';
+        }
+        break;
+      case 'SHARE_SOCIAL':
+        if (!formData.shareMessage) {
+          newErrors.shareMessage = 'Share message is required';
+        }
+        if (formData.requiresHashtag && !formData.hashtag) {
+          newErrors.hashtag = 'Hashtag is required';
+        }
+        break;
+      case 'SOCIAL_ENGAGEMENT':
+        if (!formData.targetUrl) {
+          newErrors.targetUrl = 'Target URL is required';
+        }
+        if (selectedActions.length === 0) {
+          newErrors.actions = 'Select at least one action';
+        }
+        break;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -139,14 +192,33 @@ export default function PostTaskPage() {
         type: formData.type,
         participantThreshold: formData.participantThreshold,
         totalBudget: formData.totalBudget,
-        socialRequirements: formData.type === 'SOCIAL_ENGAGEMENT' ? {
+        taskRequirements: {
+          // Social engagement
           platform: selectedPlatform,
           actions: selectedActions,
           targetUrl: formData.targetUrl,
           commentText: formData.commentText || undefined,
           minCommentLength: formData.minCommentLength,
           requiresScreenshot: formData.requiresScreenshot,
-        } : undefined,
+          // Read article
+          articleUrl: formData.articleUrl || undefined,
+          minReadTime: formData.minReadTime,
+          // Watch video
+          videoUrl: formData.videoUrl || undefined,
+          minWatchTime: formData.minWatchTime,
+          // App download
+          appStoreUrl: formData.appStoreUrl || undefined,
+          requiresReview: formData.requiresReview,
+          minRating: formData.minRating,
+          // Survey
+          surveyUrl: formData.surveyUrl || undefined,
+          minQuestions: formData.minQuestions,
+          // Share social
+          sharePlatform: formData.sharePlatform,
+          shareMessage: formData.shareMessage || undefined,
+          requiresHashtag: formData.requiresHashtag,
+          hashtag: formData.hashtag || undefined,
+        },
       });
       router.push('/tasks/posted?success=created');
     } catch (err: any) {
@@ -246,6 +318,233 @@ export default function PostTaskPage() {
             ))}
           </div>
         </div>
+
+        {/* Task-Specific Requirements */}
+        {formData.type === 'READ_ARTICLE' && (
+          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">article</span>
+              Article Reading Requirements
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Article URL *</label>
+                <input
+                  type="url"
+                  value={formData.articleUrl}
+                  onChange={(e) => handleInputChange('articleUrl', e.target.value)}
+                  placeholder="https://yourblog.com/article-title"
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Link to the article participants must read
+                </p>
+              </div>
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Minimum Read Time (minutes)</label>
+                <input
+                  type="number"
+                  value={formData.minReadTime}
+                  onChange={(e) => handleInputChange('minReadTime', Math.max(1, parseInt(e.target.value) || 1))}
+                  min={1}
+                  max={60}
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Estimated time to read the article
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {formData.type === 'WATCH_VIDEO' && (
+          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">play_circle</span>
+              Video Watching Requirements
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Video URL *</label>
+                <input
+                  type="url"
+                  value={formData.videoUrl}
+                  onChange={(e) => handleInputChange('videoUrl', e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  YouTube, Vimeo, or other video platform URL
+                </p>
+              </div>
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Minimum Watch Time (seconds)</label>
+                <input
+                  type="number"
+                  value={formData.minWatchTime}
+                  onChange={(e) => handleInputChange('minWatchTime', Math.max(10, parseInt(e.target.value) || 10))}
+                  min={10}
+                  max={3600}
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Minimum seconds participants must watch
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {formData.type === 'APP_DOWNLOAD' && (
+          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">download</span>
+              App Download Requirements
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">App Store URL *</label>
+                <input
+                  type="url"
+                  value={formData.appStoreUrl}
+                  onChange={(e) => handleInputChange('appStoreUrl', e.target.value)}
+                  placeholder="https://apps.apple.com/... or https://play.google.com/..."
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Link to your app on App Store or Google Play
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="requiresReview"
+                  checked={formData.requiresReview}
+                  onChange={(e) => handleInputChange('requiresReview', e.target.checked)}
+                  className="w-5 h-5 rounded border-outline-variant/30 text-[#B8860B] focus:ring-[#B8860B]"
+                />
+                <label htmlFor="requiresReview" className="font-body-md text-body-md text-on-surface">
+                  Require app review
+                </label>
+              </div>
+              {formData.requiresReview && (
+                <div>
+                  <label className="block font-body-md text-body-md text-on-surface mb-2">Minimum Rating (stars)</label>
+                  <input
+                    type="number"
+                    value={formData.minRating}
+                    onChange={(e) => handleInputChange('minRating', Math.max(1, Math.min(5, parseInt(e.target.value) || 5)))}
+                    min={1}
+                    max={5}
+                    className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                  />
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                    Minimum star rating required (1-5)
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {formData.type === 'COMPLETE_SURVEY' && (
+          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">poll</span>
+              Survey Requirements
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Survey URL *</label>
+                <input
+                  type="url"
+                  value={formData.surveyUrl}
+                  onChange={(e) => handleInputChange('surveyUrl', e.target.value)}
+                  placeholder="https://forms.google.com/... or https://typeform.com/..."
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Link to your survey (Google Forms, Typeform, SurveyMonkey, etc.)
+                </p>
+              </div>
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Minimum Questions</label>
+                <input
+                  type="number"
+                  value={formData.minQuestions}
+                  onChange={(e) => handleInputChange('minQuestions', Math.max(1, parseInt(e.target.value) || 1))}
+                  min={1}
+                  max={100}
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Number of questions in the survey
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {formData.type === 'SHARE_SOCIAL' && (
+          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">share</span>
+              Social Share Requirements
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Share Platform *</label>
+                <select
+                  value={formData.sharePlatform}
+                  onChange={(e) => handleInputChange('sharePlatform', e.target.value)}
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                >
+                  {SOCIAL_PLATFORMS.map((platform) => (
+                    <option key={platform.value} value={platform.value}>{platform.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Suggested Share Message</label>
+                <textarea
+                  value={formData.shareMessage}
+                  onChange={(e) => handleInputChange('shareMessage', e.target.value)}
+                  placeholder="Check out this amazing content..."
+                  rows={3}
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] resize-none"
+                />
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Optional message participants can use when sharing
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="requiresHashtag"
+                  checked={formData.requiresHashtag}
+                  onChange={(e) => handleInputChange('requiresHashtag', e.target.checked)}
+                  className="w-5 h-5 rounded border-outline-variant/30 text-[#B8860B] focus:ring-[#B8860B]"
+                />
+                <label htmlFor="requiresHashtag" className="font-body-md text-body-md text-on-surface">
+                  Require specific hashtag
+                </label>
+              </div>
+              {formData.requiresHashtag && (
+                <div>
+                  <label className="block font-body-md text-body-md text-on-surface mb-2">Required Hashtag</label>
+                  <input
+                    type="text"
+                    value={formData.hashtag}
+                    onChange={(e) => handleInputChange('hashtag', e.target.value.replace(/\s/g, ''))}
+                    placeholder="#YourCampaign"
+                    className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {isSocialEngagement && (
           <div className="bg-surface rounded-xl p-6 border border-[#B8860B]/30">
@@ -471,37 +770,118 @@ export default function PostTaskPage() {
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Description</p>
                 <p className="font-body-md text-body-md text-on-surface">{formData.description}</p>
               </div>
-              {isSocialEngagement && (
-                <div className="bg-surface rounded-lg p-4 space-y-3">
-                  <p className="font-label-caps text-label-caps text-[#B8860B] uppercase">Social Requirements</p>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.logo || ''}
-                      alt={selectedPlatform}
-                      className="w-6 h-6 object-contain"
-                    />
-                    <span className="font-body-md text-body-md text-on-surface">
-                      {SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.label}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Actions</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedActions.map(action => (
-                        <span key={action} className="bg-[#B8860B]/10 text-[#B8860B] font-body-sm text-body-sm px-2 py-1 rounded">
-                          {SOCIAL_ACTIONS.find(a => a.value === action)?.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  {formData.targetUrl && (
+              
+              {/* Task-Specific Requirements Preview */}
+              <div className="bg-surface rounded-lg p-4 space-y-3">
+                <p className="font-label-caps text-label-caps text-[#B8860B] uppercase">Task Requirements</p>
+                
+                {formData.type === 'READ_ARTICLE' && (
+                  <>
                     <div>
-                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Target URL</p>
-                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.targetUrl}</p>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Article URL</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.articleUrl}</p>
                     </div>
-                  )}
-                </div>
-              )}
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Min Read Time</p>
+                      <p className="font-body-md text-body-md text-on-surface">{formData.minReadTime} minutes</p>
+                    </div>
+                  </>
+                )}
+                
+                {formData.type === 'WATCH_VIDEO' && (
+                  <>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Video URL</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.videoUrl}</p>
+                    </div>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Min Watch Time</p>
+                      <p className="font-body-md text-body-md text-on-surface">{formData.minWatchTime} seconds</p>
+                    </div>
+                  </>
+                )}
+                
+                {formData.type === 'APP_DOWNLOAD' && (
+                  <>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">App Store URL</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.appStoreUrl}</p>
+                    </div>
+                    {formData.requiresReview && (
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Requires Review</p>
+                        <p className="font-body-md text-body-md text-on-surface">Yes, min {formData.minRating} stars</p>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {formData.type === 'COMPLETE_SURVEY' && (
+                  <>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Survey URL</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.surveyUrl}</p>
+                    </div>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Min Questions</p>
+                      <p className="font-body-md text-body-md text-on-surface">{formData.minQuestions} questions</p>
+                    </div>
+                  </>
+                )}
+                
+                {formData.type === 'SHARE_SOCIAL' && (
+                  <>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Platform</p>
+                      <p className="font-body-md text-body-md text-on-surface">{SOCIAL_PLATFORMS.find(p => p.value === formData.sharePlatform)?.label}</p>
+                    </div>
+                    {formData.shareMessage && (
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Share Message</p>
+                        <p className="font-body-sm text-body-sm text-on-surface line-clamp-2">{formData.shareMessage}</p>
+                      </div>
+                    )}
+                    {formData.requiresHashtag && (
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Required Hashtag</p>
+                        <p className="font-body-md text-body-md text-on-surface">{formData.hashtag}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {isSocialEngagement && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.logo || ''}
+                        alt={selectedPlatform}
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span className="font-body-md text-body-md text-on-surface">
+                        {SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.label}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Actions</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedActions.map(action => (
+                          <span key={action} className="bg-[#B8860B]/10 text-[#B8860B] font-body-sm text-body-sm px-2 py-1 rounded">
+                            {SOCIAL_ACTIONS.find(a => a.value === action)?.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    {formData.targetUrl && (
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Target URL</p>
+                        <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.targetUrl}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Type</p>
