@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePostTask } from '@/lib/hooks';
 import { useWallet } from '@/lib/useWallet';
+import { uploadAudioFile, uploadCoverImage, STORAGE_BUCKETS } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 
 const TASK_TYPES = [
   { value: 'READ_ARTICLE', label: 'Read Article', icon: 'article', minBudget: 1000 },
@@ -74,12 +76,29 @@ export default function PostTaskPage() {
     requiresHashtag: false,
     hashtag: '',
     // Music stream fields
+    audioFile: null as File | null,
     audioUrl: '',
+    coverImageFile: null as File | null,
     coverImageUrl: '',
     genre: '',
     durationSeconds: 180,
     isDownloadEnabled: false,
   });
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ audio: 0, cover: 0 });
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (formData.audioFile) {
+        URL.revokeObjectURL(URL.createObjectURL(formData.audioFile));
+      }
+      if (formData.coverImageFile) {
+        URL.revokeObjectURL(URL.createObjectURL(formData.coverImageFile));
+      }
+    };
+  }, [formData.audioFile, formData.coverImageFile]);
 
   const [selectedPlatform, setSelectedPlatform] = useState<string>('TWITTER');
   const [selectedActions, setSelectedActions] = useState<string[]>(['LIKE']);
@@ -178,8 +197,8 @@ export default function PostTaskPage() {
         }
         break;
       case 'STREAM_MUSIC':
-        if (!formData.audioUrl) {
-          newErrors.audioUrl = 'Audio file URL is required';
+        if (!formData.audioFile && !formData.audioUrl) {
+          newErrors.audioUrl = 'Audio file is required';
         }
         if (!formData.genre) {
           newErrors.genre = 'Genre is required';
@@ -201,6 +220,33 @@ export default function PostTaskPage() {
     }
 
     try {
+      let audioUrl = formData.audioUrl;
+      let coverImageUrl = formData.coverImageUrl;
+
+      // Upload files if they exist
+      if (formData.audioFile) {
+        setUploading(true);
+        setUploadProgress(prev => ({ ...prev, audio: 50 }));
+        const audioResult = await uploadAudioFile(formData.audioFile);
+        if (!audioResult.success || !audioResult.url) {
+          throw new Error('Failed to upload audio file');
+        }
+        audioUrl = audioResult.url;
+        setUploadProgress(prev => ({ ...prev, audio: 100 }));
+      }
+
+      if (formData.coverImageFile) {
+        setUploadProgress(prev => ({ ...prev, cover: 50 }));
+        const coverResult = await uploadCoverImage(formData.coverImageFile);
+        if (!coverResult.success || !coverResult.url) {
+          throw new Error('Failed to upload cover image');
+        }
+        coverImageUrl = coverResult.url;
+        setUploadProgress(prev => ({ ...prev, cover: 100 }));
+      }
+
+      setUploading(false);
+
       await postTask.mutateAsync({
         title: formData.title,
         description: formData.description,
@@ -234,8 +280,8 @@ export default function PostTaskPage() {
           requiresHashtag: formData.requiresHashtag,
           hashtag: formData.hashtag || undefined,
           // Music stream
-          audioUrl: formData.audioUrl || undefined,
-          coverImageUrl: formData.coverImageUrl || undefined,
+          audioUrl: audioUrl || undefined,
+          coverImageUrl: coverImageUrl || undefined,
           genre: formData.genre || undefined,
           durationSeconds: formData.durationSeconds,
           isDownloadEnabled: formData.isDownloadEnabled,
@@ -243,6 +289,7 @@ export default function PostTaskPage() {
       });
       router.push('/tasks/posted?success=created');
     } catch (err: any) {
+      setUploading(false);
       if (err.message?.includes('top up')) {
         router.push('/wallet?topup=required');
       } else {
@@ -574,32 +621,155 @@ export default function PostTaskPage() {
               Music Upload & Streaming Settings
             </h3>
             <div className="space-y-4">
+              {/* Audio File Upload */}
               <div>
-                <label className="block font-body-md text-body-md text-on-surface mb-2">Audio File (MP3 URL) *</label>
-                <input
-                  type="url"
-                  value={formData.audioUrl}
-                  onChange={(e) => handleInputChange('audioUrl', e.target.value)}
-                  placeholder="https://storage.supabase.co/music/your-song.mp3"
-                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
-                />
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                  Upload your MP3 file to Supabase Storage or provide a direct URL
-                </p>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Audio File (MP3) *</label>
+                <div className="border-2 border-dashed border-outline-variant/30 rounded-lg p-6 bg-surface-alt">
+                  {formData.audioFile ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-[#B8860B]">audio_file</span>
+                        <div>
+                          <p className="font-body-md text-body-md text-on-surface">{formData.audioFile.name}</p>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant">
+                            {(formData.audioFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('audioFile', null)}
+                        className="text-error-alert hover:underline font-body-sm text-body-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">cloud_upload</span>
+                      <p className="font-body-md text-body-md text-on-surface-variant mb-2">
+                        Drop your audio file here or click to browse
+                      </p>
+                      <input
+                        type="file"
+                        accept=".mp3,audio/mpeg"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 50 * 1024 * 1024) {
+                              setErrors({ audioUrl: 'File size must be less than 50MB' });
+                              return;
+                            }
+                            handleInputChange('audioFile', file);
+                            setErrors(prev => ({ ...prev, audioUrl: '' }));
+                          }
+                        }}
+                        className="hidden"
+                        id="audio-upload"
+                      />
+                      <label
+                        htmlFor="audio-upload"
+                        className="inline-flex items-center gap-2 bg-[#B8860B] text-primary font-body-md text-body-md px-4 py-2 rounded-lg hover:bg-[#8B6914] transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">upload_file</span>
+                        Choose File
+                      </label>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant mt-2">
+                        MP3 format, max 50MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {errors.audioUrl && <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.audioUrl}</p>}
+                {uploadProgress.audio > 0 && uploadProgress.audio < 100 && (
+                  <div className="mt-2">
+                    <div className="w-full bg-surface-container-high rounded-full h-2">
+                      <div
+                        className="bg-[#B8860B] h-2 rounded-full transition-all"
+                        style={{ width: `${uploadProgress.audio}%` }}
+                      />
+                    </div>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Uploading audio... {uploadProgress.audio}%</p>
+                  </div>
+                )}
               </div>
+
+              {/* Cover Image Upload */}
               <div>
-                <label className="block font-body-md text-body-md text-on-surface mb-2">Album Art URL</label>
-                <input
-                  type="url"
-                  value={formData.coverImageUrl}
-                  onChange={(e) => handleInputChange('coverImageUrl', e.target.value)}
-                  placeholder="https://storage.supabase.co/covers/your-cover.jpg"
-                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
-                />
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                  Cover art for your track (recommended: 1000x1000px)
-                </p>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Album Art</label>
+                <div className="border-2 border-dashed border-outline-variant/30 rounded-lg p-6 bg-surface-alt">
+                  {formData.coverImageFile ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={URL.createObjectURL(formData.coverImageFile)}
+                          alt="Cover preview"
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div>
+                          <p className="font-body-md text-body-md text-on-surface">{formData.coverImageFile.name}</p>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant">
+                            {(formData.coverImageFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('coverImageFile', null)}
+                        className="text-error-alert hover:underline font-body-sm text-body-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">image</span>
+                      <p className="font-body-md text-body-md text-on-surface-variant mb-2">
+                        Drop your cover art here or click to browse
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                              setErrors({ coverImageUrl: 'File size must be less than 10MB' });
+                              return;
+                            }
+                            handleInputChange('coverImageFile', file);
+                          }
+                        }}
+                        className="hidden"
+                        id="cover-upload"
+                      />
+                      <label
+                        htmlFor="cover-upload"
+                        className="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-body-md text-body-md px-4 py-2 rounded-lg hover:bg-surface-container-high/80 transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">upload_file</span>
+                        Choose File
+                      </label>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant mt-2">
+                        JPG/PNG, max 10MB (recommended: 1000x1000px)
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {uploadProgress.cover > 0 && uploadProgress.cover < 100 && (
+                  <div className="mt-2">
+                    <div className="w-full bg-surface-container-high rounded-full h-2">
+                      <div
+                        className="bg-[#B8860B] h-2 rounded-full transition-all"
+                        style={{ width: `${uploadProgress.cover}%` }}
+                      />
+                    </div>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Uploading cover... {uploadProgress.cover}%</p>
+                  </div>
+                )}
               </div>
+
+              {/* Genre and Duration */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-body-md text-body-md text-on-surface mb-2">Genre</label>
@@ -638,6 +808,8 @@ export default function PostTaskPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Download Option */}
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -650,6 +822,8 @@ export default function PostTaskPage() {
                   Allow users to download this track
                 </label>
               </div>
+
+              {/* Info Box */}
               <div className="bg-[#B8860B]/10 border border-[#B8860B]/30 rounded-lg p-4">
                 <p className="font-body-sm text-body-sm text-[#B8860B]">
                   <strong>Note:</strong> Your track will appear in the Music section. Users will earn coins by streaming. 
@@ -968,12 +1142,16 @@ export default function PostTaskPage() {
                   <>
                     <div>
                       <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Audio File</p>
-                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.audioUrl}</p>
+                      <p className="font-body-sm text-body-sm text-on-surface truncate">
+                        {formData.audioFile?.name || formData.audioUrl || 'No audio file'}
+                      </p>
                     </div>
-                    {formData.coverImageUrl && (
+                    {(formData.coverImageFile || formData.coverImageUrl) && (
                       <div>
                         <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Cover Art</p>
-                        <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.coverImageUrl}</p>
+                        <p className="font-body-sm text-body-sm text-on-surface truncate">
+                          {formData.coverImageFile?.name || formData.coverImageUrl}
+                        </p>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-4">
