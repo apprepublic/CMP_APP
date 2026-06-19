@@ -189,7 +189,7 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
         </Link>
         <button className="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-3 py-1 active:scale-90 transition-all">
           <span className="material-symbols-outlined mb-1">payments</span>
-          <span className="font-label-caps text-label-caps">Earn</span>
+          <span className="font-label-caps text-label-caps">Tasks</span>
         </button>
         <Link href="/music" className="flex flex-col items-center justify-center text-on-primary-fixed-variant px-3 py-1 hover:text-secondary-fixed transition-colors">
           <span className="material-symbols-outlined mb-1">music_note</span>

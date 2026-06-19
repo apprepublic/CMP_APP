@@ -265,7 +265,7 @@ export default function ArtistProfileClient({ slug }: { slug: string }) {
         </Link>
         <Link href="/tasks" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
           <span className="material-symbols-outlined">payments</span>
-          <span className="font-label-caps text-label-caps mt-1">Earn</span>
+          <span className="font-label-caps text-label-caps mt-1">Tasks</span>
         </Link>
         <button className="flex flex-col items-center justify-center bg-neo-secondary text-neo-primary rounded-xl px-3 py-1 scale-90 transition-all shadow-neu-raised-sm">
           <span className="material-symbols-outlined fill">music_note</span>

@@ -313,7 +313,7 @@ export default function LandingPage() {
             <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
               <li><Link className="hover:text-secondary-fixed transition-colors" href="#">How it Works</Link></li>
 
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Tasks</Link></li>
               <li><Link className="hover:text-secondary-fixed transition-colors" href="/wallet">Store</Link></li>
             </ul>
           </div>
