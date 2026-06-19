@@ -2,15 +2,25 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useTasks, useDailyTasks, useCompleteTask } from '@/lib/hooks';
+import { useTasks, useDailyTasks, useCompleteTask, usePostedTasks, useCompletePostedTask } from '@/lib/hooks';
 
 export default function EarnMarketplacePage() {
-  const { data: resp, isLoading } = useTasks();
+  const { data: resp, isLoading: systemTasksLoading } = useTasks();
   const { data: dailyResp } = useDailyTasks();
+  const { data: postedResp, isLoading: postedTasksLoading } = usePostedTasks();
   const completeTask = useCompleteTask();
+  const completePostedTask = useCompletePostedTask();
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
-  const allTasks = resp?.tasks ?? [];
+  const allSystemTasks = resp?.tasks ?? [];
+  const allPostedTasks = postedResp?.tasks?.filter((t: any) => t.is_active && t.status === 'ACTIVE').map((t: any) => ({
+    ...t,
+    isPostedTask: true,
+    coinReward: t.coin_per_participant,
+    category: t.category || 'USER_CREATED',
+  })) ?? [];
+  
+  const allTasks = [...allSystemTasks, ...allPostedTasks];
   const dailyTasks = dailyResp?.tasks ?? [];
 
   const categories = useMemo(() => {
@@ -31,6 +41,18 @@ export default function EarnMarketplacePage() {
   }, [dailyTasks]);
 
   const handleStartTask = async (task: any) => {
+    // Handle user-posted tasks
+    if (task.isPostedTask) {
+      try {
+        await completePostedTask.mutateAsync({ id: task.id });
+        alert(`Task completed! You earned ${task.coin_per_participant} coins!`);
+      } catch (err: any) {
+        alert(err.message || 'Failed to complete task');
+      }
+      return;
+    }
+
+    // Handle system tasks
     const dailyInfo = dailyStatusMap.get(task.id);
     if (dailyInfo?.linkedArticle?.slug) {
       window.location.href = `/tasks/article/${dailyInfo.linkedArticle.slug}`;
@@ -98,7 +120,7 @@ export default function EarnMarketplacePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-        {isLoading ? (
+        {(systemTasksLoading || postedTasksLoading) ? (
            Array.from({ length: 6 }).map((_, i) => (
              <div key={i} className="bg-surface-alt rounded-xl p-6 h-[280px] animate-pulse border border-outline-variant/20" />
            ))
@@ -108,13 +130,15 @@ export default function EarnMarketplacePage() {
            </div>
         ) : (
           filteredTasks.map((task: any) => {
+            const isPostedTask = task.isPostedTask;
             const isPremium = task.coinReward >= 100;
             const dailyInfo = dailyStatusMap.get(task.id);
-            const isLocked = dailyInfo?.isLocked ?? false;
+            const isLocked = isPostedTask ? task.current_participants >= task.participant_threshold : (dailyInfo?.isLocked ?? false);
             const completedToday = dailyInfo?.completedToday ?? 0;
             const dailyLimit = task.dailyLimit ?? dailyInfo?.dailyLimit ?? 1;
-            const isCompleting = completeTask.isPending && completeTask.variables?.taskId === task.id;
+            const isCompleting = (isPostedTask ? completePostedTask : completeTask).isPending;
             const hasLinkedArticle = task.linkedArticle || dailyInfo?.linkedArticle;
+            const isUserTask = isPostedTask;
             
             return (
               <div 
@@ -139,10 +163,10 @@ export default function EarnMarketplacePage() {
                   </div>
                 )}
                 
-                <div className={`flex items-start justify-between mb-4 ${isPremium && !isLocked ? 'mt-2' : ''}`}>
+                <div className={`flex items-start justify-between mb-4 ${isPremium && !isLocked && !isUserTask ? 'mt-2' : ''}`}>
                   <div className="w-12 h-12 rounded-lg bg-surface flex items-center justify-center border border-outline-variant/30">
                     <span className="material-symbols-outlined text-primary" style={{ fontSize: '24px' }}>
-                      {task.category === 'COMPLETE_SURVEY' ? 'poll' : task.category === 'SHARE_SOCIAL' ? 'share' : task.category === 'READ_ARTICLE' ? 'article' : task.category === 'CONTENT' ? 'article' : 'quickreply'}
+                      {isUserTask ? 'person_add' : (task.category === 'COMPLETE_SURVEY' ? 'poll' : task.category === 'SHARE_SOCIAL' ? 'share' : task.category === 'READ_ARTICLE' ? 'article' : task.category === 'CONTENT' ? 'article' : 'quickreply')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border-[1.5px] border-[#B8860B] bg-surface-container-lowest">
@@ -156,11 +180,15 @@ export default function EarnMarketplacePage() {
                   {task.description || 'Complete this task to earn coins and boost your creative capital.'}
                 </p>
 
-                {!isLocked && (
+                {isUserTask ? (
+                  <p className="font-label-caps text-label-caps text-on-surface-variant mb-4">
+                    {task.current_participants}/{task.participant_threshold} participants • {task.participant_threshold - task.current_participants} slots left
+                  </p>
+                ) : !isLocked ? (
                   <p className="font-label-caps text-label-caps text-on-surface-variant mb-4">
                     {task.requiresAdGate && 'Ad-gated • '}{completedToday}/{dailyLimit} today
                   </p>
-                )}
+                ) : null}
                 
                 <button 
                   onClick={() => handleStartTask(task)}
@@ -170,15 +198,22 @@ export default function EarnMarketplacePage() {
                       ? 'bg-surface-container-high text-on-surface-variant cursor-not-allowed'
                       : isCompleting
                         ? 'bg-surface-container-high text-on-surface-variant animate-pulse'
-                        : isPremium
-                          ? 'bg-primary text-on-primary hover:bg-on-surface-variant'
-                          : 'bg-[#B8860B] text-primary hover:bg-[#8B6914]'
+                        : isUserTask
+                          ? 'bg-secondary text-on-secondary hover:bg-secondary-container'
+                          : isPremium
+                            ? 'bg-primary text-on-primary hover:bg-on-surface-variant'
+                            : 'bg-[#B8860B] text-primary hover:bg-[#8B6914]'
                   }`}
                 >
                   {isLocked ? (
                     <>
-                      <span>Completed</span>
+                      <span>{isUserTask ? 'Full' : 'Completed'}</span>
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                    </>
+                  ) : isUserTask ? (
+                    <>
+                      <span>Earn {task.coinReward} Coins</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                     </>
                   ) : hasLinkedArticle ? (
                     <>
