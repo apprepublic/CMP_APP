@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePostTask } from '@/lib/hooks';
@@ -47,8 +47,6 @@ export default function PostTaskPage() {
   const coinBalance = Number(wallet?.coin_balance ?? 0);
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
     type: 'READ_ARTICLE',
     participantThreshold: 100,
     totalBudget: 5000,
@@ -115,8 +113,6 @@ export default function PostTaskPage() {
 
   const isValid = useMemo(() => {
     const baseValid = (
-      formData.title.length >= 5 &&
-      formData.description.length >= 20 &&
       coinPerParticipant >= MIN_COIN_PER_PARTICIPANT &&
       totalCost <= coinBalance
     );
@@ -150,15 +146,54 @@ export default function PostTaskPage() {
     );
   };
 
+  // Auto-generate title and description based on task type and selections
+  const generateTitleAndDescription = useCallback((data: typeof formData) => {
+    let title = '';
+    let description = '';
+
+    switch (data.type) {
+      case 'READ_ARTICLE':
+        title = `Read Article: ${data.articleUrl ? new URL(data.articleUrl).hostname : 'Article'}`;
+        description = `Read the article for at least ${data.minReadTime} minutes to earn ${coinPerParticipant} coins.`;
+        break;
+      case 'WATCH_VIDEO':
+        title = `Watch Video: ${data.videoUrl ? new URL(data.videoUrl).hostname : 'Video'}`;
+        description = `Watch the video for at least ${data.minWatchTime} seconds to earn ${coinPerParticipant} coins.`;
+        break;
+      case 'APP_DOWNLOAD':
+        title = `Download App: ${data.appStoreUrl ? new URL(data.appStoreUrl).hostname : 'App'}`;
+        description = `Download and review this app with a minimum ${data.minRating}-star rating to earn ${coinPerParticipant} coins.`;
+        break;
+      case 'COMPLETE_SURVEY':
+        title = `Complete Survey: ${data.surveyUrl ? new URL(data.surveyUrl).hostname : 'Survey'}`;
+        description = `Complete this survey with at least ${data.minQuestions} questions to earn ${coinPerParticipant} coins.`;
+        break;
+      case 'SHARE_SOCIAL':
+        title = `Share on ${SOCIAL_PLATFORMS.find(p => p.value === data.sharePlatform)?.label || 'Social'}`;
+        description = `Share the specified content on ${SOCIAL_PLATFORMS.find(p => p.value === data.sharePlatform)?.label || 'social media'}${data.requiresHashtag ? ` with hashtag ${data.hashtag}` : ''} to earn ${coinPerParticipant} coins.`;
+        break;
+      case 'SOCIAL_ENGAGEMENT':
+        const platform = SOCIAL_PLATFORMS.find(p => p.value === selectedPlatform)?.label || 'Social';
+        const actions = selectedActions.map(a => SOCIAL_ACTIONS.find(act => act.value === a)?.label).join(', ');
+        title = `Engage on ${platform}: ${actions}`;
+        description = `${actions} on the specified ${platform} post to earn ${coinPerParticipant} coins.${data.requiresScreenshot ? ' Screenshot required.' : ''}`;
+        break;
+      case 'STREAM_MUSIC':
+        const audioName = data.audioFile?.name || data.genre || 'Track';
+        title = `Stream Music: ${audioName}`;
+        description = `Stream this ${data.genre || 'music'} track (${Math.floor(data.durationSeconds / 60)}:${(data.durationSeconds % 60).toString().padStart(2, '0')}) to earn ${coinPerParticipant} coins.${data.isDownloadEnabled ? ' Download also available.' : ''}`;
+        break;
+      default:
+        title = 'Complete Task';
+        description = 'Complete this task to earn coins.';
+    }
+
+    return { title, description };
+  }, [selectedPlatform, selectedActions, coinPerParticipant]);
+
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (formData.title.length < 5) {
-      newErrors.title = 'Title must be at least 5 characters';
-    }
-    if (formData.description.length < 20) {
-      newErrors.description = 'Description must be at least 20 characters';
-    }
     if (coinPerParticipant < MIN_COIN_PER_PARTICIPANT) {
       newErrors.budget = `Coin per participant must be at least ${MIN_COIN_PER_PARTICIPANT}`;
     }
@@ -220,6 +255,9 @@ export default function PostTaskPage() {
     }
 
     try {
+      // Auto-generate title and description
+      const { title, description } = generateTitleAndDescription(formData);
+
       let audioUrl = formData.audioUrl;
       let coverImageUrl = formData.coverImageUrl;
 
@@ -248,8 +286,8 @@ export default function PostTaskPage() {
       setUploading(false);
 
       await postTask.mutateAsync({
-        title: formData.title,
-        description: formData.description,
+        title,
+        description,
         type: formData.type,
         participantThreshold: formData.participantThreshold,
         totalBudget: formData.totalBudget,
@@ -332,33 +370,28 @@ export default function PostTaskPage() {
       </div>
 
       <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/30 space-y-6">
-        <div>
-          <label className="block font-body-md text-body-md text-on-surface mb-2">Task Title *</label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => handleInputChange('title', e.target.value)}
-            placeholder="e.g., Engage with our latest content"
-            className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
-          />
-          {errors.title && <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.title}</p>}
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-            {formData.title.length}/50 min characters
-          </p>
-        </div>
-
-        <div>
-          <label className="block font-body-md text-body-md text-on-surface mb-2">Description *</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            placeholder="Describe what participants need to do..."
-            rows={4}
-            className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] resize-none"
-          />
-          {errors.description && <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.description}</p>}
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-            {formData.description.length}/100 min characters
+        {/* Auto-generated Title & Description Preview */}
+        <div className="bg-surface rounded-xl p-6 border border-outline-variant/20">
+          <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#B8860B]">auto_awesome</span>
+            Task Preview
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Generated Title</p>
+              <p className="font-body-md text-body-md text-on-surface p-3 bg-surface-alt rounded-lg border border-outline-variant/20">
+                {generateTitleAndDescription(formData).title}
+              </p>
+            </div>
+            <div>
+              <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Generated Description</p>
+              <p className="font-body-md text-body-md text-on-surface p-3 bg-surface-alt rounded-lg border border-outline-variant/20">
+                {generateTitleAndDescription(formData).description}
+              </p>
+            </div>
+          </div>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-4">
+            ℹ️ Title and description are automatically generated based on your task type and settings
           </p>
         </div>
 
@@ -1052,11 +1085,11 @@ export default function PostTaskPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Title</p>
-                <p className="font-body-md text-body-md text-on-surface">{formData.title}</p>
+                <p className="font-body-md text-body-md text-on-surface">{generateTitleAndDescription(formData).title}</p>
               </div>
               <div>
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Description</p>
-                <p className="font-body-md text-body-md text-on-surface">{formData.description}</p>
+                <p className="font-body-md text-body-md text-on-surface">{generateTitleAndDescription(formData).description}</p>
               </div>
               
               {/* Task-Specific Requirements Preview */}
