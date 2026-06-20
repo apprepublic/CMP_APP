@@ -36,8 +36,10 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const authHeader = req.headers.get("authorization");
+    const apiKey = req.headers.get("apikey");
+
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized - missing auth header" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -46,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -114,6 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const totalCost = CREATION_FEE + totalBudget;
 
+    // Use service role client to query Wallet (camelCase column names per Prisma schema)
     const { data: wallet, error: walletError } = await supabase
       .from("Wallet")
       .select("id, coinBalance, lifetimeSpent")
@@ -121,6 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (walletError || !wallet) {
+      console.error("Wallet fetch error:", walletError);
       return new Response(JSON.stringify({ error: "Wallet not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -128,7 +132,6 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const currentBalance = Number(wallet.coinBalance);
-
     if (currentBalance < totalCost) {
       return new Response(
         JSON.stringify({
@@ -141,8 +144,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const newBalance = currentBalance - totalCost;
+    const newCoinBalance = currentBalance - totalCost;
+    const newLifetimeSpent = Number(wallet.lifetimeSpent || 0) + totalCost;
 
+    // Create Song record if user has artist profile
     let songId = null;
     if (type === "STREAM_MUSIC" && musicMetadata) {
       const { data: artistProfile } = await supabase
@@ -176,27 +181,29 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // Insert into user_posted_tasks (snake_case column names)
     const { data: postedTask, error: taskError } = await supabase
-      .from("UserPostedTask")
+      .from("user_posted_tasks")
       .insert({
-        creatorId: user.id,
+        creator_id: user.id,
         title,
         description,
         type,
         category: "USER_CREATED",
-        participantThreshold,
-        totalBudget,
-        coinPerParticipant,
-        creationFee: CREATION_FEE,
+        participant_threshold: participantThreshold,
+        total_budget: totalBudget,
+        coin_per_participant: coinPerParticipant,
+        creation_fee: CREATION_FEE,
         status: "PENDING",
-        currentParticipants: 0,
-        isActive: false,
-        audioUrl: musicMetadata?.audioUrl || null,
-        coverImageUrl: musicMetadata?.coverImageUrl || null,
+        current_participants: 0,
+        is_active: false,
+        social_requirements: socialRequirements || null,
+        audio_url: musicMetadata?.audioUrl || null,
+        cover_image_url: musicMetadata?.coverImageUrl || null,
         genre: musicMetadata?.genre || null,
-        durationSeconds: musicMetadata?.durationSeconds || null,
-        isDownloadEnabled: musicMetadata?.isDownloadEnabled || false,
-        songId,
+        duration_seconds: musicMetadata?.durationSeconds || null,
+        is_download_enabled: musicMetadata?.isDownloadEnabled || false,
+        song_id: songId,
       })
       .select("id")
       .single();
@@ -209,13 +216,11 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const currentLifetimeSpent = Number(wallet.lifetimeSpent || 0);
-    const newLifetimeSpent = currentLifetimeSpent + totalCost;
-
+    // Update wallet (camelCase column names - Prisma schema)
     const { error: walletUpdateError } = await supabase
       .from("Wallet")
       .update({
-        coinBalance: newBalance,
+        coinBalance: newCoinBalance,
         lifetimeSpent: newLifetimeSpent,
       })
       .eq("id", wallet.id);
@@ -224,11 +229,12 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Wallet update error:", walletUpdateError);
     }
 
+    // Insert transaction record (camelCase column names - Prisma schema)
     const { error: txError } = await supabase.from("CoinTransaction").insert({
       walletId: wallet.id,
       type: "TASK_CREATION",
       amount: -totalCost,
-      balanceAfter: newBalance,
+      balanceAfter: newCoinBalance,
       description: `Posted task: ${title}`,
       metadata: {
         postedTaskId: postedTask.id,
