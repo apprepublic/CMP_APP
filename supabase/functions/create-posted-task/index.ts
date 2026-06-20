@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Pool } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,23 +31,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
   }
 
+  let pool;
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     // Auth client: used ONLY to verify the user's JWT
-    // Calling auth.getUser() on a client overrides its auth context,
-    // so we must use a separate client for DB ops.
     const authClient = createClient(supabaseUrl, supabaseServiceKey);
-
-    // DB client: uses service role key exclusively (bypasses RLS)
-    const db = createClient(supabaseUrl, supabaseServiceKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${supabaseServiceKey}`,
-        },
-      },
-    });
 
     const authHeader = req.headers.get("authorization");
 
@@ -128,152 +119,141 @@ const handler = async (req: Request): Promise<Response> => {
 
     const totalCost = CREATION_FEE + totalBudget;
 
-    // Use service role DB client to query Wallet (camelCase column names per Prisma schema)
-    const { data: wallet, error: walletError } = await db
-      .from("Wallet")
-      .select("id, coinBalance, lifetimeSpent")
-      .eq("userId", user.id)
-      .single();
+    // Connect directly via Postgres (bypasses RLS completely)
+    const dbUrl = Deno.env.get("SUPABASE_DB_URL")!;
+    pool = new Pool(dbUrl, 1);
 
-    if (walletError || !wallet) {
-      console.error("Wallet fetch error:", walletError);
-      return new Response(JSON.stringify({ error: "Wallet not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const client = await pool.connect();
 
-    const currentBalance = Number(wallet.coinBalance);
-    if (currentBalance < totalCost) {
-      return new Response(
-        JSON.stringify({
-          error: "Insufficient balance. Please top up your wallet.",
-          code: "INSUFFICIENT_BALANCE",
-          required: totalCost,
-          available: currentBalance,
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    try {
+      // Get wallet
+      const walletResult = await client.queryObject`
+        SELECT id, "coinBalance", "lifetimeSpent"
+        FROM "Wallet"
+        WHERE "userId" = ${user.id}
+        LIMIT 1
+      `;
 
-    const newCoinBalance = currentBalance - totalCost;
-    const newLifetimeSpent = Number(wallet.lifetimeSpent || 0) + totalCost;
+      const wallet = walletResult.rows[0];
+      if (!wallet) {
+        return new Response(JSON.stringify({ error: "Wallet not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    // Create Song record if user has artist profile
-    let songId = null;
-    if (type === "STREAM_MUSIC" && musicMetadata) {
-      const { data: artistProfile } = await db
-        .from("ArtistProfile")
-        .select("id")
-        .eq("userId", user.id)
-        .single();
+      const currentBalance = Number(wallet.coinBalance);
+      if (currentBalance < totalCost) {
+        return new Response(
+          JSON.stringify({
+            error: "Insufficient balance. Please top up your wallet.",
+            code: "INSUFFICIENT_BALANCE",
+            required: totalCost,
+            available: currentBalance,
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-      if (artistProfile) {
-        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
-        const { data: song, error: songError } = await db
-          .from("Song")
-          .insert({
-            artistId: artistProfile.id,
-            title,
-            slug,
-            description,
-            audioUrl: musicMetadata.audioUrl,
-            coverUrl: musicMetadata.coverImageUrl || null,
-            genre: musicMetadata.genre || "Unknown",
-            durationSeconds: musicMetadata.durationSeconds || 0,
-            coinReward: coinPerParticipant,
-            isPublished: true,
-          })
-          .select("id")
-          .single();
+      const newCoinBalance = currentBalance - totalCost;
+      const newLifetimeSpent = Number(wallet.lifetimeSpent || 0) + totalCost;
 
-        if (!songError && song) {
-          songId = song.id;
+      // Create Song record if user has artist profile
+      let songId = null;
+      if (type === "STREAM_MUSIC" && musicMetadata) {
+        const artistResult = await client.queryObject`
+          SELECT id FROM "ArtistProfile" WHERE "userId" = ${user.id} LIMIT 1
+        `;
+        const artistProfile = artistResult.rows[0];
+
+        if (artistProfile) {
+          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
+          const songResult = await client.queryObject`
+            INSERT INTO "Song" (
+              "artistId", "title", "slug", "description", "audioUrl",
+              "coverUrl", "genre", "durationSeconds", "coinReward", "isPublished"
+            )
+            VALUES (
+              ${artistProfile.id}, ${title}, ${slug}, ${description}, ${musicMetadata.audioUrl},
+              ${musicMetadata.coverImageUrl || null}, ${musicMetadata.genre || "Unknown"},
+              ${musicMetadata.durationSeconds || 0}, ${coinPerParticipant}, true
+            )
+            RETURNING id
+          `;
+          songId = songResult.rows[0]?.id;
         }
       }
+
+      // Insert into user_posted_tasks
+      const taskResult = await client.queryObject`
+        INSERT INTO user_posted_tasks (
+          creator_id, title, description, type, category,
+          participant_threshold, total_budget, coin_per_participant, creation_fee,
+          status, current_participants, is_active,
+          social_requirements, audio_url, cover_image_url, genre,
+          duration_seconds, is_download_enabled, song_id
+        )
+        VALUES (
+          ${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED',
+          ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE},
+          'PENDING', 0, false,
+          ${socialRequirements ? JSON.stringify(socialRequirements) : null},
+          ${musicMetadata?.audioUrl || null},
+          ${musicMetadata?.coverImageUrl || null},
+          ${musicMetadata?.genre || null},
+          ${musicMetadata?.durationSeconds || null},
+          ${musicMetadata?.isDownloadEnabled || false},
+          ${songId}
+        )
+        RETURNING id
+      `;
+
+      const postedTask = taskResult.rows[0];
+
+      // Update wallet
+      await client.queryObject`
+        UPDATE "Wallet"
+        SET "coinBalance" = ${newCoinBalance}, "lifetimeSpent" = ${newLifetimeSpent}
+        WHERE id = ${wallet.id}
+      `;
+
+      // Insert transaction record
+      await client.queryObject`
+        INSERT INTO "CoinTransaction" (
+          "walletId", type, amount, "balanceAfter", description, metadata
+        )
+        VALUES (
+          ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance},
+          ${`Posted task: ${title}`, JSON.stringify({
+            postedTaskId: postedTask.id,
+            creationFee: CREATION_FEE,
+            budget: totalBudget,
+          })}
+        )
+      `;
+
+      return new Response(
+        JSON.stringify({
+          message: "Task created successfully",
+          task: postedTask,
+          totalCost,
+          coinPerParticipant,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } finally {
+      client.release();
     }
-
-    // Insert into user_posted_tasks (snake_case column names)
-    const { data: postedTask, error: taskError } = await db
-      .from("user_posted_tasks")
-      .insert({
-        creator_id: user.id,
-        title,
-        description,
-        type,
-        category: "USER_CREATED",
-        participant_threshold: participantThreshold,
-        total_budget: totalBudget,
-        coin_per_participant: coinPerParticipant,
-        creation_fee: CREATION_FEE,
-        status: "PENDING",
-        current_participants: 0,
-        is_active: false,
-        social_requirements: socialRequirements || null,
-        audio_url: musicMetadata?.audioUrl || null,
-        cover_image_url: musicMetadata?.coverImageUrl || null,
-        genre: musicMetadata?.genre || null,
-        duration_seconds: musicMetadata?.durationSeconds || null,
-        is_download_enabled: musicMetadata?.isDownloadEnabled || false,
-        song_id: songId,
-      })
-      .select("id")
-      .single();
-
-    if (taskError) {
-      console.error("Task insert error:", taskError);
-      return new Response(JSON.stringify({ error: "Failed to create task: " + taskError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Update wallet (camelCase column names - Prisma schema)
-    const { error: walletUpdateError } = await db
-      .from("Wallet")
-      .update({
-        coinBalance: newCoinBalance,
-        lifetimeSpent: newLifetimeSpent,
-      })
-      .eq("id", wallet.id);
-
-    if (walletUpdateError) {
-      console.error("Wallet update error:", walletUpdateError);
-    }
-
-    // Insert transaction record (camelCase column names - Prisma schema)
-    const { error: txError } = await db.from("CoinTransaction").insert({
-      walletId: wallet.id,
-      type: "TASK_CREATION",
-      amount: -totalCost,
-      balanceAfter: newCoinBalance,
-      description: `Posted task: ${title}`,
-      metadata: {
-        postedTaskId: postedTask.id,
-        creationFee: CREATION_FEE,
-        budget: totalBudget,
-      },
-    });
-
-    if (txError) {
-      console.error("Transaction insert error:", txError);
-    }
-
-    return new Response(
-      JSON.stringify({
-        message: "Task created successfully",
-        task: postedTask,
-        totalCost,
-        coinPerParticipant,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (err) {
     console.error("Function error:", err);
     return new Response(JSON.stringify({ error: err.message || "Server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  } finally {
+    if (pool) {
+      await pool.end();
+    }
   }
 };
 
