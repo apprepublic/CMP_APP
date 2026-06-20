@@ -170,17 +170,22 @@ class ApiService {
     });
   }
 
-  // Tasks
+  // Tasks - fetch from Supabase instead of dead API
   async getTasks(type?: string, category?: string) {
-    const params = new URLSearchParams();
-    if (type) params.set('type', type);
-    if (category) params.set('category', category);
-    const qs = params.toString();
-    return this.request<{ tasks: any[] }>(`/api/tasks${qs ? `?${qs}` : ''}`);
+    const { data, error } = await supabase
+      .from('user_posted_tasks')
+      .select('*')
+      .eq('is_active', true)
+      .eq('status', 'ACTIVE')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { tasks: data || [] };
   }
 
   async getDailyTasks() {
-    return this.request<{ tasks: any[] }>('/api/tasks/daily');
+    // Return empty array or fetch from a daily_tasks table if it exists
+    return { tasks: [] };
   }
 
   async getStreak() {
@@ -255,7 +260,17 @@ class ApiService {
   }
 
   async getPostedTasks() {
-    return this.request<{ tasks: any[] }>('/api/tasks/posted');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return { tasks: [] };
+
+    const { data, error } = await supabase
+      .from('user_posted_tasks')
+      .select('*')
+      .eq('creator_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { tasks: data || [] };
   }
 
   async activatePostedTask(id: string) {
