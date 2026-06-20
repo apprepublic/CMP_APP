@@ -339,7 +339,7 @@ router.post('/withdrawals/:id/reject', async (req: Request, res: Response) => {
 const taskSchema = z.object({
   title: z.string().min(1),
   description: z.string(),
-  type: z.enum(['READ_ARTICLE', 'WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE']),
+  type: z.enum(['WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE']),
   coinReward: z.number().min(1),
   dailyLimit: z.number().min(1).default(1),
   requiresAdGate: z.boolean().default(true)

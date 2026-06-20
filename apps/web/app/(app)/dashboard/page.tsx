@@ -182,7 +182,7 @@ export default function DashboardPage() {
 <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
                             <span className="material-symbols-outlined text-sm">
-                              {task.type === 'READ_ARTICLE' ? 'article' : task.type === 'WATCH_VIDEO' ? 'play_circle' : task.type === 'COMPLETE_SURVEY' ? 'poll' : task.type === 'SHARE_SOCIAL' ? 'share' : 'quickreply'}
+                              {task.type === 'WATCH_VIDEO' ? 'play_circle' : task.type === 'COMPLETE_SURVEY' ? 'poll' : task.type === 'SHARE_SOCIAL' ? 'share' : 'quickreply'}
                             </span>
                           </div>
                           <div>

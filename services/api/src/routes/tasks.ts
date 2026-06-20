@@ -440,7 +440,7 @@ router.post('/streak/freeze', authenticate, async (req: Request, res: Response) 
 const createPostedTaskSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(5).max(1000),
-  type: z.enum(['READ_ARTICLE', 'WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE', 'SOCIAL_ENGAGEMENT', 'STREAM_MUSIC']),
+  type: z.enum(['WATCH_VIDEO', 'SHARE_SOCIAL', 'COMPLETE_SURVEY', 'APP_DOWNLOAD', 'VOTE', 'SOCIAL_ENGAGEMENT', 'STREAM_MUSIC']),
   category: z.string().optional().default('USER_CREATED'),
   participantThreshold: z.number().min(10).max(10000),
   totalBudget: z.number().min(1000).max(1000000),

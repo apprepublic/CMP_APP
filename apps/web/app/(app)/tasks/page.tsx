@@ -166,7 +166,7 @@ export default function EarnMarketplacePage() {
                 <div className={`flex items-start justify-between mb-4 ${isPremium && !isLocked && !isUserTask ? 'mt-2' : ''}`}>
                   <div className="w-12 h-12 rounded-lg bg-surface flex items-center justify-center border border-outline-variant/30">
                     <span className="material-symbols-outlined text-primary" style={{ fontSize: '24px' }}>
-                      {isUserTask ? 'person_add' : (task.category === 'COMPLETE_SURVEY' ? 'poll' : task.category === 'SHARE_SOCIAL' ? 'share' : task.category === 'READ_ARTICLE' ? 'article' : task.category === 'CONTENT' ? 'article' : 'quickreply')}
+                      {isUserTask ? 'person_add' : (task.category === 'COMPLETE_SURVEY' ? 'poll' : task.category === 'SHARE_SOCIAL' ? 'share' : task.category === 'CONTENT' ? 'article' : 'quickreply')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border-[1.5px] border-[#B8860B] bg-surface-container-lowest">

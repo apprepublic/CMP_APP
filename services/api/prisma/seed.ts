@@ -133,14 +133,6 @@ async function main() {
   // Create tasks
   const tasks = [
     {
-      title: 'Read Latest News',
-      description: 'Read a news article to earn coins',
-      type: TaskType.READ_ARTICLE,
-      coinReward: 50,
-      dailyLimit: 5,
-      requiresAdGate: true
-    },
-    {
       title: 'Watch Video Ad',
       description: 'Watch a short video ad',
       type: TaskType.WATCH_VIDEO,
