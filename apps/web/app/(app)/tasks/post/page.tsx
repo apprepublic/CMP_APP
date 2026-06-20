@@ -9,7 +9,6 @@ import { uploadAudioFile, uploadCoverImage, STORAGE_BUCKETS } from '@/lib/storag
 import { supabase } from '@/lib/supabase';
 
 const TASK_TYPES = [
-  { value: 'READ_ARTICLE', label: 'Read Article', icon: 'article', minBudget: 1000 },
   { value: 'WATCH_VIDEO', label: 'Watch Video', icon: 'play_circle', minBudget: 2000 },
   { value: 'SHARE_SOCIAL', label: 'Share on Social', icon: 'share', minBudget: 3000 },
   { value: 'SOCIAL_ENGAGEMENT', label: 'Social Engagement', icon: 'thumb_up', minBudget: 2000 },
@@ -64,7 +63,7 @@ export default function PostTaskPage() {
   }, [router]);
 
   const [formData, setFormData] = useState({
-    type: 'READ_ARTICLE',
+    type: 'WATCH_VIDEO',
     participantThreshold: 100,
     totalBudget: 5000,
     // Social engagement fields
@@ -72,9 +71,6 @@ export default function PostTaskPage() {
     commentText: '',
     minCommentLength: 10,
     requiresScreenshot: false,
-    // Read article fields
-    articleUrl: '',
-    minReadTime: 2,
     // Watch video fields
     videoUrl: '',
     minWatchTime: 30,
@@ -229,10 +225,6 @@ export default function PostTaskPage() {
     let description = '';
 
     switch (data.type) {
-      case 'READ_ARTICLE':
-        title = `Read Article: ${data.articleUrl ? new URL(data.articleUrl).hostname : 'Article'}`;
-        description = `Read the article for at least ${data.minReadTime} minutes to earn ${coinPerParticipant} coins.`;
-        break;
       case 'WATCH_VIDEO':
         title = `Watch Video: ${data.videoUrl ? new URL(data.videoUrl).hostname : 'Video'}`;
         description = `Watch the video for at least ${data.minWatchTime} seconds to earn ${coinPerParticipant} coins.`;
@@ -280,11 +272,6 @@ export default function PostTaskPage() {
 
     // Task-specific validation
     switch (formData.type) {
-      case 'READ_ARTICLE':
-        if (!formData.articleUrl) {
-          newErrors.articleUrl = 'Article URL is required';
-        }
-        break;
       case 'WATCH_VIDEO':
         if (!formData.videoUrl) {
           newErrors.videoUrl = 'Video URL is required';
@@ -486,45 +473,6 @@ export default function PostTaskPage() {
             ))}
           </div>
         </div>
-
-        {/* Task-Specific Requirements */}
-        {formData.type === 'READ_ARTICLE' && (
-          <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
-            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#B8860B]">article</span>
-              Article Reading Requirements
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block font-body-md text-body-md text-on-surface mb-2">Article URL *</label>
-                <input
-                  type="url"
-                  value={formData.articleUrl}
-                  onChange={(e) => handleInputChange('articleUrl', e.target.value)}
-                  placeholder="https://yourblog.com/article-title"
-                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
-                />
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                  Link to the article participants must read
-                </p>
-              </div>
-              <div>
-                <label className="block font-body-md text-body-md text-on-surface mb-2">Minimum Read Time (minutes)</label>
-                <input
-                  type="number"
-                  value={formData.minReadTime}
-                  onChange={(e) => handleInputChange('minReadTime', Math.max(1, parseInt(e.target.value) || 1))}
-                  min={1}
-                  max={60}
-                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
-                />
-                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                  Estimated time to read the article
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {formData.type === 'WATCH_VIDEO' && (
           <div className="bg-surface rounded-xl p-6 border border-outline-variant/30">
@@ -1199,24 +1147,11 @@ export default function PostTaskPage() {
                 <p className="font-body-md text-body-md text-on-surface">{generateTitleAndDescription(formData).description}</p>
               </div>
               
-              {/* Task-Specific Requirements Preview */}
-              <div className="bg-surface rounded-lg p-4 space-y-3">
-                <p className="font-label-caps text-label-caps text-[#B8860B] uppercase">Task Requirements</p>
-                
-                {formData.type === 'READ_ARTICLE' && (
-                  <>
-                    <div>
-                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Article URL</p>
-                      <p className="font-body-sm text-body-sm text-on-surface truncate">{formData.articleUrl}</p>
-                    </div>
-                    <div>
-                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Min Read Time</p>
-                      <p className="font-body-md text-body-md text-on-surface">{formData.minReadTime} minutes</p>
-                    </div>
-                  </>
-                )}
-                
-                {formData.type === 'WATCH_VIDEO' && (
+{/* Task-Specific Requirements Preview */}
+                <div className="bg-surface rounded-lg p-4 space-y-3">
+                  <p className="font-label-caps text-label-caps text-[#B8860B] uppercase">Task Requirements</p>
+                  
+                  {formData.type === 'WATCH_VIDEO' && (
                   <>
                     <div>
                       <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Video URL</p>
@@ -1457,15 +1392,13 @@ export default function PostTaskPage() {
                   setShowSuccess(false);
                   // Reset form to create another task
                   setFormData({
-                    type: 'READ_ARTICLE',
+                    type: 'WATCH_VIDEO',
                     participantThreshold: 100,
                     totalBudget: 5000,
                     targetUrl: '',
                     commentText: '',
                     minCommentLength: 10,
                     requiresScreenshot: false,
-                    articleUrl: '',
-                    minReadTime: 2,
                     videoUrl: '',
                     minWatchTime: 30,
                     appStoreUrl: '',

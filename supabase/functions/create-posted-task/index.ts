@@ -33,19 +33,22 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
-    // Use service role key for DB operations (bypasses RLS)
-    // Pass it as both the client key AND in headers for PostgREST
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+
+    // Auth client: used ONLY to verify the user's JWT
+    // Calling auth.getUser() on a client overrides its auth context,
+    // so we must use a separate client for DB ops.
+    const authClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // DB client: uses service role key exclusively (bypasses RLS)
+    const db = createClient(supabaseUrl, supabaseServiceKey, {
       global: {
         headers: {
           Authorization: `Bearer ${supabaseServiceKey}`,
-        }
-      }
+        },
+      },
     });
 
     const authHeader = req.headers.get("authorization");
-    const apiKey = req.headers.get("apikey");
 
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized - missing auth header" }), {
@@ -55,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
         status: 401,
@@ -125,8 +128,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const totalCost = CREATION_FEE + totalBudget;
 
-    // Use service role client to query Wallet (camelCase column names per Prisma schema)
-    const { data: wallet, error: walletError } = await supabase
+    // Use service role DB client to query Wallet (camelCase column names per Prisma schema)
+    const { data: wallet, error: walletError } = await db
       .from("Wallet")
       .select("id, coinBalance, lifetimeSpent")
       .eq("userId", user.id)
@@ -159,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Create Song record if user has artist profile
     let songId = null;
     if (type === "STREAM_MUSIC" && musicMetadata) {
-      const { data: artistProfile } = await supabase
+      const { data: artistProfile } = await db
         .from("ArtistProfile")
         .select("id")
         .eq("userId", user.id)
@@ -167,7 +170,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (artistProfile) {
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
-        const { data: song, error: songError } = await supabase
+        const { data: song, error: songError } = await db
           .from("Song")
           .insert({
             artistId: artistProfile.id,
@@ -191,7 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Insert into user_posted_tasks (snake_case column names)
-    const { data: postedTask, error: taskError } = await supabase
+    const { data: postedTask, error: taskError } = await db
       .from("user_posted_tasks")
       .insert({
         creator_id: user.id,
@@ -226,7 +229,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Update wallet (camelCase column names - Prisma schema)
-    const { error: walletUpdateError } = await supabase
+    const { error: walletUpdateError } = await db
       .from("Wallet")
       .update({
         coinBalance: newCoinBalance,
@@ -239,7 +242,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Insert transaction record (camelCase column names - Prisma schema)
-    const { error: txError } = await supabase.from("CoinTransaction").insert({
+    const { error: txError } = await db.from("CoinTransaction").insert({
       walletId: wallet.id,
       type: "TASK_CREATION",
       amount: -totalCost,

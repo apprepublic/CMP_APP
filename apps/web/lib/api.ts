@@ -359,11 +359,11 @@ class ApiService {
   }
 
   // Articles
-  async getArticles(page = 1, limit = 20, category?: string, search?: string) {
-    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (category) params.set('category', category);
-    if (search) params.set('search', search);
-    return this.request<{ articles: any[]; pagination: any }>(`/api/articles?${params}`);
+  async getArticles(opts: { category?: string; search?: string } = {}) {
+    const params = new URLSearchParams();
+    if (opts.category) params.set('category', opts.category);
+    if (opts.search) params.set('search', opts.search);
+    return this.request<{ articles: any[] }>(`/api/articles?${params.toString()}`);
   }
 
   async getArticle(id: string) {

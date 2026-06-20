@@ -45,8 +45,12 @@ export interface Article {
   content: string;
   category: string;
   read_time_minutes: number;
+  coin_reward: number;
+  cover_image_url: string | null;
   view_count: number;
   published_at: string | null;
+  created_at: string;
+  author?: { display_name: string } | null;
 }
 
 export interface Store {
@@ -282,14 +286,20 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
 
 /* ---------------------------- ARTICLES --------------------------- */
 
-export async function getArticles(limit = 20): Promise<Article[]> {
-  return unwrap<Article[]>(
-    await db.from('articles').select('*').eq('is_published', true).order('published_at', { ascending: false }).limit(limit)
-  );
+export async function getArticles(opts: { category?: string; search?: string; limit?: number } = {}): Promise<Article[]> {
+  let q = db
+    .from('articles')
+    .select('*, author:users(id, display_name)')
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(opts.limit ?? 50);
+  if (opts.category) q = q.eq('category', opts.category);
+  if (opts.search) q = q.ilike('title', `%${opts.search}%`);
+  return unwrap<Article[]>(await q);
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const res = (await db.from('articles').select('*').eq('slug', slug).eq('is_published', true).single()) as {
+  const res = (await db.from('articles').select('*, author:users(id, display_name)').eq('slug', slug).eq('is_published', true).single()) as {
     data: Article | null;
     error: any;
   };

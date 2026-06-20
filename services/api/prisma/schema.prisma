@@ -55,7 +55,6 @@ enum CoinTransactionType {
 }
 
 enum TaskType {
-  READ_ARTICLE
   WATCH_VIDEO
   SHARE_SOCIAL
   COMPLETE_SURVEY

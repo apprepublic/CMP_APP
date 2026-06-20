@@ -11,6 +11,7 @@ export default function BottomNavBar() {
     { href: '/dashboard', label: 'Home', icon: 'home' },
     { href: '/tasks', label: 'Tasks', icon: 'task' },
     { href: '/music', label: 'Music', icon: 'music_note' },
+    { href: '/articles', label: 'Articles', icon: 'article' },
     { href: '/referrals', label: 'Refer', icon: 'groups' },
     { href: '/wallet', label: 'Wallet', icon: 'wallet' },
   ];

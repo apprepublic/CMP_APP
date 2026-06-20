@@ -23,6 +23,7 @@ export default function SideNavBar() {
     { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { href: '/tasks', label: 'Tasks', icon: 'task' },
     { href: '/music', label: 'Music', icon: 'library_music' },
+    { href: '/articles', label: 'Articles', icon: 'article' },
     { href: '/referrals', label: 'Referrals', icon: 'groups' },
     { href: '/wallet', label: 'Wallet', icon: 'account_balance_wallet' },
   ];

@@ -144,6 +144,9 @@ export const useCompletePostedTask = () => {
 export const useArticle = (slug: string) =>
   useQuery({ queryKey: ['article', slug], queryFn: () => api.getArticleBySlug(slug), enabled: !!slug });
 
+export const useArticles = (opts: { category?: string; search?: string } = {}) =>
+  useQuery({ queryKey: ['articles', opts], queryFn: () => api.getArticles(opts) });
+
 export const useTransactions = (walletId: string) => 
   useQuery({ queryKey: ['transactions', walletId], queryFn: () => getTransactions(walletId), enabled: !!walletId });
 
