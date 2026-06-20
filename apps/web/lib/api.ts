@@ -1,4 +1,6 @@
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zympjjrkiqfsuhdwddur.supabase.co';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cmpapp.ng';
+const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1`;
 
 interface FetchOptions extends RequestInit {
   token?: string;
@@ -225,8 +227,10 @@ class ApiService {
       isDownloadEnabled?: boolean;
     };
   }) {
-    return this.request<{ task: any; totalCost: number; coinPerParticipant: number }>('/api/tasks/create', {
+    const token = this.getToken() ?? undefined;
+    return this.request<{ task: any; totalCost: number; coinPerParticipant: number }>(`${EDGE_FUNCTION_URL}/create-posted-task`, {
       method: 'POST',
+      token,
       body: JSON.stringify(data),
     });
   }

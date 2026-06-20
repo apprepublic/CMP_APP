@@ -136,9 +136,11 @@ export default function PostTaskPage() {
       totalCost <= coinBalance
     );
 
-    // Check if uploading for music tasks
-    if (formData.type === 'STREAM_MUSIC' && uploading) {
-      return false;
+    if (formData.type === 'STREAM_MUSIC') {
+      const hasAudio = !!formData.audioFile || !!formData.audioUrl;
+      const hasGenre = !!formData.genre;
+      if (uploading) return false;
+      return baseValid && hasAudio && hasGenre;
     }
 
     if (formData.type === 'SOCIAL_ENGAGEMENT') {
