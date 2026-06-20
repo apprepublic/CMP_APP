@@ -158,31 +158,36 @@ const handler = async (req: Request): Promise<Response> => {
       const newCoinBalance = currentBalance - totalCost;
       const newLifetimeSpent = Number(wallet.lifetimeSpent || 0) + totalCost;
 
-      // Create Song record if user has artist profile
-      let songId = null;
-      if (type === "STREAM_MUSIC" && musicMetadata) {
-        const artistResult = await client.queryObject`
-          SELECT id FROM "ArtistProfile" WHERE "userId" = ${user.id} LIMIT 1
-        `;
-        const artistProfile = artistResult.rows[0];
+// Create Song record if user has artist profile OR just create with null artistId
+    let songId = null;
+    if (type === "STREAM_MUSIC" && musicMetadata) {
+      const artistResult = await client.queryObject`
+        SELECT id FROM "ArtistProfile" WHERE "userId" = ${user.id} LIMIT 1
+      `;
+      const artistProfile = artistResult.rows[0];
 
-        if (artistProfile) {
-          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
-          const songResult = await client.queryObject`
-            INSERT INTO "Song" (
-              "artistId", "title", "slug", "description", "audioUrl",
-              "coverUrl", "genre", "durationSeconds", "coinReward", "isPublished"
-            )
-            VALUES (
-              ${artistProfile.id}, ${title}, ${slug}, ${description}, ${musicMetadata.audioUrl},
-              ${musicMetadata.coverImageUrl || null}, ${musicMetadata.genre || "Unknown"},
-              ${musicMetadata.durationSeconds || 0}, ${coinPerParticipant}, true
-            )
-            RETURNING id
-          `;
-          songId = songResult.rows[0]?.id;
-        }
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
+      const { data: song, error: songError } = await supabase
+        .from("Song")
+        .insert({
+          artistId: artistProfile?.id || null,
+          title,
+          slug,
+          description,
+          audioUrl: musicMetadata.audioUrl,
+          coverUrl: musicMetadata.coverImageUrl || null,
+          genre: musicMetadata.genre || "Unknown",
+          durationSeconds: musicMetadata.durationSeconds || 0,
+          coinReward: coinPerParticipant,
+          isPublished: true,
+        })
+        .select("id")
+        .single();
+
+      if (!songError && song) {
+        songId = song.id;
       }
+    }
 
       // Insert into user_posted_tasks
       const taskResult = await client.queryObject`
