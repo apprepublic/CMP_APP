@@ -33,7 +33,16 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Use service role key for DB operations (bypasses RLS)
+    // Pass it as both the client key AND in headers for PostgREST
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${supabaseServiceKey}`,
+        }
+      }
+    });
 
     const authHeader = req.headers.get("authorization");
     const apiKey = req.headers.get("apikey");
