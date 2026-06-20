@@ -102,20 +102,70 @@ export default function PostTaskPage() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ audio: 0, cover: 0 });
+  const [audioUploaded, setAudioUploaded] = useState(false);
+  const [coverUploaded, setCoverUploaded] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
 
-  // Cleanup object URLs on unmount
-  useEffect(() => {
-    return () => {
-      if (formData.audioFile) {
-        URL.revokeObjectURL(URL.createObjectURL(formData.audioFile));
-      }
-      if (formData.coverImageFile) {
-        URL.revokeObjectURL(URL.createObjectURL(formData.coverImageFile));
-      }
-    };
-  }, [formData.audioFile, formData.coverImageFile]);
+  const handleAudioFileSelected = useCallback(async (file: File) => {
+    if (!isAuthenticated) {
+      setErrors({ submit: 'Please sign in to upload files' });
+      router.push('/login?redirect=/tasks/post');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setErrors({ audioUrl: 'File size must be less than 50MB' });
+      return;
+    }
+    setAudioUploaded(false);
+    setFormData(prev => ({ ...prev, audioFile: file }));
+    setUploading(true);
+    setUploadProgress(prev => ({ ...prev, audio: 10 }));
+    setErrors(prev => ({ ...prev, audioUrl: '' }));
+
+    const result = await uploadAudioFile(file);
+    if (!result.success || !result.url) {
+      setUploading(false);
+      setUploadProgress(prev => ({ ...prev, audio: 0 }));
+      setFormData(prev => ({ ...prev, audioFile: null, audioUrl: '' }));
+      setErrors({ audioUrl: result.error || 'Failed to upload audio file' });
+      return;
+    }
+    setUploadProgress(prev => ({ ...prev, audio: 100 }));
+    setFormData(prev => ({ ...prev, audioUrl: result.url! }));
+    setAudioUploaded(true);
+    setUploading(false);
+  }, [isAuthenticated, router]);
+
+  const handleCoverFileSelected = useCallback(async (file: File) => {
+    if (!isAuthenticated) {
+      setErrors({ submit: 'Please sign in to upload files' });
+      router.push('/login?redirect=/tasks/post');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors({ coverImageUrl: 'File size must be less than 10MB' });
+      return;
+    }
+    setCoverUploaded(false);
+    setFormData(prev => ({ ...prev, coverImageFile: file }));
+    setUploading(true);
+    setUploadProgress(prev => ({ ...prev, cover: 10 }));
+    setErrors(prev => ({ ...prev, coverImageUrl: '' }));
+
+    const result = await uploadCoverImage(file);
+    if (!result.success || !result.url) {
+      setUploading(false);
+      setUploadProgress(prev => ({ ...prev, cover: 0 }));
+      setFormData(prev => ({ ...prev, coverImageFile: null, coverImageUrl: '' }));
+      setErrors({ coverImageUrl: result.error || 'Failed to upload cover image' });
+      return;
+    }
+    setUploadProgress(prev => ({ ...prev, cover: 100 }));
+    setFormData(prev => ({ ...prev, coverImageUrl: result.url! }));
+    setCoverUploaded(true);
+    setUploading(false);
+  }, [isAuthenticated, router]);
 
   const [selectedPlatform, setSelectedPlatform] = useState<string>('TWITTER');
   const [selectedActions, setSelectedActions] = useState<string[]>(['LIKE']);
@@ -136,10 +186,11 @@ export default function PostTaskPage() {
       totalCost <= coinBalance
     );
 
+    if (uploading) return false;
+
     if (formData.type === 'STREAM_MUSIC') {
-      const hasAudio = !!formData.audioFile || !!formData.audioUrl;
+      const hasAudio = !!formData.audioUrl || audioUploaded;
       const hasGenre = !!formData.genre;
-      if (uploading) return false;
       return baseValid && hasAudio && hasGenre;
     }
 
@@ -148,7 +199,7 @@ export default function PostTaskPage() {
     }
 
     return baseValid;
-  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading]);
+  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading, audioUploaded]);
 
   useEffect(() => {
     const minBudget = TASK_TYPES.find(t => t.value === formData.type)?.minBudget ?? 1000;
@@ -258,15 +309,14 @@ export default function PostTaskPage() {
         }
         break;
       case 'STREAM_MUSIC':
-        if (!formData.audioFile && !formData.audioUrl) {
+        if (!formData.audioUrl && !formData.audioFile) {
           newErrors.audioUrl = 'Audio file is required';
+        }
+        if (!formData.audioUrl && formData.audioFile && !audioUploaded) {
+          newErrors.audioUrl = 'Please wait for audio upload to complete';
         }
         if (!formData.genre) {
           newErrors.genre = 'Genre is required';
-        }
-        // Prevent preview if still uploading
-        if (uploading) {
-          newErrors.submit = 'Please wait for file upload to complete';
         }
         break;
       case 'SOCIAL_ENGAGEMENT':
@@ -285,35 +335,7 @@ export default function PostTaskPage() {
     }
 
     try {
-      // Auto-generate title and description
       const { title, description } = generateTitleAndDescription(formData);
-
-      let audioUrl = formData.audioUrl;
-      let coverImageUrl = formData.coverImageUrl;
-
-      // Upload files if they exist
-      if (formData.audioFile) {
-        setUploading(true);
-        setUploadProgress(prev => ({ ...prev, audio: 50 }));
-        const audioResult = await uploadAudioFile(formData.audioFile);
-        if (!audioResult.success || !audioResult.url) {
-          throw new Error('Failed to upload audio file');
-        }
-        audioUrl = audioResult.url;
-        setUploadProgress(prev => ({ ...prev, audio: 100 }));
-      }
-
-      if (formData.coverImageFile) {
-        setUploadProgress(prev => ({ ...prev, cover: 50 }));
-        const coverResult = await uploadCoverImage(formData.coverImageFile);
-        if (!coverResult.success || !coverResult.url) {
-          throw new Error('Failed to upload cover image');
-        }
-        coverImageUrl = coverResult.url;
-        setUploadProgress(prev => ({ ...prev, cover: 100 }));
-      }
-
-      setUploading(false);
 
       const payload: any = {
         title,
@@ -336,8 +358,8 @@ export default function PostTaskPage() {
 
       if (formData.type === 'STREAM_MUSIC') {
         payload.musicMetadata = {
-          audioUrl: audioUrl,
-          coverImageUrl: coverImageUrl || undefined,
+          audioUrl: formData.audioUrl,
+          coverImageUrl: formData.coverImageUrl || undefined,
           genre: formData.genre || undefined,
           durationSeconds: formData.durationSeconds,
           isDownloadEnabled: formData.isDownloadEnabled,
@@ -708,8 +730,10 @@ export default function PostTaskPage() {
                       <div className="flex items-center gap-3">
                         {uploading && uploadProgress.audio < 100 ? (
                           <span className="material-symbols-outlined text-[#B8860B] animate-spin">progress_activity</span>
-                        ) : (
+                        ) : audioUploaded ? (
                           <span className="material-symbols-outlined text-success-verified">check_circle</span>
+                        ) : (
+                          <span className="material-symbols-outlined text-[#B8860B] animate-spin">progress_activity</span>
                         )}
                         <div>
                           <p className="font-body-md text-body-md text-on-surface">{formData.audioFile.name}</p>
@@ -719,23 +743,27 @@ export default function PostTaskPage() {
                               <span className="ml-2 text-[#B8860B]">
                                 - Uploading {uploadProgress.audio}%
                               </span>
-                            ) : uploadProgress.audio === 100 ? (
+                            ) : audioUploaded ? (
                               <span className="ml-2 text-success-verified">
                                 - Upload Complete
                               </span>
-                            ) : null}
+                            ) : (
+                              <span className="ml-2 text-[#B8860B]">- Uploading...</span>
+                            )}
                           </p>
                         </div>
                       </div>
-                      {!uploading && (
-                        <button
-                          type="button"
-                          onClick={() => handleInputChange('audioFile', null)}
-                          className="text-error-alert hover:underline font-body-sm text-body-sm"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, audioFile: null, audioUrl: '' }));
+                          setAudioUploaded(false);
+                          setUploadProgress(prev => ({ ...prev, audio: 0 }));
+                        }}
+                        className="text-error-alert hover:underline font-body-sm text-body-sm"
+                      >
+                        Remove
+                      </button>
                     </div>
                   ) : (
                     <div className="text-center">
@@ -747,20 +775,8 @@ export default function PostTaskPage() {
                         type="file"
                         accept=".mp3,audio/mpeg"
                         onChange={(e) => {
-                          if (!isAuthenticated) {
-                            setErrors({ submit: 'Please sign in to upload files' });
-                            router.push('/login?redirect=/tasks/post');
-                            return;
-                          }
                           const file = e.target.files?.[0];
-                          if (file) {
-                            if (file.size > 50 * 1024 * 1024) {
-                              setErrors({ audioUrl: 'File size must be less than 50MB' });
-                              return;
-                            }
-                            handleInputChange('audioFile', file);
-                            setErrors(prev => ({ ...prev, audioUrl: '' }));
-                          }
+                          if (file) handleAudioFileSelected(file);
                         }}
                         className="hidden"
                         id="audio-upload"
@@ -801,8 +817,10 @@ export default function PostTaskPage() {
                       <div className="flex items-center gap-3">
                         {uploading && uploadProgress.cover < 100 ? (
                           <span className="material-symbols-outlined text-[#B8860B] animate-spin">progress_activity</span>
-                        ) : (
+                        ) : coverUploaded ? (
                           <span className="material-symbols-outlined text-success-verified">check_circle</span>
+                        ) : (
+                          <span className="material-symbols-outlined text-[#B8860B] animate-spin">progress_activity</span>
                         )}
                         <img
                           src={URL.createObjectURL(formData.coverImageFile)}
@@ -817,23 +835,27 @@ export default function PostTaskPage() {
                               <span className="ml-2 text-[#B8860B]">
                                 - Uploading {uploadProgress.cover}%
                               </span>
-                            ) : uploadProgress.cover === 100 ? (
+                            ) : coverUploaded ? (
                               <span className="ml-2 text-success-verified">
                                 - Upload Complete
                               </span>
-                            ) : null}
+                            ) : (
+                              <span className="ml-2 text-[#B8860B]">- Uploading...</span>
+                            )}
                           </p>
                         </div>
                       </div>
-                      {!uploading && (
-                        <button
-                          type="button"
-                          onClick={() => handleInputChange('coverImageFile', null)}
-                          className="text-error-alert hover:underline font-body-sm text-body-sm"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, coverImageFile: null, coverImageUrl: '' }));
+                          setCoverUploaded(false);
+                          setUploadProgress(prev => ({ ...prev, cover: 0 }));
+                        }}
+                        className="text-error-alert hover:underline font-body-sm text-body-sm"
+                      >
+                        Remove
+                      </button>
                     </div>
                   ) : (
                     <div className="text-center">
@@ -845,19 +867,8 @@ export default function PostTaskPage() {
                         type="file"
                         accept="image/*"
                         onChange={(e) => {
-                          if (!isAuthenticated) {
-                            setErrors({ submit: 'Please sign in to upload files' });
-                            router.push('/login?redirect=/tasks/post');
-                            return;
-                          }
                           const file = e.target.files?.[0];
-                          if (file) {
-                            if (file.size > 10 * 1024 * 1024) {
-                              setErrors({ coverImageUrl: 'File size must be less than 10MB' });
-                              return;
-                            }
-                            handleInputChange('coverImageFile', file);
-                          }
+                          if (file) handleCoverFileSelected(file);
                         }}
                         className="hidden"
                         id="cover-upload"
@@ -1160,7 +1171,7 @@ export default function PostTaskPage() {
             {uploading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                Uploading... {uploadProgress.audio > 0 ? `Audio ${uploadProgress.audio}%` : ''}{uploadProgress.cover > 0 ? `Cover ${uploadProgress.cover}%` : ''}
+                Uploading... {uploadProgress.audio > 0 && uploadProgress.audio < 100 ? `Audio ${uploadProgress.audio}%` : ''}{uploadProgress.cover > 0 && uploadProgress.cover < 100 ? ` Cover ${uploadProgress.cover}%` : ''}
               </span>
             ) : postTask.isPending ? (
               'Creating...'
