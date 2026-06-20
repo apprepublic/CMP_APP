@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zympjjrkiqfsuhdwddur.supabase.co';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cmpapp.ng';
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1`;
@@ -227,12 +229,29 @@ class ApiService {
       isDownloadEnabled?: boolean;
     };
   }) {
-    const token = this.getToken() ?? undefined;
-    return this.request<{ task: any; totalCost: number; coinPerParticipant: number }>(`${EDGE_FUNCTION_URL}/create-posted-task`, {
+    const url = `${EDGE_FUNCTION_URL}/create-posted-task`;
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    };
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
-      token,
+      headers,
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || error.message || 'Request failed');
+    }
+
+    return response.json();
   }
 
   async getPostedTasks() {
