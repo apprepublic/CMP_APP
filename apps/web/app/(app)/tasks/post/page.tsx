@@ -224,17 +224,26 @@ export default function PostTaskPage() {
     let title = '';
     let description = '';
 
+    // Helper to safely extract hostname from URL
+    const getHostname = (url: string) => {
+      try {
+        return url ? new URL(url).hostname : '';
+      } catch {
+        return '';
+      }
+    };
+
     switch (data.type) {
       case 'WATCH_VIDEO':
-        title = `Watch Video: ${data.videoUrl ? new URL(data.videoUrl).hostname : 'Video'}`;
+        title = `Watch Video: ${data.videoUrl ? getHostname(data.videoUrl) : 'Video'}`;
         description = `Watch the video for at least ${data.minWatchTime} seconds to earn ${coinPerParticipant} coins.`;
         break;
       case 'APP_DOWNLOAD':
-        title = `Download App: ${data.appStoreUrl ? new URL(data.appStoreUrl).hostname : 'App'}`;
+        title = `Download App: ${data.appStoreUrl ? getHostname(data.appStoreUrl) : 'App'}`;
         description = `Download and review this app with a minimum ${data.minRating}-star rating to earn ${coinPerParticipant} coins.`;
         break;
       case 'COMPLETE_SURVEY':
-        title = `Complete Survey: ${data.surveyUrl ? new URL(data.surveyUrl).hostname : 'Survey'}`;
+        title = `Complete Survey: ${data.surveyUrl ? getHostname(data.surveyUrl) : 'Survey'}`;
         description = `Complete this survey with at least ${data.minQuestions} questions to earn ${coinPerParticipant} coins.`;
         break;
       case 'SHARE_SOCIAL':
@@ -275,16 +284,34 @@ export default function PostTaskPage() {
       case 'WATCH_VIDEO':
         if (!formData.videoUrl) {
           newErrors.videoUrl = 'Video URL is required';
+        } else {
+          try {
+            new URL(formData.videoUrl);
+          } catch {
+            newErrors.videoUrl = 'Please enter a valid URL (e.g., https://...)';
+          }
         }
         break;
       case 'APP_DOWNLOAD':
         if (!formData.appStoreUrl) {
           newErrors.appStoreUrl = 'App Store URL is required';
+        } else {
+          try {
+            new URL(formData.appStoreUrl);
+          } catch {
+            newErrors.appStoreUrl = 'Please enter a valid URL (e.g., https://...)';
+          }
         }
         break;
       case 'COMPLETE_SURVEY':
         if (!formData.surveyUrl) {
           newErrors.surveyUrl = 'Survey URL is required';
+        } else {
+          try {
+            new URL(formData.surveyUrl);
+          } catch {
+            newErrors.surveyUrl = 'Please enter a valid URL (e.g., https://...)';
+          }
         }
         break;
       case 'SHARE_SOCIAL':
@@ -309,6 +336,13 @@ export default function PostTaskPage() {
       case 'SOCIAL_ENGAGEMENT':
         if (!formData.targetUrl) {
           newErrors.targetUrl = 'Target URL is required';
+        } else {
+          // Validate URL format
+          try {
+            new URL(formData.targetUrl);
+          } catch {
+            newErrors.targetUrl = 'Please enter a valid URL (e.g., https://...)';
+          }
         }
         if (selectedActions.length === 0) {
           newErrors.actions = 'Select at least one action';
