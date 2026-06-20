@@ -218,12 +218,13 @@ const handler = async (req: Request): Promise<Response> => {
       `;
 
       // Insert transaction record
+      const txId = crypto.randomUUID();
       await client.queryObject`
         INSERT INTO "CoinTransaction" (
-          "walletId", type, amount, "balanceAfter", description, metadata
+          id, "walletId", type, amount, "balanceAfter", description, metadata
         )
         VALUES (
-          ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance},
+          ${txId}, ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance},
           ${`Posted task: ${title}`},
           ${JSON.stringify({
             postedTaskId: postedTask.id,
