@@ -197,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
           ${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED',
           ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE},
           'PENDING', 0, false,
-          ${socialRequirements ? JSON.stringify(socialRequirements) : null},
+          ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb,
           ${musicMetadata?.audioUrl || null},
           ${musicMetadata?.coverImageUrl || null},
           ${musicMetadata?.genre || null},
@@ -224,11 +224,12 @@ const handler = async (req: Request): Promise<Response> => {
         )
         VALUES (
           ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance},
-          ${`Posted task: ${title}`, JSON.stringify({
+          ${`Posted task: ${title}`},
+          ${JSON.stringify({
             postedTaskId: postedTask.id,
             creationFee: CREATION_FEE,
             budget: totalBudget,
-          })}
+          })}::jsonb
         )
       `;
 
