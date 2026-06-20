@@ -36,7 +36,6 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Auth client: used ONLY to verify the user's JWT
     const authClient = createClient(supabaseUrl, supabaseServiceKey);
 
     const authHeader = req.headers.get("authorization");
@@ -58,15 +57,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
+    const { title, description, type, participantThreshold, totalBudget, socialRequirements, musicMetadata } = body;
 
-    const title = body.title;
-    const description = body.description;
-    const type = body.type;
-    const participantThreshold = body.participantThreshold;
-    const totalBudget = body.totalBudget;
-    const socialRequirements = body.socialRequirements;
-    const musicMetadata = body.musicMetadata;
-
+    // Validations
     if (!title || title.length < 3 || title.length > 200) {
       return new Response(JSON.stringify({ error: "Title must be 3-200 characters" }), {
         status: 400,
@@ -119,22 +112,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     const totalCost = CREATION_FEE + totalBudget;
 
-    // Connect directly via Postgres (bypasses RLS completely)
+    // Connect to database
     const dbUrl = Deno.env.get("SUPABASE_DB_URL")!;
     pool = new Pool(dbUrl, 1);
-
     const client = await pool.connect();
 
     try {
       // Get wallet
       const walletResult = await client.queryObject`
-        SELECT id, "coinBalance", "lifetimeSpent"
-        FROM "Wallet"
-        WHERE "userId" = ${user.id}
-        LIMIT 1
+        SELECT id, "coinBalance", "lifetimeSpent" FROM "Wallet" WHERE "userId" = ${user.id} LIMIT 1
       `;
-
       const wallet = walletResult.rows[0];
+
       if (!wallet) {
         return new Response(JSON.stringify({ error: "Wallet not found" }), {
           status: 404,
@@ -144,110 +133,64 @@ const handler = async (req: Request): Promise<Response> => {
 
       const currentBalance = Number(wallet.coinBalance);
       if (currentBalance < totalCost) {
-        return new Response(
-          JSON.stringify({
-            error: "Insufficient balance. Please top up your wallet.",
-            code: "INSUFFICIENT_BALANCE",
-            required: totalCost,
-            available: currentBalance,
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({
+          error: "Insufficient balance. Please top up your wallet.",
+          code: "INSUFFICIENT_BALANCE",
+          required: totalCost,
+          available: currentBalance,
+        }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       const newCoinBalance = currentBalance - totalCost;
       const newLifetimeSpent = Number(wallet.lifetimeSpent || 0) + totalCost;
 
-// Create Song record if user has artist profile OR just create with null artistId
-    let songId = null;
-    if (type === "STREAM_MUSIC" && musicMetadata) {
-      const artistResult = await client.queryObject`
-        SELECT id FROM "ArtistProfile" WHERE "userId" = ${user.id} LIMIT 1
-      `;
-      const artistProfile = artistResult.rows[0];
+      // Create Song for music tasks
+      let songId = null;
+      if (type === "STREAM_MUSIC" && musicMetadata) {
+        const artistResult = await client.queryObject`
+          SELECT id FROM "ArtistProfile" WHERE "userId" = ${user.id} LIMIT 1
+        `;
+        const artistProfile = artistResult.rows[0];
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
 
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
-      const { data: song, error: songError } = await supabase
-        .from("Song")
-        .insert({
-          artistId: artistProfile?.id || null,
-          title,
-          slug,
-          description,
-          audioUrl: musicMetadata.audioUrl,
-          coverUrl: musicMetadata.coverImageUrl || null,
-          genre: musicMetadata.genre || "Unknown",
-          durationSeconds: musicMetadata.durationSeconds || 0,
-          coinReward: coinPerParticipant,
-          isPublished: true,
-        })
-        .select("id")
-        .single();
-
-      if (!songError && song) {
-        songId = song.id;
+        const songResult = await client.queryObject`
+          INSERT INTO "Song" ("artistId", "title", "slug", "description", "audioUrl", "coverUrl", "genre", "durationSeconds", "coinReward", "isPublished")
+          VALUES (${artistProfile?.id || null}, ${title}, ${slug}, ${description}, ${musicMetadata.audioUrl}, ${musicMetadata.coverImageUrl || null}, ${musicMetadata.genre || "Unknown"}, ${musicMetadata.durationSeconds || 0}, ${coinPerParticipant}, true)
+          RETURNING id
+        `;
+        songId = songResult.rows[0]?.id;
+        console.log("Song created:", songId);
       }
-    }
 
-      // Insert into user_posted_tasks
+      // Create task
       const taskResult = await client.queryObject`
-        INSERT INTO user_posted_tasks (
-          creator_id, title, description, type, category,
-          participant_threshold, total_budget, coin_per_participant, creation_fee,
-          status, current_participants, is_active,
-          social_requirements, audio_url, cover_image_url, genre,
-          duration_seconds, is_download_enabled, song_id
-        )
-        VALUES (
-          ${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED',
-          ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE},
-          'PENDING', 0, false,
-          ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb,
-          ${musicMetadata?.audioUrl || null},
-          ${musicMetadata?.coverImageUrl || null},
-          ${musicMetadata?.genre || null},
-          ${musicMetadata?.durationSeconds || null},
-          ${musicMetadata?.isDownloadEnabled || false},
-          ${songId}
-        )
+        INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id)
+        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId})
         RETURNING id
       `;
-
       const postedTask = taskResult.rows[0];
+      console.log("Task created:", postedTask.id);
 
       // Update wallet
       await client.queryObject`
-        UPDATE "Wallet"
-        SET "coinBalance" = ${newCoinBalance}, "lifetimeSpent" = ${newLifetimeSpent}
-        WHERE id = ${wallet.id}
+        UPDATE "Wallet" SET "coinBalance" = ${newCoinBalance}, "lifetimeSpent" = ${newLifetimeSpent} WHERE id = ${wallet.id}
       `;
 
-      // Insert transaction record
+      // Create transaction
       const txId = crypto.randomUUID();
       await client.queryObject`
-        INSERT INTO "CoinTransaction" (
-          id, "walletId", type, amount, "balanceAfter", description, metadata
-        )
-        VALUES (
-          ${txId}, ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance},
-          ${`Posted task: ${title}`},
-          ${JSON.stringify({
-            postedTaskId: postedTask.id,
-            creationFee: CREATION_FEE,
-            budget: totalBudget,
-          })}::jsonb
-        )
+        INSERT INTO "CoinTransaction" (id, "walletId", type, amount, "balanceAfter", description, metadata)
+        VALUES (${txId}, ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance}, ${`Posted task: ${title}`}, ${JSON.stringify({ postedTaskId: postedTask.id, creationFee: CREATION_FEE, budget: totalBudget })}::jsonb)
       `;
 
-      return new Response(
-        JSON.stringify({
-          message: "Task created successfully",
-          task: postedTask,
-          totalCost,
-          coinPerParticipant,
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        message: "Task created successfully",
+        task: postedTask,
+        totalCost,
+        coinPerParticipant,
+        songId,
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
     } finally {
       client.release();
     }
@@ -258,9 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } finally {
-    if (pool) {
-      await pool.end();
-    }
+    if (pool) await pool.end();
   }
 };
 
