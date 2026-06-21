@@ -624,33 +624,55 @@ class ApiService {
       throw new Error('Please provide the link to your tweet/like/share');
     }
 
-    const { error: completionError } = await supabase
-      .from('user_task_completions')
-      .insert({
-        user_id: session.user.id,
-        posted_task_id: id,
-        coins_earned: task.coin_per_participant,
-        proof_data: proofData || null,
-        status: 'PENDING',
-      });
+    // Use atomic RPC function to insert completion and increment count in one transaction
+    const { data: completionId, error: completionError } = await supabase.rpc('complete_posted_task_with_increment', {
+      p_user_id: session.user.id,
+      p_posted_task_id: id,
+      p_coins_earned: task.coin_per_participant,
+      p_proof_data: proofData || null,
+    });
 
     if (completionError) {
-      if (completionError.message?.includes('unique') || completionError.message?.includes('duplicate')) {
+      // Check for duplicate/already completed
+      if (completionError.message?.includes('unique') || completionError.message?.includes('duplicate') || completionError.message?.includes('already')) {
         throw new Error('You have already completed this task');
       }
-      throw new Error(completionError.message);
+      // Fallback: try separate insert
+      const { data: existing } = await supabase
+        .from('user_task_completions')
+        .select('id, status')
+        .eq('user_id', session.user.id)
+        .eq('posted_task_id', id)
+        .maybeSingle();
+
+      if (existing) {
+        if (existing.status === 'PENDING') throw new Error('You have already submitted proof - awaiting approval');
+        if (existing.status === 'APPROVED') throw new Error('You have already completed this task');
+        if (existing.status === 'REJECTED') throw new Error('Your submission was rejected - you cannot redo this task');
+      }
+
+      // Try direct insert
+      const { error: insertError } = await supabase
+        .from('user_task_completions')
+        .insert({
+          user_id: session.user.id,
+          posted_task_id: id,
+          coins_earned: task.coin_per_participant,
+          proof_data: proofData || null,
+          status: 'PENDING',
+        });
+
+      if (insertError) {
+        if (insertError.message?.includes('unique') || insertError.message?.includes('duplicate')) {
+          throw new Error('You have already completed this task');
+        }
+        throw new Error(insertError.message);
+      }
+
+      // Try atomic increment as fallback
+      const { error: updateError } = await supabase.rpc('increment_participant_count', { p_task_id: id });
+      if (updateError) console.error('[API] Failed to increment participant count:', updateError);
     }
-
-    // Update participant count (submission counts, approval is separate)
-    const { error: updateError } = await supabase
-      .from('user_posted_tasks')
-      .update({
-        current_participants: task.current_participants + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
-
-    if (updateError) console.error('[API] Failed to update participant count:', updateError);
 
     return {
       coinsEarned: task.coin_per_participant,
