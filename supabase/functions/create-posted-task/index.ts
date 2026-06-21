@@ -120,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Get wallet
       const walletResult = await client.queryObject`
-        SELECT id, coin_balance, lifetime_spent FROM wallets WHERE user_id = ${user.id} LIMIT 1
+        SELECT id, balance, lifetime_earned FROM wallets WHERE user_id = ${user.id} LIMIT 1
       `;
       const wallet = walletResult.rows[0] as any;
 
@@ -131,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      const currentBalance = Number(wallet.coin_balance);
+      const currentBalance = Number(wallet.balance);
       if (currentBalance < totalCost) {
         return new Response(JSON.stringify({
           error: "Insufficient balance. Please top up your wallet.",
@@ -141,8 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
         }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const newCoinBalance = currentBalance - totalCost;
-      const newLifetimeSpent = Number(wallet.lifetime_spent || 0) + totalCost;
+      const newBalance = currentBalance - totalCost;
 
       // Create Song for music tasks
       let songId = null;
@@ -171,13 +170,13 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Task created:", postedTask.id);
 
       await client.queryObject`
-        UPDATE wallets SET coin_balance = ${newCoinBalance}, lifetime_spent = ${newLifetimeSpent}, updated_at = NOW() WHERE id = ${wallet.id}
+        UPDATE wallets SET balance = ${newBalance}, lifetime_earned = lifetime_earned - ${totalCost}, updated_at = NOW() WHERE id = ${wallet.id}
       `;
 
       const txId = crypto.randomUUID();
       await client.queryObject`
-        INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description, metadata)
-        VALUES (${txId}, ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance}, ${`Posted task: ${title}`}, ${JSON.stringify({ postedTaskId: postedTask.id, creationFee: CREATION_FEE, budget: totalBudget })}::jsonb)
+        INSERT INTO coin_transactions (id, user_id, type, amount, balance_after, description, reference_id)
+        VALUES (${txId}, ${user.id}, 'spend', ${-totalCost}, ${newBalance}, ${`Posted task: ${title}`}, ${postedTask.id})
       `;
 
       return new Response(JSON.stringify({
