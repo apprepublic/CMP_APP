@@ -297,7 +297,7 @@ class ApiService {
       .from('wallets')
       .select('id, coin_balance')
       .eq('user_id', session.user.id)
-      .single();
+      .single() as any;
 
     if (!wallet) throw new Error('Wallet not found');
     if (Number(wallet.coin_balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
@@ -313,7 +313,7 @@ class ApiService {
       .select('*')
       .eq('user_id', session.user.id)
       .limit(1)
-      .maybeSingle();
+      .maybeSingle() as any;
 
     if (streak) {
       await supabase
