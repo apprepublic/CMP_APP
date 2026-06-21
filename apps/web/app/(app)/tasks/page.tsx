@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useTasks, useDailyTasks, useCompleteTask, usePostedTasks, useCompletePostedTask } from '@/lib/hooks';
+import { api } from '@/lib/api';
 
 interface ProofModalState {
   isOpen: boolean;
@@ -10,27 +11,79 @@ interface ProofModalState {
 }
 
 function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose: () => void; onSubmit: (proofData: any) => void }) {
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string>('');
   const [screenshotUrl, setScreenshotUrl] = useState('');
   const [actionUrl, setActionUrl] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const requirements = task.social_requirements || {};
+  const requirements = task.social_requirements || task.socialRequirements || {};
   const platform = requirements.platform || '';
   const actions = requirements.actions || [];
   const targetUrl = requirements.targetUrl || '';
   const requiresScreenshot = requirements.requiresScreenshot || false;
-  const needsActionUrl = platform || targetUrl || actions.length > 0;
+  const needsActionUrl = !!(platform || targetUrl || actions.length > 0);
 
-  const handleSubmit = () => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File too large. Max 10MB.');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Only image files allowed.');
+      return;
+    }
+
+    setUploadError('');
+    setScreenshotFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeScreenshot = () => {
+    setScreenshotFile(null);
+    setScreenshotPreview('');
+    setScreenshotUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    const proofData: any = {};
-    if (screenshotUrl.trim()) proofData.screenshot = screenshotUrl.trim();
-    if (actionUrl.trim()) proofData.actionUrl = actionUrl.trim();
-    if (comment.trim()) proofData.comment = comment.trim();
-    proofData.platform = platform || task.type;
-    proofData.submittedAt = new Date().toISOString();
-    onSubmit(proofData);
+
+    try {
+      const proofData: any = {};
+      proofData.platform = platform || task.type;
+      proofData.submittedAt = new Date().toISOString();
+
+      if (requiresScreenshot && screenshotFile) {
+        setIsUploading(true);
+        const uploadedUrl = await api.uploadProofScreenshot(screenshotFile);
+        proofData.screenshot = uploadedUrl;
+        setIsUploading(false);
+      } else if (screenshotUrl.trim()) {
+        proofData.screenshot = screenshotUrl.trim();
+      }
+
+      if (actionUrl.trim()) proofData.actionUrl = actionUrl.trim();
+      if (comment.trim()) proofData.comment = comment.trim();
+
+      await onSubmit(proofData);
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed. Try pasting a URL instead.');
+    } finally {
+      setIsUploading(false);
+      setIsSubmitting(false);
+    }
   };
 
   const platformLabel: Record<string, string> = {
@@ -40,6 +93,12 @@ function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose:
     tiktok: 'TikTok',
     youtube: 'YouTube',
   };
+
+  const canSubmit = !isSubmitting && !isUploading && (
+    !requiresScreenshot || screenshotPreview || screenshotUrl.trim()
+  ) && (
+    !needsActionUrl || actionUrl.trim()
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/60 backdrop-blur-sm" onClick={onClose}>
@@ -111,21 +170,65 @@ function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose:
             </div>
           )}
 
-          {requiresScreenshot && (
+          {(requiresScreenshot || !needsActionUrl) && (
             <div className="mb-4">
-              <label className="font-body-sm text-body-sm text-on-surface font-medium mb-1 block">
-                Screenshot URL * {needsActionUrl ? '' : '(Required)'}
+              <label className="font-body-sm text-body-sm text-on-surface font-medium mb-2 block">
+                Screenshot Proof {requiresScreenshot ? '*' : '(optional)'}
               </label>
+
+              {screenshotPreview ? (
+                <div className="relative rounded-lg overflow-hidden border border-outline-variant/30 mb-2">
+                  <img
+                    src={screenshotPreview}
+                    alt="Screenshot preview"
+                    className="w-full h-48 object-cover"
+                  />
+                  <button
+                    onClick={removeScreenshot}
+                    className="absolute top-2 right-2 bg-surface-container-high/80 rounded-full p-1 text-on-surface-variant hover:text-error-alert"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-outline-variant rounded-lg p-8 text-center cursor-pointer hover:border-secondary hover:bg-secondary-container/5 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2 block">cloud_upload</span>
+                  <p className="font-body-md text-body-md text-on-surface-variant">Click to upload screenshot</p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant/70 mt-1">PNG, JPG, GIF up to 10MB</p>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              <div className="flex items-center gap-4 mt-3">
+                <div className="flex-1 border-t border-outline-variant/30" />
+                <span className="font-label-caps text-label-caps text-on-surface-variant">OR</span>
+                <div className="flex-1 border-t border-outline-variant/30" />
+              </div>
+
               <input
                 type="url"
                 value={screenshotUrl}
-                onChange={(e) => setScreenshotUrl(e.target.value)}
-                placeholder="https://... (upload image and paste link)"
-                className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant text-on-surface placeholder-on-surface-variant/50 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none"
+                onChange={(e) => { setScreenshotUrl(e.target.value); if (e.target.value.trim()) { setScreenshotFile(null); setScreenshotPreview(''); } }}
+                placeholder="Paste image URL instead..."
+                className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant text-on-surface placeholder-on-surface-variant/50 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none mt-3"
               />
-              <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                Upload a screenshot of your completed action and paste the URL here
-              </p>
+
+              {uploadError && (
+                <p className="font-body-sm text-body-sm text-error-alert mt-1">{uploadError}</p>
+              )}
+              {isUploading && (
+                <p className="font-body-sm text-body-sm text-secondary mt-1 animate-pulse">Uploading screenshot...</p>
+              )}
             </div>
           )}
 
@@ -160,10 +263,12 @@ function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose:
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={!canSubmit}
               className="flex-1 py-3 rounded-lg font-body-md text-body-md bg-[#B8860B] text-primary hover:bg-[#8B6914] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isSubmitting ? (
+              {isUploading ? (
+                <span className="animate-pulse">Uploading...</span>
+              ) : isSubmitting ? (
                 <span className="animate-pulse">Submitting...</span>
               ) : (
                 <>

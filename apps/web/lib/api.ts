@@ -563,6 +563,26 @@ class ApiService {
     return { task: data };
   }
 
+  async uploadProofScreenshot(file: File): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    const ext = file.name.split('.').pop() || 'png';
+    const path = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
+
+    const { data, error } = await supabase.storage
+      .from('task-attachments')
+      .upload(path, file, { cacheControl: '3600', upsert: false });
+
+    if (error) throw new Error(error.message);
+
+    const { data: urlData } = supabase.storage
+      .from('task-attachments')
+      .getPublicUrl(path);
+
+    return urlData.publicUrl;
+  }
+
   async completePostedTask(id: string, proofData?: any) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('Not authenticated');

@@ -116,12 +116,16 @@ function CompletionReview({ taskId }: { taskId: string }) {
                 </p>
               )}
               {completion.proof_data.screenshot && (
-                <p className="font-body-sm text-body-sm">
-                  <span className="text-on-surface-variant">Screenshot:</span>{' '}
-                  <a href={completion.proof_data.screenshot} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
-                    View
+                <div>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mb-1">Screenshot:</p>
+                  <a href={completion.proof_data.screenshot} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={completion.proof_data.screenshot}
+                      alt="Proof screenshot"
+                      className="max-h-40 rounded-lg border border-outline-variant/30 object-cover hover:opacity-80 transition-opacity"
+                    />
                   </a>
-                </p>
+                </div>
               )}
               {completion.proof_data.comment && (
                 <p className="font-body-sm text-body-sm">
