@@ -153,7 +153,7 @@ function unwrap<T>(res: { data: T | null; error: any }): T {
 
 export async function getTransactions(walletId: string): Promise<CoinTransaction[]> {
   return unwrap<CoinTransaction[]>(
-    await db.from('coin_transactions').select('*').eq('wallet_id', walletId).order('created_at', { ascending: false })
+    await db.from('coin_transactions').select('*').eq('user_id', walletId).order('created_at', { ascending: false })
   );
 }
 
@@ -180,12 +180,12 @@ export async function processWithdrawal(
 
   // 3. Insert transaction record
   const { data: txn, error: txnError } = await db.from('coin_transactions').insert({
-    wallet_id: walletId,
-    type: 'WITHDRAWAL',
+    user_id: wallet.user_id,
+    type: 'spend',
     amount: amountCoins,
     balance_after: newBalance.toString(),
     description: `Withdrawal to ${bankDetails.name || 'Bank'}`,
-    metadata: bankDetails
+    reference_id: walletId,
   }).select().single();
 
   if (txnError) {
@@ -216,23 +216,20 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
   const referrals = await getReferrals(userId).catch(() => []);
   const activeReferrals = referrals.filter(r => r.status === 'ACTIVE').length;
   
-  const { data: wallets } = await db.from('wallets').select('id').eq('user_id', userId).single();
   let totalEarned = 0;
   let weeklyEarnings = 0;
   
-  if (wallets) {
-    const { data: txs } = await db.from('coin_transactions').select('amount, created_at').eq('wallet_id', wallets.id).eq('type', 'REFERRAL_REWARD');
-    if (txs) {
-      totalEarned = txs.reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
-      
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const oneWeekAgoStr = oneWeekAgo.toISOString();
-      
-      weeklyEarnings = txs
-        .filter((tx: any) => tx.created_at >= oneWeekAgoStr)
-        .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
-    }
+  const { data: txs } = await db.from('coin_transactions').select('amount, created_at').eq('user_id', userId).eq('type', 'earn');
+  if (txs) {
+    totalEarned = txs.reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+    
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const oneWeekAgoStr = oneWeekAgo.toISOString();
+    
+    weeklyEarnings = txs
+      .filter((tx: any) => tx.created_at >= oneWeekAgoStr)
+      .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
   }
 
   return {

@@ -517,7 +517,33 @@ class ApiService {
       console.error('[API] getPostedTasks error:', error);
       throw new Error(error.message);
     }
-    return { tasks: data || [] };
+    
+    const tasks = (data || []).map((t: any) => ({
+      ...t,
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      type: t.type,
+      status: t.status,
+      is_active: t.is_active,
+      currentParticipants: t.current_participants,
+      participantThreshold: t.participant_threshold,
+      totalBudget: t.total_budget,
+      coinPerParticipant: t.coin_per_participant,
+      creationFee: t.creation_fee,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at,
+      expiresAt: t.expires_at,
+      socialRequirements: t.social_requirements,
+      audioUrl: t.audio_url,
+      coverImageUrl: t.cover_image_url,
+      genre: t.genre,
+      durationSeconds: t.duration_seconds,
+      isDownloadEnabled: t.is_download_enabled,
+      songId: t.song_id,
+    }));
+    
+    return { tasks };
   }
 
   async activatePostedTask(id: string) {

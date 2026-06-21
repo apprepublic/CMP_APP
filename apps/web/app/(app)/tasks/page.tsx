@@ -13,11 +13,13 @@ export default function EarnMarketplacePage() {
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
   const allSystemTasks = resp?.tasks ?? [];
-  const allPostedTasks = postedResp?.tasks?.filter((t: any) => t.is_active && t.status === 'ACTIVE').map((t: any) => ({
+  const allPostedTasks = postedResp?.tasks?.map((t: any) => ({
     ...t,
     isPostedTask: true,
-    coinReward: t.coin_per_participant,
+    coinReward: t.coin_per_participant || t.coinPerParticipant,
     category: t.category || 'USER_CREATED',
+    current_participants: t.currentParticipants || t.current_participants,
+    participant_threshold: t.participantThreshold || t.participant_threshold,
   })) ?? [];
   
   const allTasks = [...allSystemTasks, ...allPostedTasks];
@@ -133,7 +135,10 @@ export default function EarnMarketplacePage() {
             const isPostedTask = task.isPostedTask;
             const isPremium = task.coinReward >= 100;
             const dailyInfo = dailyStatusMap.get(task.id);
-            const isLocked = isPostedTask ? task.current_participants >= task.participant_threshold : (dailyInfo?.isLocked ?? false);
+            const isPending = isPostedTask && task.status === 'PENDING';
+            const isLocked = isPostedTask 
+              ? (task.current_participants >= task.participant_threshold) || isPending
+              : (dailyInfo?.isLocked ?? false);
             const completedToday = dailyInfo?.completedToday ?? 0;
             const dailyLimit = task.dailyLimit ?? dailyInfo?.dailyLimit ?? 1;
             const isCompleting = (isPostedTask ? completePostedTask : completeTask).isPending;
@@ -183,6 +188,7 @@ export default function EarnMarketplacePage() {
                 {isUserTask ? (
                   <p className="font-label-caps text-label-caps text-on-surface-variant mb-4">
                     {task.current_participants}/{task.participant_threshold} participants • {task.participant_threshold - task.current_participants} slots left
+                    {isPending && ' • Pending Activation'}
                   </p>
                 ) : !isLocked ? (
                   <p className="font-label-caps text-label-caps text-on-surface-variant mb-4">
@@ -207,8 +213,8 @@ export default function EarnMarketplacePage() {
                 >
                   {isLocked ? (
                     <>
-                      <span>{isUserTask ? 'Full' : 'Completed'}</span>
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                      <span>{isPending ? 'Pending' : isUserTask ? 'Full' : 'Completed'}</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{isPending ? 'pending' : 'check_circle'}</span>
                     </>
                   ) : isUserTask ? (
                     <>
