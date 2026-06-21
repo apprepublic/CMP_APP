@@ -344,7 +344,7 @@ class ApiService {
       .select('id, completion_count, last_completed_at')
       .eq('user_id', session.user.id)
       .eq('task_id', taskId)
-      .single();
+      .single() as any;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -360,8 +360,7 @@ class ApiService {
     if (completedToday >= dailyLimit) throw new Error('Daily limit reached');
 
     if (existingCompletion) {
-      const { error } = await supabase
-        .from('task_completions')
+      const { error } = await (supabase.from('task_completions') as any)
         .update({
           completion_count: (existingCompletion.completion_count || 0) + 1,
           last_completed_at: new Date().toISOString(),
@@ -370,8 +369,7 @@ class ApiService {
         .eq('id', existingCompletion.id);
       if (error) throw new Error(error.message);
     } else {
-      const { error } = await supabase
-        .from('task_completions')
+      const { error } = await (supabase.from('task_completions') as any)
         .insert({
           user_id: session.user.id,
           task_id: taskId,
