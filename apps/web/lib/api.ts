@@ -303,8 +303,7 @@ class ApiService {
     if (Number(wallet.coin_balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
 
     const newBalance = Number(wallet.coin_balance) - FREEZE_PRICE;
-    await supabase
-      .from('wallets')
+    await (supabase.from('wallets') as any)
       .update({ coin_balance: newBalance, lifetime_spent: Number(wallet.coin_balance) + FREEZE_PRICE, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
