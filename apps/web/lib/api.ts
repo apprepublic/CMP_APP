@@ -295,16 +295,16 @@ class ApiService {
     const FREEZE_PRICE = 500;
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance')
+      .select('id, balance')
       .eq('user_id', session.user.id)
       .single() as any;
 
     if (!wallet) throw new Error('Wallet not found');
-    if (Number(wallet.coin_balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
+    if (Number(wallet.balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
 
-    const newBalance = Number(wallet.coin_balance) - FREEZE_PRICE;
+    const newBalance = Number(wallet.balance) - FREEZE_PRICE;
     await (supabase.from('wallets') as any)
-      .update({ coin_balance: newBalance, lifetime_spent: Number(wallet.coin_balance) + FREEZE_PRICE, updated_at: new Date().toISOString() })
+      .update({ balance: newBalance, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
     const { data: streak } = await supabase
@@ -414,18 +414,18 @@ class ApiService {
 
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance, lifetime_earned')
+      .select('id, balance, lifetime_earned')
       .eq('user_id', session.user.id)
       .single();
 
     if (!wallet) throw new Error('Wallet not found');
 
-    const newBalance = Number(wallet.coin_balance) + article.coin_reward;
+    const newBalance = Number(wallet.balance) + article.coin_reward;
     const newLifetimeEarned = Number(wallet.lifetime_earned) + article.coin_reward;
 
     await supabase
       .from('wallets')
-      .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+      .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
     await supabase
@@ -444,12 +444,12 @@ class ApiService {
       .from('coin_transactions')
       .insert({
         id: txId,
-        wallet_id: wallet.id,
-        type: 'READ_ARTICLE',
+        user_id: session.user.id,
+        type: 'earn',
         amount: article.coin_reward,
         balance_after: newBalance,
         description: `Read article: ${article.title}`,
-        metadata: { articleId },
+        reference_id: articleId,
       });
 
     return { coinsEarned: article.coin_reward, message: 'Coins claimed' };

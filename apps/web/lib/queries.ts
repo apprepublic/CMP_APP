@@ -169,13 +169,13 @@ export async function processWithdrawal(
   const { data: wallet, error: walletError } = await db.from('wallets').select('*').eq('id', walletId).single();
   if (walletError) throw new Error('Failed to load wallet');
   
-  const currentBalance = parseFloat(wallet.coin_balance || '0');
+  const currentBalance = parseFloat(wallet.balance || '0');
   if (currentBalance < amountCoins) throw new Error('Insufficient balance');
   
   const newBalance = currentBalance - amountCoins;
 
   // 2. Update wallet balance
-  const { error: updateError } = await db.from('wallets').update({ coin_balance: newBalance.toString() }).eq('id', walletId);
+  const { error: updateError } = await db.from('wallets').update({ balance: newBalance.toString() }).eq('id', walletId);
   if (updateError) throw new Error('Failed to update balance');
 
   // 3. Insert transaction record

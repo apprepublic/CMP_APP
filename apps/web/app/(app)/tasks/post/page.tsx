@@ -43,7 +43,7 @@ export default function PostTaskPage() {
   const router = useRouter();
   const postTask = usePostTask();
   const { wallet } = useWallet();
-  const coinBalance = Number(wallet?.coin_balance ?? 0);
+  const coinBalance = Number(wallet?.balance ?? 0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 

@@ -17,7 +17,7 @@ export default function DashboardPage() {
   
   const { data: streakResp, isLoading: streakLoading } = useStreak();
   const currentStreak = streakResp?.streak?.currentStreak ?? 0;
-  const coinBalance = wallet?.coin_balance ?? 0;
+  const coinBalance = wallet?.balance ?? 0;
 
   const [firstName, setFirstName] = useState(
     user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'User'

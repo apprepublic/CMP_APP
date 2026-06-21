@@ -85,7 +85,7 @@ export default async function handler(
     // Get user's wallet
     const { data: wallet, error: walletError } = await supabase
       .from('wallets')
-      .select('id, coin_balance, pending_coins')
+      .select('id, balance')
       .eq('user_id', userId)
       .single();
 
@@ -100,12 +100,12 @@ export default async function handler(
 
     if (internalStatus === 'COMPLETED') {
       // Update wallet balance
-      const newBalance = BigInt(wallet.coin_balance) + BigInt(coinAmount);
+      const newBalance = BigInt(wallet.balance) + BigInt(coinAmount);
       
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ 
-          coin_balance: newBalance.toString(),
+          balance: newBalance.toString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', wallet.id);
@@ -119,20 +119,12 @@ export default async function handler(
       const { error: txError } = await supabase
         .from('coin_transactions')
         .insert({
-          wallet_id: wallet.id,
-          type: 'TOPUP',
+          user_id: userId,
+          type: 'topup',
           amount: coinAmount,
           balance_after: newBalance.toString(),
           description: `Crypto top-up via NOWPayments (${pay_currency.toUpperCase()})`,
-          metadata: {
-            payment_id,
-            purchase_id,
-            price_amount,
-            price_currency,
-            pay_amount,
-            pay_currency,
-            created_at,
-          },
+          reference_id: payment_id,
         });
 
       if (txError) {
@@ -144,21 +136,12 @@ export default async function handler(
       await supabase
         .from('coin_transactions')
         .insert({
-          wallet_id: wallet.id,
-          type: 'TOPUP',
+          user_id: userId,
+          type: 'refund',
           amount: 0,
-          balance_after: wallet.coin_balance,
+          balance_after: wallet.balance,
           description: `Failed crypto top-up via NOWPayments (${pay_currency.toUpperCase()})`,
-          metadata: {
-            payment_id,
-            purchase_id,
-            price_amount,
-            price_currency,
-            pay_amount,
-            pay_currency,
-            created_at,
-            failure_reason: payment_status,
-          },
+          reference_id: payment_id,
         });
     }
 

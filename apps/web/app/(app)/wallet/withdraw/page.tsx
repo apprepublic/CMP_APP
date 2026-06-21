@@ -9,7 +9,7 @@ import { useWithdrawStore } from '@/stores/withdrawStore';
 export default function WithdrawAmountPage() {
   const router = useRouter();
   const { wallet, loading: isLoading } = useWallet();
-  const availableBalance = wallet ? wallet.coin_balance : 0;
+  const availableBalance = wallet ? wallet.balance : 0;
   
   const { amountCoins, setAmountCoins } = useWithdrawStore();
   const [coins, setCoins] = useState<string>(amountCoins > 0 ? amountCoins.toString() : '');

@@ -13,7 +13,7 @@ export default function WalletPage() {
   const { wallet, loading: walletLoading } = useWallet();
   const { data: transactions = [], isLoading: txLoading } = useTransactions(wallet?.id || '');
 
-  const coinBalance = wallet?.coin_balance ?? 0;
+  const coinBalance = wallet?.balance ?? 0;
   // Assume 100 coins = 1 NGN for display purposes
   const fiatEquivalent = (coinBalance / 100).toFixed(2);
 

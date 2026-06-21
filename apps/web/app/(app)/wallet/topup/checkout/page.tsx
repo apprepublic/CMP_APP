@@ -35,14 +35,14 @@ function CheckoutContent() {
         // From previous flow, if it's usd, we can just say 1 USD = 1000 CMP for demo.
         const conversionRate = 1000;
         const coinsToAdd = amount * conversionRate;
-        const newBalance = (wallet.coin_balance || 0) + coinsToAdd;
+        const newBalance = (wallet.balance || 0) + coinsToAdd;
 
         // In a real app, this would happen in a secure backend webhook
         // For the demo, we update it from the client directly.
         const { error: walletError } = await supabase
           .from('wallets')
           // @ts-ignore
-          .update({ coin_balance: newBalance } as any)
+          .update({ balance: newBalance } as any)
           .eq('id', wallet.id);
 
         if (!walletError) {
