@@ -263,7 +263,7 @@ class ApiService {
       .eq('user_id', session.user.id)
       .order('last_activity_date', { ascending: false })
       .limit(1)
-      .maybeSingle();
+      .maybeSingle() as any;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
