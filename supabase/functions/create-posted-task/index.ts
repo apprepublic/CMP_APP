@@ -9,7 +9,6 @@ const corsHeaders = {
 
 const CREATION_FEE = 500;
 const VALID_TASK_TYPES = [
-  "READ_ARTICLE",
   "WATCH_VIDEO",
   "SHARE_SOCIAL",
   "COMPLETE_SURVEY",
@@ -143,7 +142,6 @@ const handler = async (req: Request): Promise<Response> => {
 
       const newBalance = currentBalance - totalCost;
 
-      // Create Song for music tasks
       const taskResult = await client.queryObject`
         INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id)
         VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, null)
@@ -153,13 +151,13 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Task created:", postedTask.id);
 
       await client.queryObject`
-        UPDATE wallets SET balance = ${newBalance}, lifetime_earned = lifetime_earned - ${totalCost}, updated_at = NOW() WHERE id = ${wallet.id}
+        UPDATE wallets SET balance = ${newBalance}, updated_at = NOW() WHERE id = ${wallet.id}
       `;
 
       const txId = crypto.randomUUID();
       await client.queryObject`
         INSERT INTO coin_transactions (id, user_id, type, amount, balance_after, description, reference_id)
-        VALUES (${txId}, ${user.id}, 'spend', ${-totalCost}, ${newBalance}, ${`Posted task: ${title}`}, ${postedTask.id})
+        VALUES (${txId}, ${user.id}, 'spend', ${totalCost}, ${newBalance}, ${`Posted task: ${title}`}, ${postedTask.id})
       `;
 
       return new Response(JSON.stringify({
@@ -167,7 +165,6 @@ const handler = async (req: Request): Promise<Response> => {
         task: postedTask,
         totalCost,
         coinPerParticipant,
-        songId,
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     } finally {
