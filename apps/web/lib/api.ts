@@ -594,6 +594,37 @@ class ApiService {
       throw new Error(completionError.message);
     }
 
+    // Credit user's wallet
+    const { data: userWallet, error: walletError } = await supabase
+      .from('wallets')
+      .select('id, balance, lifetime_earned')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (walletError || !userWallet) throw new Error('Wallet not found');
+
+    const newBalance = Number(userWallet.balance) + task.coin_per_participant;
+    const newLifetimeEarned = Number(userWallet.lifetime_earned) + task.coin_per_participant;
+
+    await supabase
+      .from('wallets')
+      .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+      .eq('id', userWallet.id);
+
+    // Create coin transaction
+    const txId = crypto.randomUUID();
+    await supabase
+      .from('coin_transactions')
+      .insert({
+        id: txId,
+        user_id: session.user.id,
+        type: 'earn',
+        amount: task.coin_per_participant,
+        balance_after: newBalance,
+        description: `Completed posted task: ${task.title}`,
+        reference_id: id,
+      });
+
     const { error: updateError } = await supabase
       .from('user_posted_tasks')
       .update({
