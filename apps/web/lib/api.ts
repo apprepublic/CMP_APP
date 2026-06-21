@@ -578,6 +578,32 @@ class ApiService {
     if (task.creator_id === session.user.id) throw new Error('Cannot complete your own task');
     if (task.current_participants >= task.participant_threshold) throw new Error('Task has reached participant limit');
 
+    // Check if already submitted
+    const { data: existing } = await supabase
+      .from('user_task_completions')
+      .select('id, status')
+      .eq('user_id', session.user.id)
+      .eq('posted_task_id', id)
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.status === 'PENDING') throw new Error('You have already submitted proof - awaiting approval');
+      if (existing.status === 'APPROVED') throw new Error('You have already completed this task');
+      if (existing.status === 'REJECTED') throw new Error('Your submission was rejected - you cannot redo this task');
+    }
+
+    // Validate proof data based on social requirements
+    const requirements = task.social_requirements || {};
+    if (requirements.requiresScreenshot && !proofData?.screenshot) {
+      throw new Error('Screenshot proof is required');
+    }
+    if (requirements.targetUrl && !proofData?.actionUrl) {
+      throw new Error('You must provide the URL of your action (e.g., share link, comment link)');
+    }
+    if (requirements.platform === 'twitter' && !proofData?.actionUrl) {
+      throw new Error('Please provide the link to your tweet/like/share');
+    }
+
     const { error: completionError } = await supabase
       .from('user_task_completions')
       .insert({
@@ -585,6 +611,7 @@ class ApiService {
         posted_task_id: id,
         coins_earned: task.coin_per_participant,
         proof_data: proofData || null,
+        status: 'PENDING',
       });
 
     if (completionError) {
@@ -594,37 +621,7 @@ class ApiService {
       throw new Error(completionError.message);
     }
 
-    // Credit user's wallet
-    const { data: userWallet, error: walletError } = await supabase
-      .from('wallets')
-      .select('id, balance, lifetime_earned')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (walletError || !userWallet) throw new Error('Wallet not found');
-
-    const newBalance = Number(userWallet.balance) + task.coin_per_participant;
-    const newLifetimeEarned = Number(userWallet.lifetime_earned) + task.coin_per_participant;
-
-    await supabase
-      .from('wallets')
-      .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
-      .eq('id', userWallet.id);
-
-    // Create coin transaction
-    const txId = crypto.randomUUID();
-    await supabase
-      .from('coin_transactions')
-      .insert({
-        id: txId,
-        user_id: session.user.id,
-        type: 'earn',
-        amount: task.coin_per_participant,
-        balance_after: newBalance,
-        description: `Completed posted task: ${task.title}`,
-        reference_id: id,
-      });
-
+    // Update participant count (submission counts, approval is separate)
     const { error: updateError } = await supabase
       .from('user_posted_tasks')
       .update({
@@ -637,8 +634,128 @@ class ApiService {
 
     return {
       coinsEarned: task.coin_per_participant,
-      message: 'Task completed successfully',
+      message: 'Proof submitted! Coins will be credited after creator approval (auto-approved in 24hrs if no action)',
+      status: 'PENDING',
     };
+  }
+
+  async getTaskCompletions(taskId: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return { completions: [] };
+
+    const { data, error } = await supabase
+      .from('user_task_completions')
+      .select('id, user_id, posted_task_id, coins_earned, proof_data, status, completed_at, reviewed_at, rejection_reason')
+      .eq('posted_task_id', taskId)
+      .order('completed_at', { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return { completions: data || [] };
+  }
+
+  async approveCompletion(completionId: string, postedTaskId: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    // Verify user is the task creator
+    const { data: task } = await supabase
+      .from('user_posted_tasks')
+      .select('creator_id')
+      .eq('id', postedTaskId)
+      .single();
+    if (!task || task.creator_id !== session.user.id) throw new Error('Only the task creator can approve');
+
+    // Get completion details
+    const { data: completion, error: completionError } = await supabase
+      .from('user_task_completions')
+      .select('*')
+      .eq('id', completionId)
+      .eq('status', 'PENDING')
+      .single();
+    if (completionError || !completion) throw new Error('Completion not found or already processed');
+
+    // Approve the completion
+    const { error: updateError } = await supabase
+      .from('user_task_completions')
+      .update({ status: 'APPROVED', reviewer_id: session.user.id, reviewed_at: new Date().toISOString() })
+      .eq('id', completionId);
+    if (updateError) throw new Error(updateError.message);
+
+    // Credit user's wallet
+    const { data: userWallet } = await supabase
+      .from('wallets')
+      .select('id, balance, lifetime_earned')
+      .eq('user_id', completion.user_id)
+      .single();
+
+    if (userWallet) {
+      const newBalance = Number(userWallet.balance) + completion.coins_earned;
+      const newLifetimeEarned = Number(userWallet.lifetime_earned) + completion.coins_earned;
+
+      await supabase
+        .from('wallets')
+        .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+        .eq('id', userWallet.id);
+
+      const txId = crypto.randomUUID();
+      await supabase
+        .from('coin_transactions')
+        .insert({
+          id: txId,
+          user_id: completion.user_id,
+          type: 'earn',
+          amount: completion.coins_earned,
+          balance_after: newBalance,
+          description: `Earned from posted task`,
+          reference_id: postedTaskId,
+        });
+    }
+
+    return { message: 'Completion approved and coins credited' };
+  }
+
+  async rejectCompletion(completionId: string, postedTaskId: string, reason: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    // Verify user is the task creator
+    const { data: task } = await supabase
+      .from('user_posted_tasks')
+      .select('creator_id')
+      .eq('id', postedTaskId)
+      .single();
+    if (!task || task.creator_id !== session.user.id) throw new Error('Only the task creator can reject');
+
+    const { error: updateError } = await supabase
+      .from('user_task_completions')
+      .update({
+        status: 'REJECTED',
+        reviewer_id: session.user.id,
+        reviewed_at: new Date().toISOString(),
+        rejection_reason: reason,
+      })
+      .eq('id', completionId)
+      .eq('status', 'PENDING');
+
+    // Decrement participant count
+    const { data: taskData } = await supabase
+      .from('user_posted_tasks')
+      .select('current_participants')
+      .eq('id', postedTaskId)
+      .single();
+    if (taskData) {
+      await supabase
+        .from('user_posted_tasks')
+        .update({
+          current_participants: Math.max(0, taskData.current_participants - 1),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', postedTaskId);
+    }
+
+    if (updateError) throw new Error(updateError.message);
+
+    return { message: 'Completion rejected' };
   }
 
   // Music

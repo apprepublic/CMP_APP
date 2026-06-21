@@ -135,8 +135,35 @@ export const useCompletePostedTask = () => {
       api.completePostedTask(id, proofData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+};
+
+export const useTaskCompletions = (taskId: string) =>
+  useQuery({ queryKey: ['taskCompletions', taskId], queryFn: () => api.getTaskCompletions(taskId), enabled: !!taskId });
+
+export const useApproveCompletion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ completionId, postedTaskId }: { completionId: string; postedTaskId: string }) =>
+      api.approveCompletion(completionId, postedTaskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['taskCompletions'] });
+      queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      queryClient.invalidateQueries({ queryKey: ['streak'] });
+    },
+  });
+};
+
+export const useRejectCompletion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ completionId, postedTaskId, reason }: { completionId: string; postedTaskId: string; reason: string }) =>
+      api.rejectCompletion(completionId, postedTaskId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['taskCompletions'] });
+      queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
     },
   });
 };

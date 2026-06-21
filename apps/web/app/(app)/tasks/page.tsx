@@ -1,8 +1,183 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useTasks, useDailyTasks, useCompleteTask, usePostedTasks, useCompletePostedTask } from '@/lib/hooks';
+
+interface ProofModalState {
+  isOpen: boolean;
+  task: any | null;
+}
+
+function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose: () => void; onSubmit: (proofData: any) => void }) {
+  const [screenshotUrl, setScreenshotUrl] = useState('');
+  const [actionUrl, setActionUrl] = useState('');
+  const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const requirements = task.social_requirements || {};
+  const platform = requirements.platform || '';
+  const actions = requirements.actions || [];
+  const targetUrl = requirements.targetUrl || '';
+  const requiresScreenshot = requirements.requiresScreenshot || false;
+  const needsActionUrl = platform || targetUrl || actions.length > 0;
+
+  const handleSubmit = () => {
+    setIsSubmitting(true);
+    const proofData: any = {};
+    if (screenshotUrl.trim()) proofData.screenshot = screenshotUrl.trim();
+    if (actionUrl.trim()) proofData.actionUrl = actionUrl.trim();
+    if (comment.trim()) proofData.comment = comment.trim();
+    proofData.platform = platform || task.type;
+    proofData.submittedAt = new Date().toISOString();
+    onSubmit(proofData);
+  };
+
+  const platformLabel: Record<string, string> = {
+    twitter: 'Twitter/X',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    tiktok: 'TikTok',
+    youtube: 'YouTube',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-h3 text-h3 text-on-surface">Submit Proof</h2>
+            <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div className="bg-surface-container rounded-xl p-4 mb-6">
+            <h3 className="font-body-md text-body-md font-semibold text-on-surface mb-1">{task.title}</h3>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mb-2">{task.description}</p>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B] text-sm">generating_tokens</span>
+              <span className="font-data-md text-data-md text-primary">{task.coinReward || task.coin_per_participant} coins</span>
+            </div>
+          </div>
+
+          {targetUrl && (
+            <div className="mb-4">
+              <label className="font-label-caps text-label-caps text-on-surface-variant mb-2 block">Target URL</label>
+              <a href={targetUrl} target="_blank" rel="noopener noreferrer" className="font-body-md text-body-md text-secondary hover:underline flex items-center gap-1 break-all">
+                {targetUrl}
+                <span className="material-symbols-outlined text-sm">open_in_new</span>
+              </a>
+            </div>
+          )}
+
+          {actions.length > 0 && (
+            <div className="mb-4">
+              <label className="font-label-caps text-label-caps text-on-surface-variant mb-2 block">Required Actions</label>
+              <div className="flex flex-wrap gap-2">
+                {actions.map((action: string) => (
+                  <span key={action} className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-caps text-label-caps">
+                    {action}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {platform && (
+            <div className="mb-4">
+              <label className="font-label-caps text-label-caps text-on-surface-variant mb-2 block">Platform</label>
+              <span className="px-3 py-1 bg-primary-container text-on-primary-container rounded-full font-label-caps text-label-caps">
+                {platformLabel[platform] || platform}
+              </span>
+            </div>
+          )}
+
+          {needsActionUrl && (
+            <div className="mb-4">
+              <label className="font-body-sm text-body-sm text-on-surface font-medium mb-1 block">
+                Link to your {platformLabel[platform] || 'action'} *
+              </label>
+              <input
+                type="url"
+                value={actionUrl}
+                onChange={(e) => setActionUrl(e.target.value)}
+                placeholder={platform === 'twitter' ? 'https://x.com/username/status/...' : 'https://...'}
+                className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant text-on-surface placeholder-on-surface-variant/50 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none"
+              />
+              <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                Provide the direct link to your {actions.includes('like') ? 'like' : actions.includes('comment') ? 'comment' : actions.includes('share') ? 'share/post' : 'action'}
+              </p>
+            </div>
+          )}
+
+          {requiresScreenshot && (
+            <div className="mb-4">
+              <label className="font-body-sm text-body-sm text-on-surface font-medium mb-1 block">
+                Screenshot URL * {needsActionUrl ? '' : '(Required)'}
+              </label>
+              <input
+                type="url"
+                value={screenshotUrl}
+                onChange={(e) => setScreenshotUrl(e.target.value)}
+                placeholder="https://... (upload image and paste link)"
+                className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant text-on-surface placeholder-on-surface-variant/50 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none"
+              />
+              <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                Upload a screenshot of your completed action and paste the URL here
+              </p>
+            </div>
+          )}
+
+          {!needsActionUrl && !requiresScreenshot && (
+            <div className="mb-4">
+              <label className="font-body-sm text-body-sm text-on-surface font-medium mb-1 block">
+                Any additional comments (optional)
+              </label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Add any notes about completing this task..."
+                rows={3}
+                className="w-full px-4 py-3 bg-surface-container rounded-lg border border-outline-variant text-on-surface placeholder-on-surface-variant/50 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none resize-none"
+              />
+            </div>
+          )}
+
+          <div className="bg-tertiary-container/20 rounded-xl p-3 mb-6 flex items-start gap-2">
+            <span className="material-symbols-outlined text-on-tertiary-container text-sm mt-0.5">info</span>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              Coins will be credited after the task creator approves your submission. Auto-approved after 24 hours if no action is taken.
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-lg font-body-md text-body-md bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1 py-3 rounded-lg font-body-md text-body-md bg-[#B8860B] text-primary hover:bg-[#8B6914] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <span className="animate-pulse">Submitting...</span>
+              ) : (
+                <>
+                  <span>Submit Proof</span>
+                  <span className="material-symbols-outlined text-sm">send</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function EarnMarketplacePage() {
   const { data: resp, isLoading: systemTasksLoading } = useTasks();
@@ -11,6 +186,7 @@ export default function EarnMarketplacePage() {
   const completeTask = useCompleteTask();
   const completePostedTask = useCompletePostedTask();
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [proofModal, setProofModal] = useState<ProofModalState>({ isOpen: false, task: null });
 
   const allSystemTasks = resp?.tasks ?? [];
   const allPostedTasks = postedResp?.tasks?.map((t: any) => ({
@@ -43,14 +219,13 @@ export default function EarnMarketplacePage() {
   }, [dailyTasks]);
 
   const handleStartTask = async (task: any) => {
-    // Handle user-posted tasks
+    // Handle user-posted tasks - open proof modal
     if (task.isPostedTask) {
-      try {
-        await completePostedTask.mutateAsync({ id: task.id });
-        alert(`Task completed! You earned ${task.coin_per_participant} coins!`);
-      } catch (err: any) {
-        alert(err.message || 'Failed to complete task');
+      if (task.status === 'PENDING') {
+        alert('This task is pending activation by its creator');
+        return;
       }
+      setProofModal({ isOpen: true, task });
       return;
     }
 
@@ -70,6 +245,17 @@ export default function EarnMarketplacePage() {
       } catch {}
     }
   };
+
+  const handleSubmitProof = useCallback(async (proofData: any) => {
+    if (!proofModal.task) return;
+    try {
+      const result = await completePostedTask.mutateAsync({ id: proofModal.task.id, proofData });
+      setProofModal({ isOpen: false, task: null });
+      alert(result.message || 'Proof submitted successfully!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit proof');
+    }
+  }, [proofModal.task, completePostedTask]);
 
   return (
     <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full">
@@ -242,6 +428,14 @@ export default function EarnMarketplacePage() {
           })
         )}
       </div>
+
+      {proofModal.isOpen && proofModal.task && (
+        <ProofSubmissionModal
+          task={proofModal.task}
+          onClose={() => setProofModal({ isOpen: false, task: null })}
+          onSubmit={handleSubmitProof}
+        />
+      )}
     </main>
   );
 }
