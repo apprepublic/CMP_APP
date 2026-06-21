@@ -315,13 +315,11 @@ class ApiService {
       .maybeSingle() as any;
 
     if (streak) {
-      await supabase
-        .from('streaks')
+      await (supabase.from('streaks') as any)
         .update({ freezes_owned: (streak.freezes_owned || 0) + 1 })
         .eq('id', streak.id);
     } else {
-      await supabase
-        .from('streaks')
+      await (supabase.from('streaks') as any)
         .insert({ user_id: session.user.id, streak_type: 'TASK_COMPLETION', freezes_owned: 1 });
     }
 
