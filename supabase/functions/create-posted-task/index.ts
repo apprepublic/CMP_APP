@@ -120,9 +120,9 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Get wallet
       const walletResult = await client.queryObject`
-        SELECT id, "coinBalance", "lifetimeSpent" FROM "Wallet" WHERE "userId" = ${user.id} LIMIT 1
+        SELECT id, coin_balance, lifetime_spent FROM wallets WHERE user_id = ${user.id} LIMIT 1
       `;
-      const wallet = walletResult.rows[0];
+      const wallet = walletResult.rows[0] as any;
 
       if (!wallet) {
         return new Response(JSON.stringify({ error: "Wallet not found" }), {
@@ -131,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
-      const currentBalance = Number(wallet.coinBalance);
+      const currentBalance = Number(wallet.coin_balance);
       if (currentBalance < totalCost) {
         return new Response(JSON.stringify({
           error: "Insufficient balance. Please top up your wallet.",
@@ -142,44 +142,41 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       const newCoinBalance = currentBalance - totalCost;
-      const newLifetimeSpent = Number(wallet.lifetimeSpent || 0) + totalCost;
+      const newLifetimeSpent = Number(wallet.lifetime_spent || 0) + totalCost;
 
       // Create Song for music tasks
       let songId = null;
       if (type === "STREAM_MUSIC" && musicMetadata) {
         const artistResult = await client.queryObject`
-          SELECT id FROM "ArtistProfile" WHERE "userId" = ${user.id} LIMIT 1
+          SELECT id FROM artists WHERE user_id = ${user.id} LIMIT 1
         `;
-        const artistProfile = artistResult.rows[0];
+        const artistProfile = artistResult.rows[0] as any;
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
 
         const songResult = await client.queryObject`
-          INSERT INTO "Song" ("artistId", "title", "slug", "description", "audioUrl", "coverUrl", "genre", "durationSeconds", "coinReward", "isPublished")
+          INSERT INTO songs (artist_id, title, slug, description, audio_url, cover_url, genre, duration_seconds, coin_reward, is_published)
           VALUES (${artistProfile?.id || null}, ${title}, ${slug}, ${description}, ${musicMetadata.audioUrl}, ${musicMetadata.coverImageUrl || null}, ${musicMetadata.genre || "Unknown"}, ${musicMetadata.durationSeconds || 0}, ${coinPerParticipant}, true)
           RETURNING id
         `;
-        songId = songResult.rows[0]?.id;
+        songId = (songResult.rows[0] as any)?.id;
         console.log("Song created:", songId);
       }
 
-      // Create task
       const taskResult = await client.queryObject`
         INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id)
         VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId})
         RETURNING id
       `;
-      const postedTask = taskResult.rows[0];
+      const postedTask = taskResult.rows[0] as any;
       console.log("Task created:", postedTask.id);
 
-      // Update wallet
       await client.queryObject`
-        UPDATE "Wallet" SET "coinBalance" = ${newCoinBalance}, "lifetimeSpent" = ${newLifetimeSpent} WHERE id = ${wallet.id}
+        UPDATE wallets SET coin_balance = ${newCoinBalance}, lifetime_spent = ${newLifetimeSpent}, updated_at = NOW() WHERE id = ${wallet.id}
       `;
 
-      // Create transaction
       const txId = crypto.randomUUID();
       await client.queryObject`
-        INSERT INTO "CoinTransaction" (id, "walletId", type, amount, "balanceAfter", description, metadata)
+        INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description, metadata)
         VALUES (${txId}, ${wallet.id}, 'TASK_CREATION', ${-totalCost}, ${newCoinBalance}, ${`Posted task: ${title}`}, ${JSON.stringify({ postedTaskId: postedTask.id, creationFee: CREATION_FEE, budget: totalBudget })}::jsonb)
       `;
 

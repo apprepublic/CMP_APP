@@ -172,43 +172,292 @@ class ApiService {
 
   // Tasks - fetch from Supabase instead of dead API
   async getTasks(type?: string, category?: string) {
-    const { data, error } = await supabase
-      .from('user_posted_tasks')
-      .select('*')
-      .eq('is_active', true)
-      .eq('status', 'ACTIVE')
-      .order('created_at', { ascending: false });
+    const [postedRes, systemRes] = await Promise.all([
+      supabase
+        .from('user_posted_tasks')
+        .select('*')
+        .eq('is_active', true)
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('tasks')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+    ]);
 
-    if (error) throw new Error(error.message);
-    return { tasks: data || [] };
+    const postedTasks = (postedRes.data || []).map((t: any) => ({
+      ...t,
+      isPostedTask: true,
+      coinReward: t.coin_per_participant,
+      category: t.category || 'USER_CREATED',
+    }));
+
+    const systemTasks = systemRes.data || [];
+
+    return { tasks: [...systemTasks, ...postedTasks] };
   }
 
   async getDailyTasks() {
-    // Return empty array or fetch from a daily_tasks table if it exists
-    return { tasks: [] };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return { tasks: [] };
+
+    const { data: tasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (tasksError || !tasks) return { tasks: [] };
+
+    const { data: completions } = await supabase
+      .from('task_completions')
+      .select('task_id, status, completion_count, last_completed_at')
+      .eq('user_id', session.user.id);
+
+    const completionMap = new Map(
+      (completions || []).map((c: any) => [c.task_id, c])
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tasksWithStatus = tasks.map((task: any) => {
+      const completion = completionMap.get(task.id);
+      const lastCompleted = completion?.last_completed_at
+        ? new Date(completion.last_completed_at)
+        : null;
+      const completedToday =
+        lastCompleted && lastCompleted >= today
+          ? completion.completion_count || 0
+          : 0;
+      const dailyLimit = task.frequency === 'UNLIMITED' ? 9999 : 1;
+      const isLocked = completedToday >= dailyLimit;
+
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        type: task.category,
+        category: task.category,
+        coinReward: task.coin_reward,
+        requiresAdGate: true,
+        dailyLimit,
+        completedToday,
+        isLocked,
+        canComplete: !isLocked,
+        linkedArticle: null,
+      };
+    });
+
+    return { tasks: tasksWithStatus };
   }
 
   async getStreak() {
-    return this.request<{ streak: any }>('/api/tasks/streak');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return { streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, freezesOwned: 0, tasksCompletedToday: 0 } };
+
+    const { data: streakData } = await supabase
+      .from('streaks')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('last_activity_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { count: completionsToday } = await supabase
+      .from('task_completions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gte('last_completed_at', today.toISOString())
+      .lt('last_completed_at', tomorrow.toISOString());
+
+    return {
+      streak: {
+        currentStreak: streakData?.current_streak || 0,
+        longestStreak: streakData?.longest_streak || 0,
+        lastActiveDate: streakData?.last_activity_date || null,
+        freezesOwned: streakData?.freezes_owned || 0,
+        tasksCompletedToday: completionsToday || 0,
+      },
+    };
   }
 
   async buyStreakFreeze() {
-    return this.request<{ message: string; freezesOwned: number }>('/api/tasks/streak/freeze', {
-      method: 'POST',
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    const FREEZE_PRICE = 500;
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('id, coin_balance')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!wallet) throw new Error('Wallet not found');
+    if (Number(wallet.coin_balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
+
+    const newBalance = Number(wallet.coin_balance) - FREEZE_PRICE;
+    await supabase
+      .from('wallets')
+      .update({ coin_balance: newBalance, lifetime_spent: Number(wallet.coin_balance) + FREEZE_PRICE, updated_at: new Date().toISOString() })
+      .eq('id', wallet.id);
+
+    const { data: streak } = await supabase
+      .from('streaks')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (streak) {
+      await supabase
+        .from('streaks')
+        .update({ freezes_owned: (streak.freezes_owned || 0) + 1 })
+        .eq('id', streak.id);
+    } else {
+      await supabase
+        .from('streaks')
+        .insert({ user_id: session.user.id, streak_type: 'TASK_COMPLETION', freezes_owned: 1 });
+    }
+
+    return { message: 'Streak freeze purchased', freezesOwned: (streak?.freezes_owned || 0) + 1 };
   }
 
   async completeTask(taskId: string, adWatched = true) {
-    return this.request<{ coinsEarned: number; message: string }>(`/api/tasks/${taskId}/complete`, {
-      method: 'POST',
-      body: JSON.stringify({ adWatched }),
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('id', taskId)
+      .eq('is_active', true)
+      .single();
+
+    if (!task) throw new Error('Task not found or inactive');
+
+    const { data: existingCompletion } = await supabase
+      .from('task_completions')
+      .select('id, completion_count, last_completed_at')
+      .eq('user_id', session.user.id)
+      .eq('task_id', taskId)
+      .single();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastCompleted = existingCompletion?.last_completed_at
+      ? new Date(existingCompletion.last_completed_at)
+      : null;
+    const completedToday =
+      lastCompleted && lastCompleted >= today
+        ? existingCompletion.completion_count || 0
+        : 0;
+    const dailyLimit = task.frequency === 'UNLIMITED' ? 9999 : 1;
+
+    if (completedToday >= dailyLimit) throw new Error('Daily limit reached');
+
+    if (existingCompletion) {
+      const { error } = await supabase
+        .from('task_completions')
+        .update({
+          completion_count: (existingCompletion.completion_count || 0) + 1,
+          last_completed_at: new Date().toISOString(),
+          status: 'COMPLETED',
+        })
+        .eq('id', existingCompletion.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase
+        .from('task_completions')
+        .insert({
+          user_id: session.user.id,
+          task_id: taskId,
+          status: 'COMPLETED',
+          completion_count: 1,
+          last_completed_at: new Date().toISOString(),
+        });
+      if (error) throw new Error(error.message);
+    }
+
+    return { coinsEarned: task.coin_reward, message: 'Task completed successfully' };
   }
 
   async claimArticle(articleId: string) {
-    return this.request<{ coinsEarned: number; message: string }>(`/api/tasks/article/${articleId}/claim`, {
-      method: 'POST',
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    const { data: article } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('id', articleId)
+      .eq('is_published', true)
+      .single();
+
+    if (!article) throw new Error('Article not found or not published');
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { data: existingClaim } = await supabase
+      .from('task_completions')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('proof_data->>articleId', articleId)
+      .gte('last_completed_at', today.toISOString())
+      .lt('last_completed_at', tomorrow.toISOString())
+      .maybeSingle();
+
+    if (existingClaim) throw new Error('Article already claimed today');
+
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('id, coin_balance')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!wallet) throw new Error('Wallet not found');
+
+    const newBalance = Number(wallet.coin_balance) + article.coin_reward;
+    const newLifetimeEarned = Number(wallet.lifetime_earned) + article.coin_reward;
+
+    await supabase
+      .from('wallets')
+      .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+      .eq('id', wallet.id);
+
+    await supabase
+      .from('task_completions')
+      .insert({
+        user_id: session.user.id,
+        task_id: null,
+        status: 'COMPLETED',
+        completion_count: 1,
+        last_completed_at: new Date().toISOString(),
+        proof_data: { articleId: articleId, type: 'READ_ARTICLE' },
+      });
+
+    const txId = crypto.randomUUID();
+    await supabase
+      .from('coin_transactions')
+      .insert({
+        id: txId,
+        wallet_id: wallet.id,
+        type: 'READ_ARTICLE',
+        amount: article.coin_reward,
+        balance_after: newBalance,
+        description: `Read article: ${article.title}`,
+        metadata: { articleId },
+      });
+
+    return { coinsEarned: article.coin_reward, message: 'Coins claimed' };
   }
 
   async createPostedTask(data: {
@@ -269,21 +518,75 @@ class ApiService {
       .eq('creator_id', session.user.id)
       .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('[API] getPostedTasks error:', error);
+      throw new Error(error.message);
+    }
     return { tasks: data || [] };
   }
 
   async activatePostedTask(id: string) {
-    return this.request<{ task: any }>(`/api/tasks/posted/${id}/activate`, {
-      method: 'POST',
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('user_posted_tasks')
+      .update({ status: 'ACTIVE', is_active: true, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('creator_id', session.user.id)
+      .eq('status', 'PENDING')
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { task: data };
   }
 
   async completePostedTask(id: string, proofData?: any) {
-    return this.request<{ coinsEarned: number; message: string }>(`/api/tasks/posted/${id}/complete`, {
-      method: 'POST',
-      body: JSON.stringify({ proofData }),
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Not authenticated');
+
+    const { data: task, error: taskError } = await supabase
+      .from('user_posted_tasks')
+      .select('*')
+      .eq('id', id)
+      .eq('is_active', true)
+      .single();
+
+    if (taskError || !task) throw new Error('Task not found or not active');
+    if (task.creator_id === session.user.id) throw new Error('Cannot complete your own task');
+    if (task.current_participants >= task.participant_threshold) throw new Error('Task has reached participant limit');
+
+    const { error: completionError } = await supabase
+      .from('user_task_completions')
+      .insert({
+        user_id: session.user.id,
+        posted_task_id: id,
+        coins_earned: task.coin_per_participant,
+        proof_data: proofData || null,
+      });
+
+    if (completionError) {
+      if (completionError.message?.includes('unique') || completionError.message?.includes('duplicate')) {
+        throw new Error('You have already completed this task');
+      }
+      throw new Error(completionError.message);
+    }
+
+    const { error: updateError } = await supabase
+      .from('user_posted_tasks')
+      .update({
+        current_participants: task.current_participants + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (updateError) console.error('[API] Failed to update participant count:', updateError);
+
+    return {
+      coinsEarned: task.coin_per_participant,
+      message: 'Task completed successfully',
+    };
   }
 
   // Music
