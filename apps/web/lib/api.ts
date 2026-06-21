@@ -414,7 +414,7 @@ class ApiService {
 
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance')
+      .select('id, coin_balance, lifetime_earned')
       .eq('user_id', session.user.id)
       .single();
 
