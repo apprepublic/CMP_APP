@@ -144,26 +144,9 @@ const handler = async (req: Request): Promise<Response> => {
       const newBalance = currentBalance - totalCost;
 
       // Create Song for music tasks
-      let songId = null;
-      if (type === "STREAM_MUSIC" && musicMetadata) {
-        const artistResult = await client.queryObject`
-          SELECT id FROM artists WHERE user_id = ${user.id} LIMIT 1
-        `;
-        const artistProfile = artistResult.rows[0] as any;
-        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now();
-
-        const songResult = await client.queryObject`
-          INSERT INTO songs (artist_id, title, slug, description, audio_url, cover_url, genre, duration_seconds, coin_reward, is_published)
-          VALUES (${artistProfile?.id || null}, ${title}, ${slug}, ${description}, ${musicMetadata.audioUrl}, ${musicMetadata.coverImageUrl || null}, ${musicMetadata.genre || "Unknown"}, ${musicMetadata.durationSeconds || 0}, ${coinPerParticipant}, true)
-          RETURNING id
-        `;
-        songId = (songResult.rows[0] as any)?.id;
-        console.log("Song created:", songId);
-      }
-
       const taskResult = await client.queryObject`
         INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id)
-        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId})
+        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, null)
         RETURNING id
       `;
       const postedTask = taskResult.rows[0] as any;
