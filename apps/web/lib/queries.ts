@@ -251,7 +251,52 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
     .limit(opts.limit ?? 50);
   if (opts.genre) q = q.eq('genre', opts.genre);
   if (opts.search) q = q.ilike('title', `%${opts.search}%`);
-  return unwrap<Song[]>(await q);
+  
+  let songs = await q.then(res => res.data as Song[] | null).catch(() => null);
+  
+  if (songs && songs.length > 0) {
+    return songs;
+  }
+
+  // Fallback to active STREAM_MUSIC tasks
+  let taskQ = db
+    .from('user_posted_tasks')
+    .select('*')
+    .eq('type', 'STREAM_MUSIC')
+    .eq('is_active', true)
+    .eq('status', 'ACTIVE')
+    .order('created_at', { ascending: false })
+    .limit(opts.limit ?? 50);
+
+  if (opts.genre) taskQ = taskQ.eq('genre', opts.genre);
+  if (opts.search) taskQ = taskQ.ilike('title', `%${opts.search}%`);
+
+  const { data: tasks, error } = await taskQ;
+  if (error || !tasks) return [];
+
+  return tasks.map((t: any) => ({
+    id: t.song_id || t.id,
+    artist_id: t.creator_id,
+    title: t.title,
+    slug: `task-track-${t.id}`,
+    description: t.description,
+    audio_url: t.audio_url,
+    cover_url: t.cover_image_url || null,
+    duration_seconds: t.duration_seconds || 180,
+    genre: t.genre || null,
+    coin_reward: t.coin_per_participant || 0,
+    play_count: 0,
+    is_featured: false,
+    artist: {
+      id: t.creator_id,
+      stage_name: 'Artist Partner',
+      slug: 'artist-partner',
+      avatar_url: null,
+      is_verified: false,
+    },
+    // Keep reference to taskId so player can submit completions correctly
+    taskId: t.id,
+  })) as Song[];
 }
 
 export async function getFeaturedSongs(): Promise<Song[]> {

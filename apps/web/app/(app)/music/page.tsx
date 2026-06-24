@@ -77,7 +77,17 @@ export default function MusicPage() {
     return Array.from(set).slice(0, 6);
   }, [songs]);
 
-  const playSong = (song: Song, list: Song[]) => play(song, list);
+  const playSong = (song: Song, list: Song[]) => {
+    if ((song as any).taskId) {
+      play(song, list, {
+        id: (song as any).taskId,
+        isPosted: true,
+        coinReward: song.coin_reward
+      });
+    } else {
+      play(song, list);
+    }
+  };
 
   return (
     <main className="flex-1 flex flex-col relative pb-[160px] lg:pb-[100px]">
@@ -155,7 +165,22 @@ export default function MusicPage() {
               <p className="font-body-md text-on-surface-variant">Could not load songs. Please refresh the page.</p>
             </div>
           ) : trending.length === 0 ? (
-            <div className="text-center py-10 text-on-surface-variant">No songs available yet.</div>
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center mb-2">
+                <span className="material-symbols-outlined text-4xl text-on-primary-container">library_music</span>
+              </div>
+              <h4 className="font-h3 text-h3 text-on-background">No songs yet</h4>
+              <p className="font-body-md text-on-surface-variant max-w-sm">
+                The music catalogue is being built. Artists post tracks as Stream Music tasks — complete them to earn coins!
+              </p>
+              <Link
+                href="/tasks"
+                className="inline-flex items-center gap-2 bg-secondary text-on-secondary font-body-md px-6 py-3 rounded-xl hover:bg-secondary/90 transition-colors mt-2"
+              >
+                <span className="material-symbols-outlined">task_alt</span>
+                Browse Stream Tasks
+              </Link>
+            </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-gutter">
               {trending.map((song) => {

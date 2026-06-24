@@ -1,6 +1,7 @@
 'use client';
 
 import { usePlayer } from './PlayerProvider';
+import { useSidebarStore } from '@/stores/sidebarStore';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Shuffle, Repeat } from 'lucide-react';
 
 function fmt(t: number) {
@@ -12,13 +13,20 @@ function fmt(t: number) {
 
 export function PlayerBar() {
   const { current, isPlaying, progress, duration, volume, toggle, next, prev, seek, setVolume } = usePlayer();
+  const { isCollapsed } = useSidebarStore();
 
   if (!current) return null;
 
   const pct = duration ? (progress / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-16 lg:bottom-0 w-full lg:w-[calc(100%-16rem)] lg:left-64 z-40 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300">
+    <div
+      className={`fixed bottom-16 lg:bottom-0 z-50 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 ${
+        isCollapsed
+          ? 'w-full lg:w-[calc(100%-72px)] lg:left-[72px]'
+          : 'w-full lg:w-[calc(100%-16rem)] lg:left-64'
+      }`}
+    >
       {/* Progress Bar */}
       <div className="absolute top-0 left-0 w-full h-1 bg-surface-variant/20 cursor-pointer">
         <input
