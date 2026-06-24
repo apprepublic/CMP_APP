@@ -252,7 +252,7 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
   if (opts.genre) q = q.eq('genre', opts.genre);
   if (opts.search) q = q.ilike('title', `%${opts.search}%`);
   
-  let songs = await q.then(res => res.data as Song[] | null).catch(() => null);
+  let songs = await q.then((res: any) => res.data as Song[] | null).catch(() => null);
   
   if (songs && songs.length > 0) {
     return songs;
