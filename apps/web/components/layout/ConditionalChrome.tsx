@@ -25,6 +25,7 @@ const selfChromedPrefixes = [
   '/marketplace',
   '/referrals',
   '/contests',
+  '/articles',
   '/', // Landing page has its own premium nav
 ];
 
