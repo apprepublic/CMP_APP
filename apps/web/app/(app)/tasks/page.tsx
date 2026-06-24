@@ -324,6 +324,38 @@ export default function EarnMarketplacePage() {
   }, [dailyTasks]);
 
   const handleStartTask = async (task: any) => {
+    const isMusicTask = task.type === 'STREAM_MUSIC' || 
+                        task.category === 'STREAM_MUSIC' || 
+                        task.category?.toLowerCase() === 'music' || 
+                        task.title?.toLowerCase().includes('stream music') || 
+                        task.title?.toLowerCase().includes('play song');
+
+    if (isMusicTask) {
+      if (task.isPostedTask && task.status === 'PENDING') {
+        alert('This task is pending activation by its creator');
+        return;
+      }
+      
+      const songId = task.songId || task.song_id || '';
+      const audioUrl = task.audioUrl || task.audio_url || '';
+      const coverUrl = task.coverImageUrl || task.cover_image_url || '';
+      const coinReward = task.coinReward || task.coin_per_participant || 0;
+      
+      const queryParams = new URLSearchParams({
+        play: 'true',
+        taskId: task.id,
+        songId: songId,
+        audioUrl: audioUrl,
+        title: task.title || '',
+        coverUrl: coverUrl,
+        coinReward: String(coinReward),
+        isPosted: task.isPostedTask ? 'true' : 'false',
+      });
+      
+      window.location.href = `/music?${queryParams.toString()}`;
+      return;
+    }
+
     // Handle user-posted tasks - open proof modal
     if (task.isPostedTask) {
       if (task.status === 'PENDING') {

@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import type { Song } from '@/lib/queries';
 import { logSongPlay } from '@/lib/queries';
+import { api } from '@/lib/api';
+import { toast } from '@/components/ui/use-toast';
 
 interface PlayerState {
   current: Song | null;
@@ -12,7 +14,7 @@ interface PlayerState {
   progress: number; // seconds
   duration: number; // seconds
   volume: number; // 0..1
-  play: (song: Song, queue?: Song[]) => void;
+  play: (song: Song, queue?: Song[], taskInfo?: { id: string; isPosted: boolean; coinReward: number }) => void;
   toggle: () => void;
   next: () => void;
   prev: () => void;
@@ -33,12 +35,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const loggedRef = useRef(false); // ensures one reward log per track play
 
   const [current, setCurrent] = useState<Song | null>(null);
+  const [activeTask, setActiveTask] = useState<{ id: string; isPosted: boolean; coinReward: number } | null>(null);
   const [queue, setQueue] = useState<Song[]>([]);
   const [index, setIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(0.8);
+
+  const currentRef = useRef<Song | null>(null);
+  const activeTaskRef = useRef<{ id: string; isPosted: boolean; coinReward: number } | null>(null);
+
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
+
+  useEffect(() => {
+    activeTaskRef.current = activeTask;
+  }, [activeTask]);
 
   // Create the audio element once (client only).
   useEffect(() => {
@@ -49,10 +63,42 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     const onTime = () => {
       setProgress(audio.currentTime);
+      const curSong = currentRef.current;
+      const actTask = activeTaskRef.current;
       // Stream-to-earn: log a qualifying play once we cross 30s.
-      if (!loggedRef.current && audio.currentTime >= 30 && current) {
+      if (!loggedRef.current && audio.currentTime >= 30 && curSong) {
         loggedRef.current = true;
-        logSongPlay(current.id, audio.currentTime).catch(() => {});
+        logSongPlay(curSong.id, audio.currentTime).catch(() => {});
+
+        // Complete the task!
+        if (actTask) {
+          const completePromise = actTask.isPosted
+            ? api.completePostedTask(actTask.id, {
+                platform: 'STREAM_MUSIC',
+                submittedAt: new Date().toISOString(),
+                comment: 'Automated stream completion'
+              })
+            : api.completeTask(actTask.id, false);
+
+          completePromise
+            .then(() => {
+              toast({
+                title: 'Task Completed!',
+                description: `Successfully streamed and earned ${actTask.coinReward} coins.`,
+                variant: 'success',
+              });
+            })
+            .catch((err: any) => {
+              console.error('Failed to complete streaming task:', err);
+              toast({
+                title: 'Task Completion Failed',
+                description: err.message || 'Failed to complete streaming task.',
+                variant: 'destructive',
+              });
+            });
+
+          setActiveTask(null); // prevent duplicate submissions
+        }
       }
     };
     const onMeta = () => setDuration(audio.duration || 0);
@@ -83,11 +129,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const play = useCallback(
-    (song: Song, q?: Song[]) => {
+    (song: Song, q?: Song[], taskInfo?: { id: string; isPosted: boolean; coinReward: number }) => {
       const list = q && q.length ? q : [song];
       const i = Math.max(0, list.findIndex((s) => s.id === song.id));
       setQueue(list);
       playIndex(list, i === -1 ? 0 : i);
+      setActiveTask(taskInfo || null);
     },
     [playIndex]
   );

@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 import { useSongs, useFeaturedSongs, useArtists } from '@/lib/hooks';
 import { usePlayer } from '@/components/music/PlayerProvider';
 import type { Song } from '@/lib/queries';
@@ -10,6 +11,7 @@ import type { Song } from '@/lib/queries';
 export default function MusicPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { play, current, isPlaying } = usePlayer();
+  const searchParams = useSearchParams();
 
   const { data: songs = [], isLoading: songsLoading } = useSongs(
     searchQuery ? { search: searchQuery } : {}
@@ -24,6 +26,50 @@ export default function MusicPage() {
     songs.forEach((s) => s.genre && set.add(s.genre));
     return Array.from(set).slice(0, 6);
   }, [songs]);
+
+  useEffect(() => {
+    const shouldPlay = searchParams.get('play') === 'true';
+    const audioUrl = searchParams.get('audioUrl');
+    if (shouldPlay && audioUrl) {
+      if (current?.audio_url === audioUrl && isPlaying) {
+        return;
+      }
+
+      const songId = searchParams.get('songId') || 'temp-task-song';
+      const taskId = searchParams.get('taskId') || '';
+      const title = searchParams.get('title') || 'Stream Task Track';
+      const coverUrl = searchParams.get('coverUrl') || null;
+      const coinReward = Number(searchParams.get('coinReward') || 0);
+      const isPosted = searchParams.get('isPosted') === 'true';
+
+      const songToPlay: Song = {
+        id: songId,
+        artist_id: 'task-creator',
+        title: title,
+        slug: 'task-track',
+        description: 'Stream to earn coins',
+        audio_url: audioUrl,
+        cover_url: coverUrl,
+        duration_seconds: 180,
+        coin_reward: coinReward,
+        play_count: 0,
+        is_featured: false,
+        artist: {
+          id: 'creator',
+          stage_name: 'Task Artist',
+          slug: 'task-artist',
+          avatar_url: null,
+          is_verified: false
+        }
+      };
+
+      play(songToPlay, [], {
+        id: taskId,
+        isPosted,
+        coinReward
+      });
+    }
+  }, [searchParams, play, current, isPlaying]);
 
   const playSong = (song: Song, list: Song[]) => play(song, list);
 
