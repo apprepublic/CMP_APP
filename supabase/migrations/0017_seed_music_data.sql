@@ -3,12 +3,14 @@
 -- Self-contained: creates tables if missing,
 -- then inserts demo artists and songs.
 -- Safe to run multiple times (idempotent).
+-- References auth.users (Supabase built-in) instead of
+-- public.users which may not exist on all instances.
 -- ===========================================
 
 -- ---- ARTISTS TABLE (from 0004, safe re-run) ----
 CREATE TABLE IF NOT EXISTS artists (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   stage_name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   bio TEXT,
@@ -56,7 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_songs_published ON songs(is_published);
 CREATE TABLE IF NOT EXISTS song_plays (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   song_id UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   seconds_played INTEGER NOT NULL DEFAULT 0,
   is_rewarded BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
