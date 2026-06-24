@@ -142,9 +142,46 @@ const handler = async (req: Request): Promise<Response> => {
 
       const newBalance = currentBalance - totalCost;
 
+      let artistId = null;
+      let songId = null;
+
+      if (type === "STREAM_MUSIC" && musicMetadata) {
+        // Find if artist already exists for this user
+        const artistQuery = await client.queryObject`
+          SELECT id FROM artists WHERE user_id = ${user.id} LIMIT 1
+        `;
+        
+        if (artistQuery.rows.length > 0) {
+          artistId = (artistQuery.rows[0] as any).id;
+        } else {
+          // Create a new artist profile for the user
+          const stageName = user.user_metadata?.full_name || user.email?.split('@')[0] || "User Artist";
+          const baseSlug = stageName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || "artist";
+          const uniqueSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+          
+          const newArtistQuery = await client.queryObject`
+            INSERT INTO artists (user_id, stage_name, slug, bio, is_verified)
+            VALUES (${user.id}, ${stageName}, ${uniqueSlug}, 'Artist profile created from posted task', false)
+            RETURNING id
+          `;
+          artistId = (newArtistQuery.rows[0] as any).id;
+        }
+
+        // Create the song record
+        const songBaseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || "song";
+        const songSlug = `${songBaseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+        
+        const songInsertQuery = await client.queryObject`
+          INSERT INTO songs (artist_id, title, slug, description, audio_url, cover_url, duration_seconds, genre, coin_reward, is_published)
+          VALUES (${artistId}, ${title}, ${songSlug}, ${description}, ${musicMetadata.audioUrl}, ${musicMetadata.coverImageUrl || null}, ${musicMetadata.durationSeconds || 180}, ${musicMetadata.genre || null}, ${coinPerParticipant}, false)
+          RETURNING id
+        `;
+        songId = (songInsertQuery.rows[0] as any).id;
+      }
+
       const taskResult = await client.queryObject`
         INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id)
-        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, null)
+        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId})
         RETURNING id
       `;
       const postedTask = taskResult.rows[0] as any;
