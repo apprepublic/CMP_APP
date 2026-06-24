@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
@@ -8,24 +8,10 @@ import { useSongs, useFeaturedSongs, useArtists } from '@/lib/hooks';
 import { usePlayer } from '@/components/music/PlayerProvider';
 import type { Song } from '@/lib/queries';
 
-export default function MusicPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { play, current, isPlaying } = usePlayer();
+/** Isolated component so useSearchParams is inside a Suspense boundary */
+function TaskAutoPlay() {
   const searchParams = useSearchParams();
-
-  const { data: songs = [], isLoading: songsLoading } = useSongs(
-    searchQuery ? { search: searchQuery } : {}
-  );
-  const { data: featured = [] } = useFeaturedSongs();
-  const { data: artists = [] } = useArtists();
-
-  const trending = useMemo(() => songs.slice(0, 12), [songs]);
-
-  const genres = useMemo(() => {
-    const set = new Set<string>();
-    songs.forEach((s) => s.genre && set.add(s.genre));
-    return Array.from(set).slice(0, 6);
-  }, [songs]);
+  const { play, current, isPlaying } = usePlayer();
 
   useEffect(() => {
     const shouldPlay = searchParams?.get('play') === 'true';
@@ -72,10 +58,35 @@ export default function MusicPage() {
     }
   }, [searchParams, play, current, isPlaying]);
 
+  return null;
+}
+
+export default function MusicPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { play, current, isPlaying } = usePlayer();
+
+  const { data: songs = [], isLoading: songsLoading } = useSongs(
+    searchQuery ? { search: searchQuery } : {}
+  );
+  const { data: featured = [] } = useFeaturedSongs();
+  const { data: artists = [] } = useArtists();
+
+  const trending = useMemo(() => songs.slice(0, 12), [songs]);
+
+  const genres = useMemo(() => {
+    const set = new Set<string>();
+    songs.forEach((s) => s.genre && set.add(s.genre));
+    return Array.from(set).slice(0, 6);
+  }, [songs]);
+
   const playSong = (song: Song, list: Song[]) => play(song, list);
 
   return (
     <main className="flex-1 flex flex-col relative pb-[160px] lg:pb-[100px]">
+      {/* TaskAutoPlay must be inside Suspense because it calls useSearchParams */}
+      <Suspense fallback={null}>
+        <TaskAutoPlay />
+      </Suspense>
       <div className="p-margin-mobile lg:p-margin-desktop space-y-12 max-w-[1400px] mx-auto w-full">
         {/* Hero Search Section */}
         <section className="relative bg-primary-container rounded-2xl p-8 lg:p-12 overflow-hidden shadow-sm">
