@@ -28,19 +28,19 @@ export default function MusicPage() {
   }, [songs]);
 
   useEffect(() => {
-    const shouldPlay = searchParams.get('play') === 'true';
-    const audioUrl = searchParams.get('audioUrl');
+    const shouldPlay = searchParams?.get('play') === 'true';
+    const audioUrl = searchParams?.get('audioUrl');
     if (shouldPlay && audioUrl) {
       if (current?.audio_url === audioUrl && isPlaying) {
         return;
       }
 
-      const songId = searchParams.get('songId') || 'temp-task-song';
-      const taskId = searchParams.get('taskId') || '';
-      const title = searchParams.get('title') || 'Stream Task Track';
-      const coverUrl = searchParams.get('coverUrl') || null;
-      const coinReward = Number(searchParams.get('coinReward') || 0);
-      const isPosted = searchParams.get('isPosted') === 'true';
+      const songId = searchParams?.get('songId') || 'temp-task-song';
+      const taskId = searchParams?.get('taskId') || '';
+      const title = searchParams?.get('title') || 'Stream Task Track';
+      const coverUrl = searchParams?.get('coverUrl') || null;
+      const coinReward = Number(searchParams?.get('coinReward') || 0);
+      const isPosted = searchParams?.get('isPosted') === 'true';
 
       const songToPlay: Song = {
         id: songId,
