@@ -244,10 +244,10 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
 
 export async function getSongs(opts: { genre?: string; search?: string; limit?: number } = {}): Promise<Song[]> {
   let q = db
-    .from('Song')
-    .select('*, artist:ArtistProfile(id, stage_name, slug, avatar_url, is_verified)')
-    .eq('isPublished', true)
-    .order('playCount', { ascending: false })
+    .from('songs')
+    .select('*, artist:artists(id, stage_name, slug, avatar_url, is_verified)')
+    .eq('is_published', true)
+    .order('play_count', { ascending: false })
     .limit(opts.limit ?? 50);
   if (opts.genre) q = q.eq('genre', opts.genre);
   if (opts.search) q = q.ilike('title', `%${opts.search}%`);
@@ -257,11 +257,11 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
 export async function getFeaturedSongs(): Promise<Song[]> {
   return unwrap<Song[]>(
     await db
-      .from('Song')
-      .select('*, artist:ArtistProfile(id, stage_name, slug, avatar_url, is_verified)')
-      .eq('isPublished', true)
-      .eq('isFeatured', true)
-      .order('playCount', { ascending: false })
+      .from('songs')
+      .select('*, artist:artists(id, stage_name, slug, avatar_url, is_verified)')
+      .eq('is_published', true)
+      .eq('is_featured', true)
+      .order('play_count', { ascending: false })
       .limit(12)
   );
 }

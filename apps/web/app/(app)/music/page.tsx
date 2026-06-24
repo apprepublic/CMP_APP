@@ -2,9 +2,8 @@
 
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
-import { useSongs, useFeaturedSongs, useArtists } from '@/lib/hooks';
+import { useSongs, useArtists } from '@/lib/hooks';
 import { usePlayer } from '@/components/music/PlayerProvider';
 import type { Song } from '@/lib/queries';
 
@@ -65,11 +64,10 @@ export default function MusicPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { play, current, isPlaying } = usePlayer();
 
-  const { data: songs = [], isLoading: songsLoading } = useSongs(
+  const { data: songs = [], isLoading: songsLoading, isError: songsError } = useSongs(
     searchQuery ? { search: searchQuery } : {}
   );
-  const { data: featured = [] } = useFeaturedSongs();
-  const { data: artists = [] } = useArtists();
+  const { data: artists = [], isError: artistsError } = useArtists();
 
   const trending = useMemo(() => songs.slice(0, 12), [songs]);
 
@@ -151,8 +149,13 @@ export default function MusicPage() {
                  <div key={i} className="flex-none w-36 md:w-48 aspect-square rounded-xl bg-surface-variant animate-pulse" />
                ))}
              </div>
+          ) : songsError ? (
+            <div className="text-center py-10">
+              <span className="material-symbols-outlined text-4xl text-error-alert mb-2 block">wifi_off</span>
+              <p className="font-body-md text-on-surface-variant">Could not load songs. Please refresh the page.</p>
+            </div>
           ) : trending.length === 0 ? (
-            <div className="text-center py-10 text-on-surface-variant">No songs found.</div>
+            <div className="text-center py-10 text-on-surface-variant">No songs available yet.</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-gutter">
               {trending.map((song) => {
