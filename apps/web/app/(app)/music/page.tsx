@@ -51,6 +51,7 @@ export default function MusicPage() {
         audio_url: audioUrl,
         cover_url: coverUrl,
         duration_seconds: 180,
+        genre: null,
         coin_reward: coinReward,
         play_count: 0,
         is_featured: false,
