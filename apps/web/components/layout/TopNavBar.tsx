@@ -12,7 +12,7 @@ export default function TopNavBar() {
 
   const displayBalance = walletLoading 
     ? '...' 
-    : (wallet?.balance ?? 500).toLocaleString();
+    : (wallet?.balance ?? 0).toLocaleString();
 
   return (
     <header className="sticky top-0 w-full z-40 bg-primary shadow-md flex justify-between items-center px-margin-mobile lg:px-margin-desktop h-20">

@@ -132,11 +132,11 @@ export const useUserStore = create<UserStore>()(
             .eq('id', authUser.id)
             .single();
 
-          // Fetch wallet from Supabase
+          // Fetch wallet from Supabase (correct table and column names)
           const { data: wallet } = await supabase
-            .from('Wallet')
-            .select('coinBalance, lifetimeEarned, lifetimeSpent')
-            .eq('userId', authUser.id)
+            .from('wallets')
+            .select('coin_balance, lifetime_earned')
+            .eq('user_id', authUser.id)
             .single();
 
           if (profile) {
@@ -150,9 +150,9 @@ export const useUserStore = create<UserStore>()(
               kycStatus: 'NONE',
               referralCode: (profile as any).referral_code || '',
               wallet: wallet ? {
-                coinBalance: Number((wallet as any).coinBalance) || 0,
-                lifetimeEarned: Number((wallet as any).lifetimeEarned) || 0,
-                lifetimeSpent: Number((wallet as any).lifetimeSpent) || 0,
+                coinBalance: Number((wallet as any).coin_balance) || 0,
+                lifetimeEarned: Number((wallet as any).lifetime_earned) || 0,
+                lifetimeSpent: 0,
               } : undefined,
             };
             set({ user, isAuthenticated: true });

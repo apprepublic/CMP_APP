@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Song } from '@/lib/queries';
 import { logSongPlay } from '@/lib/queries';
 import { api } from '@/lib/api';
@@ -34,6 +35,7 @@ export function usePlayer() {
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const loggedRef = useRef(false); // ensures one reward log per track play
+  const queryClient = useQueryClient();
 
   const [current, setCurrent] = useState<Song | null>(null);
   const [activeTask, setActiveTask] = useState<{ id: string; isPosted: boolean; coinReward: number } | null>(null);
@@ -88,7 +90,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 description: `Successfully streamed and earned ${actTask.coinReward} coins.`,
                 variant: 'success',
               });
-              // Update the task completion streak
+              // Refresh wallet and streak everywhere in the app immediately
+              queryClient.invalidateQueries({ queryKey: ['wallet'] });
+              queryClient.invalidateQueries({ queryKey: ['streak'] });
+              // Update the task completion streak record
               try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session?.user?.id) {

@@ -111,6 +111,7 @@ export const usePostTask = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
     },
   });
 };
@@ -136,6 +137,8 @@ export const useCompletePostedTask = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
     },
   });
 };
