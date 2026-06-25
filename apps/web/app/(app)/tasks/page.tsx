@@ -341,6 +341,8 @@ export default function EarnMarketplacePage() {
       const coverUrl = task.coverImageUrl || task.cover_image_url || '';
       const coinReward = task.coinReward || task.coin_per_participant || 0;
       
+      const isDownloadEnabled = task.isDownloadEnabled || task.is_download_enabled || false;
+      
       const queryParams = new URLSearchParams({
         play: 'true',
         taskId: task.id,
@@ -350,6 +352,7 @@ export default function EarnMarketplacePage() {
         coverUrl: coverUrl,
         coinReward: String(coinReward),
         isPosted: task.isPostedTask ? 'true' : 'false',
+        isDownloadEnabled: isDownloadEnabled ? 'true' : 'false',
       });
       
       window.location.href = `/music?${queryParams.toString()}`;

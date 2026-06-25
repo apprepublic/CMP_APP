@@ -35,6 +35,7 @@ export interface Song {
   play_count: number;
   is_featured: boolean;
   artist?: Pick<Artist, 'id' | 'stage_name' | 'slug' | 'avatar_url' | 'is_verified'> | null;
+  is_download_enabled?: boolean;
 }
 
 export interface Article {
@@ -252,7 +253,15 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
   if (opts.genre) q = q.eq('genre', opts.genre);
   if (opts.search) q = q.ilike('title', `%${opts.search}%`);
   
-  let songs = await q.then((res: any) => res.data as Song[] | null).catch(() => null);
+  let songs: Song[] | null = null;
+  try {
+    const res = await q;
+    if (res.data && res.data.length > 0) {
+      songs = res.data as Song[];
+    }
+  } catch (e) {
+    console.error('getSongs query failed, using fallback:', e);
+  }
   
   if (songs && songs.length > 0) {
     return songs;
@@ -296,6 +305,7 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
     },
     // Keep reference to taskId so player can submit completions correctly
     taskId: t.id,
+    is_download_enabled: t.is_download_enabled || false,
   })) as Song[];
 }
 

@@ -29,7 +29,7 @@ export function useWallet() {
     setLoading(true);
     supabase
       .from('wallets')
-      .select('id, user_id, balance, lifetime_earned, created_at, updated_at')
+      .select('id, user_id, coin_balance, lifetime_earned, created_at, updated_at')
       .eq('user_id', user.id)
       .single()
       .then(({ data, error }) => {
@@ -40,7 +40,7 @@ export function useWallet() {
           setWallet({
             id: w.id,
             user_id: w.user_id,
-            balance: Number(w.balance) || 0,
+            balance: Number(w.coin_balance) || 0,
             lifetime_earned: Number(w.lifetime_earned) || 0,
             created_at: w.created_at,
             updated_at: w.updated_at,

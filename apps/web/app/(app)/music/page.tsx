@@ -27,6 +27,8 @@ function TaskAutoPlay() {
       const coinReward = Number(searchParams?.get('coinReward') || 0);
       const isPosted = searchParams?.get('isPosted') === 'true';
 
+      const isDownloadEnabled = searchParams?.get('isDownloadEnabled') === 'true';
+
       const songToPlay: Song = {
         id: songId,
         artist_id: 'task-creator',
@@ -40,6 +42,7 @@ function TaskAutoPlay() {
         coin_reward: coinReward,
         play_count: 0,
         is_featured: false,
+        is_download_enabled: isDownloadEnabled,
         artist: {
           id: 'creator',
           stage_name: 'Task Artist',
