@@ -97,66 +97,28 @@ const handler = async (req: Request): Promise<Response> => {
     const userId = authData.user.id;
     console.log("Auth user created:", userId);
 
-    // Generate unique username from full name + user ID suffix
-    const baseUsername = (pendingReg.full_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 25);
-    const username = `${baseUsername}_${userId.slice(0, 8)}`; // 8-char UUID suffix for uniqueness
+    // Handle referral if provided
+    if (pendingReg.referral_code) {
+      // Find referrer user_id from wallets table using referral_code
+      const { data: referrerWallet } = await supabase
+        .from("wallets")
+        .select("user_id")
+        .eq("referral_code", pendingReg.referral_code)
+        .maybeSingle();
 
-    // Check if profile already exists
-    const { data: profileCheck } = await supabase.from("profiles").select("id").eq("id", userId).maybeSingle();
-    if (!profileCheck) {
-      // Find referrer if referral code was used
-      let referredBy: string | null = null;
-      if (pendingReg.referral_code) {
-        const { data: referrer } = await supabase
-          .from("profiles").select("id").eq("referral_code", pendingReg.referral_code).maybeSingle();
-        referredBy = referrer?.id || null;
+      if (referrerWallet?.user_id) {
+        const { error: referralError } = await supabase.from("referrals").insert({
+          referrer_id: referrerWallet.user_id,
+          referred_user_id: userId,
+          status: "PENDING",
+        });
+        if (referralError) {
+          console.error("Referral creation error:", referralError);
+          // Non-fatal, continue with registration
+        } else {
+          console.log("Referral recorded for user:", userId);
+        }
       }
-
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: userId,
-        full_name: pendingReg.full_name,
-        username: username,
-        // referral_code is intentionally omitted — DB DEFAULT generates a unique code for the new user.
-        // pendingReg.referral_code is the *referrer's* code (used to look up referredBy above).
-        referred_by: referredBy,
-      });
-      if (profileError) {
-        console.error("Profile error:", profileError);
-        return jsonResponse({ error: "Failed to create profile: " + profileError.message });
-      }
-      console.log("Profile created for user:", userId);
-    }
-
-
-    // Note: wallets.user_id has no FK constraint in the live DB, so no public.users row is needed.
-    // Create wallet with 500-coin signup bonus (correct table + column names)
-    const { data: walletCheck } = await supabase.from("wallets").select("id").eq("user_id", userId).maybeSingle();
-    if (!walletCheck) {
-      const walletId = crypto.randomUUID();
-      const SIGNUP_BONUS = 500;
-
-      const { error: walletError } = await supabase.from("wallets").insert({
-        id: walletId,
-        user_id: userId,
-        balance: SIGNUP_BONUS,
-        lifetime_earned: SIGNUP_BONUS,
-      });
-
-      if (walletError) {
-        console.error("Wallet error:", walletError);
-        return jsonResponse({ error: "Failed to create wallet: " + walletError.message });
-      }
-
-      // Log the signup bonus transaction
-      await supabase.from("coin_transactions").insert({
-        user_id: userId,
-        type: "earn",
-        amount: SIGNUP_BONUS,
-        balance_after: SIGNUP_BONUS,
-        description: "Signup bonus — Welcome to CMPapp!",
-      });
-
-      console.log("Wallet created with 500-coin bonus for user:", userId);
     }
 
     // Delete pending registration
