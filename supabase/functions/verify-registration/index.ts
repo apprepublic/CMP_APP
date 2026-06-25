@@ -126,23 +126,50 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Profile created for user:", userId);
     }
 
-    const { data: walletCheck } = await supabase.from("Wallet").select("id").eq("userId", userId).maybeSingle();
-    if (!walletCheck) {
-      const { error: walletError } = await supabase.from("Wallet").insert({
-        id: crypto.randomUUID(),
-        userId: userId,
-        coinBalance: 500,
-        pendingCoins: 0,
-        lifetimeEarned: 500,
-        lifetimeSpent: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+    // Ensure users table row exists (needed for FK on wallets table)
+    // Migration 0009 dropped the auth trigger that used to do this automatically.
+    const { data: userCheck } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
+    if (!userCheck) {
+      const { error: userRowError } = await supabase.from("users").insert({
+        id: userId,
+        email: pendingReg.email,
+        full_name: pendingReg.full_name,
       });
+      if (userRowError) {
+        console.error("Users row error:", userRowError);
+        // Non-fatal — wallet creation may still work via RLS service role
+      }
+    }
+
+    // Create wallet with 500-coin signup bonus (correct table + column names)
+    const { data: walletCheck } = await supabase.from("wallets").select("id").eq("user_id", userId).maybeSingle();
+    if (!walletCheck) {
+      const walletId = crypto.randomUUID();
+      const SIGNUP_BONUS = 500;
+
+      const { error: walletError } = await supabase.from("wallets").insert({
+        id: walletId,
+        user_id: userId,
+        coin_balance: SIGNUP_BONUS,
+        lifetime_earned: SIGNUP_BONUS,
+        lifetime_spent: 0,
+      });
+
       if (walletError) {
         console.error("Wallet error:", walletError);
         return jsonResponse({ error: "Failed to create wallet: " + walletError.message });
       }
-      console.log("Wallet created for user:", userId);
+
+      // Log the signup bonus transaction
+      await supabase.from("coin_transactions").insert({
+        wallet_id: walletId,
+        type: "EARN",
+        amount: SIGNUP_BONUS,
+        balance_after: SIGNUP_BONUS,
+        description: "Signup bonus — Welcome to CMPapp!",
+      });
+
+      console.log("Wallet created with 500-coin bonus for user:", userId);
     }
 
     // Delete pending registration
@@ -150,6 +177,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Account created successfully!");
     return jsonResponse({ success: true, message: "Account created successfully", email: pendingReg.email });
+
   } catch (error) {
     console.error("=== VERIFY FUNCTION ERROR ===");
     console.error("Error:", error);
