@@ -7,6 +7,7 @@ import { logSongPlay } from '@/lib/queries';
 import { api } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { useUserStore } from '@/stores/userStore';
 
 interface PlayerState {
   current: Song | null;
@@ -56,6 +57,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     activeTaskRef.current = activeTask;
   }, [activeTask]);
+
+  const isAuthenticated = useUserStore((state: any) => state.isAuthenticated);
+
+  // Stop music and reset player state when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+      setCurrent(null);
+      setQueue([]);
+      setIndex(0);
+      setIsPlaying(false);
+      setProgress(0);
+      setDuration(0);
+      setActiveTask(null);
+      loggedRef.current = false;
+    }
+  }, [isAuthenticated]);
 
   // Create the audio element once (client only).
   useEffect(() => {

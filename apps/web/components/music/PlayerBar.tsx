@@ -2,6 +2,7 @@
 
 import { usePlayer } from './PlayerProvider';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { useUserStore } from '@/stores/userStore';
 import { Shuffle, Repeat } from 'lucide-react';
 
 function fmt(t: number) {
@@ -14,8 +15,9 @@ function fmt(t: number) {
 export function PlayerBar() {
   const { current, isPlaying, progress, duration, volume, toggle, next, prev, seek, setVolume } = usePlayer();
   const { isCollapsed } = useSidebarStore();
+  const isAuthenticated = useUserStore((state: any) => state.isAuthenticated);
 
-  if (!current) return null;
+  if (!isAuthenticated || !current) return null;
 
   const pct = duration ? (progress / duration) * 100 : 0;
 
