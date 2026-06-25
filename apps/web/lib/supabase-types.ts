@@ -54,9 +54,8 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          coin_balance: string
+          balance: string
           lifetime_earned: string
-          lifetime_spent: string
           referral_code: string
           created_at: string
           updated_at: string
@@ -64,9 +63,8 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          coin_balance?: string
+          balance?: string
           lifetime_earned?: string
-          lifetime_spent?: string
           referral_code?: string
           created_at?: string
           updated_at?: string
@@ -74,9 +72,8 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
-          coin_balance?: string
+          balance?: string
           lifetime_earned?: string
-          lifetime_spent?: string
           referral_code?: string
           created_at?: string
           updated_at?: string

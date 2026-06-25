@@ -295,16 +295,16 @@ class ApiService {
     const FREEZE_PRICE = 500;
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance')
+      .select('id, balance')
       .eq('user_id', session.user.id)
       .single() as any;
 
     if (!wallet) throw new Error('Wallet not found');
-    if (Number(wallet.coin_balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
+    if (Number(wallet.balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
 
-    const newBalance = Number(wallet.coin_balance) - FREEZE_PRICE;
+    const newBalance = Number(wallet.balance) - FREEZE_PRICE;
     await (supabase.from('wallets') as any)
-      .update({ coin_balance: newBalance, updated_at: new Date().toISOString() })
+      .update({ balance: newBalance, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
     const { data: streak } = await supabase
@@ -447,16 +447,16 @@ class ApiService {
     // Credit coins to wallet
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance, lifetime_earned')
+      .select('id, balance, lifetime_earned')
       .eq('user_id', session.user.id)
       .single() as any;
 
     if (wallet && task.coin_reward) {
-      const newBalance = Number(wallet.coin_balance) + Number(task.coin_reward);
+      const newBalance = Number(wallet.balance) + Number(task.coin_reward);
       const newLifetime = Number(wallet.lifetime_earned) + Number(task.coin_reward);
       await supabase
         .from('wallets')
-        .update({ coin_balance: newBalance, lifetime_earned: newLifetime, updated_at: new Date().toISOString() })
+        .update({ balance: newBalance, lifetime_earned: newLifetime, updated_at: new Date().toISOString() })
         .eq('id', wallet.id);
 
       // Log transaction
@@ -508,18 +508,18 @@ class ApiService {
 
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance, lifetime_earned')
+      .select('id, balance, lifetime_earned')
       .eq('user_id', session.user.id)
       .single();
 
     if (!wallet) throw new Error('Wallet not found');
 
-    const newBalance = Number((wallet as any).coin_balance) + article.coin_reward;
+    const newBalance = Number((wallet as any).balance) + article.coin_reward;
     const newLifetimeEarned = Number(wallet.lifetime_earned) + article.coin_reward;
 
     await supabase
       .from('wallets')
-      .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+      .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
     await supabase
@@ -820,17 +820,17 @@ class ApiService {
     // Credit user's wallet
     const { data: userWallet } = await supabase
       .from('wallets')
-      .select('id, coin_balance, lifetime_earned')
+      .select('id, balance, lifetime_earned')
       .eq('user_id', completion.user_id)
       .single();
 
     if (userWallet) {
-      const newBalance = Number((userWallet as any).coin_balance) + completion.coins_earned;
+      const newBalance = Number((userWallet as any).balance) + completion.coins_earned;
       const newLifetimeEarned = Number(userWallet.lifetime_earned) + completion.coins_earned;
 
       await supabase
         .from('wallets')
-        .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+        .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
         .eq('id', userWallet.id);
 
       const txId = crypto.randomUUID();
