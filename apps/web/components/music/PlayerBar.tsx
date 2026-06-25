@@ -2,7 +2,7 @@
 
 import { usePlayer } from './PlayerProvider';
 import { useSidebarStore } from '@/stores/sidebarStore';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Shuffle, Repeat } from 'lucide-react';
+import { Shuffle, Repeat } from 'lucide-react';
 
 function fmt(t: number) {
   if (!isFinite(t) || t < 0) t = 0;
@@ -88,9 +88,31 @@ export function PlayerBar() {
         {/* Secondary Controls */}
         <div className="flex items-center justify-end gap-4 w-1/3 text-on-primary-container hidden md:flex">
           <span className="font-data-md text-data-md tabular-nums">{fmt(progress)} / {fmt(duration)}</span>
-          <button className="hover:text-secondary transition-colors">
+          <button className="hover:text-secondary transition-colors" aria-label="Queue">
             <span className="material-symbols-outlined text-[20px]">queue_music</span>
           </button>
+          {/* Download button — only enabled when song permits download */}
+          {current?.is_download_enabled ? (
+            <a
+              href={current.audio_url}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-secondary transition-colors"
+              aria-label="Download song"
+            >
+              <span className="material-symbols-outlined text-[20px]">download</span>
+            </a>
+          ) : (
+            <button
+              disabled
+              className="opacity-30 cursor-not-allowed"
+              title="Download not available for this track"
+              aria-label="Download unavailable"
+            >
+              <span className="material-symbols-outlined text-[20px]">download</span>
+            </button>
+          )}
           <div className="flex items-center gap-2 w-24 relative">
             <span className="material-symbols-outlined text-[20px]">volume_up</span>
             <input

@@ -295,16 +295,16 @@ class ApiService {
     const FREEZE_PRICE = 500;
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, balance')
+      .select('id, coin_balance')
       .eq('user_id', session.user.id)
       .single() as any;
 
     if (!wallet) throw new Error('Wallet not found');
-    if (Number(wallet.balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
+    if (Number(wallet.coin_balance) < FREEZE_PRICE) throw new Error('Insufficient balance');
 
-    const newBalance = Number(wallet.balance) - FREEZE_PRICE;
+    const newBalance = Number(wallet.coin_balance) - FREEZE_PRICE;
     await (supabase.from('wallets') as any)
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
+      .update({ coin_balance: newBalance, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
     const { data: streak } = await supabase
@@ -324,6 +324,70 @@ class ApiService {
     }
 
     return { message: 'Streak freeze purchased', freezesOwned: (streak?.freezes_owned || 0) + 1 };
+  }
+
+  async updateTaskCompletionStreak(userId: string) {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      // Get existing streak
+      const { data: streak, error } = await supabase
+        .from('streaks')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('streak_type', 'TASK_COMPLETION')
+        .maybeSingle() as any;
+
+      if (error) {
+        console.error('[Streak] Failed to fetch streak:', error);
+        return;
+      }
+
+      const nextReset = new Date();
+      nextReset.setDate(nextReset.getDate() + 2); // 48h reset window
+      nextReset.setHours(0, 0, 0, 0);
+
+      if (!streak) {
+        // Create new streak
+        await supabase.from('streaks').insert({
+          user_id: userId,
+          streak_type: 'TASK_COMPLETION',
+          current_streak: 1,
+          longest_streak: 1,
+          last_activity_date: todayStr,
+          next_reset_at: nextReset.toISOString(),
+        });
+      } else {
+        const lastActivity = streak.last_activity_date;
+        if (lastActivity === todayStr) {
+          // Already completed a task today, streak is maintained but not incremented today
+          return;
+        }
+
+        let newCurrent = 1;
+        if (lastActivity === yesterdayStr) {
+          newCurrent = (streak.current_streak || 0) + 1;
+        } // else, lastActivity was before yesterday, so streak broke and resets to 1
+
+        const newLongest = Math.max(newCurrent, streak.longest_streak || 0);
+
+        await supabase
+          .from('streaks')
+          .update({
+            current_streak: newCurrent,
+            longest_streak: newLongest,
+            last_activity_date: todayStr,
+            next_reset_at: nextReset.toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', streak.id);
+      }
+    } catch (e) {
+      console.error('[Streak] Error updating streak:', e);
+    }
   }
 
   async completeTask(taskId: string, adWatched = true) {
@@ -380,6 +444,36 @@ class ApiService {
       if (error) throw new Error(error.message);
     }
 
+    // Credit coins to wallet
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('id, coin_balance, lifetime_earned')
+      .eq('user_id', session.user.id)
+      .single() as any;
+
+    if (wallet && task.coin_reward) {
+      const newBalance = Number(wallet.coin_balance) + Number(task.coin_reward);
+      const newLifetime = Number(wallet.lifetime_earned) + Number(task.coin_reward);
+      await supabase
+        .from('wallets')
+        .update({ coin_balance: newBalance, lifetime_earned: newLifetime, updated_at: new Date().toISOString() })
+        .eq('id', wallet.id);
+
+      // Log transaction
+      await supabase.from('coin_transactions').insert({
+        id: crypto.randomUUID(),
+        user_id: session.user.id,
+        type: 'earn',
+        amount: task.coin_reward,
+        balance_after: newBalance,
+        description: `Completed task: ${task.title}`,
+        reference_id: taskId,
+      });
+    }
+
+    // Update streak
+    await this.updateTaskCompletionStreak(session.user.id);
+
     return { coinsEarned: task.coin_reward, message: 'Task completed successfully' };
   }
 
@@ -414,18 +508,18 @@ class ApiService {
 
     const { data: wallet } = await supabase
       .from('wallets')
-      .select('id, balance, lifetime_earned')
+      .select('id, coin_balance, lifetime_earned')
       .eq('user_id', session.user.id)
       .single();
 
     if (!wallet) throw new Error('Wallet not found');
 
-    const newBalance = Number(wallet.balance) + article.coin_reward;
+    const newBalance = Number((wallet as any).coin_balance) + article.coin_reward;
     const newLifetimeEarned = Number(wallet.lifetime_earned) + article.coin_reward;
 
     await supabase
       .from('wallets')
-      .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+      .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
       .eq('id', wallet.id);
 
     await supabase
@@ -726,17 +820,17 @@ class ApiService {
     // Credit user's wallet
     const { data: userWallet } = await supabase
       .from('wallets')
-      .select('id, balance, lifetime_earned')
+      .select('id, coin_balance, lifetime_earned')
       .eq('user_id', completion.user_id)
       .single();
 
     if (userWallet) {
-      const newBalance = Number(userWallet.balance) + completion.coins_earned;
+      const newBalance = Number((userWallet as any).coin_balance) + completion.coins_earned;
       const newLifetimeEarned = Number(userWallet.lifetime_earned) + completion.coins_earned;
 
       await supabase
         .from('wallets')
-        .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+        .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
         .eq('id', userWallet.id);
 
       const txId = crypto.randomUUID();

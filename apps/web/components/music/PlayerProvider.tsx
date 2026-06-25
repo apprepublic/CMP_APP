@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import type { Song } from '@/lib/queries';
 import { logSongPlay } from '@/lib/queries';
 import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 
 interface PlayerState {
@@ -81,12 +82,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             : api.completeTask(actTask.id, false);
 
           completePromise
-            .then(() => {
+            .then(async () => {
               toast({
                 title: 'Task Completed!',
                 description: `Successfully streamed and earned ${actTask.coinReward} coins.`,
                 variant: 'success',
               });
+              // Update the task completion streak
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user?.id) {
+                  await api.updateTaskCompletionStreak(session.user.id);
+                }
+              } catch (e) {
+                console.warn('[PlayerProvider] Failed to update streak:', e);
+              }
             })
             .catch((err: any) => {
               console.error('Failed to complete streaming task:', err);
