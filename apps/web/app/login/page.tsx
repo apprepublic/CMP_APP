@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
 import { useUserStore } from '@/stores/userStore';
@@ -11,12 +11,23 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useUserStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect already-authenticated users away from the login page
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const returnTo = searchParams?.get('returnTo');
+        router.replace(returnTo ? decodeURIComponent(returnTo) : '/dashboard');
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,11 +51,13 @@ export default function LoginPage() {
           }
         } catch {
           // API server may be down — Supabase auth is the source of truth
-          // Continue with login using Supabase session
         }
 
         await login({ email, password });
-        router.push('/dashboard');
+
+        // Redirect to the page the user was trying to access, or dashboard
+        const returnTo = searchParams?.get('returnTo');
+        router.push(returnTo ? decodeURIComponent(returnTo) : '/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');

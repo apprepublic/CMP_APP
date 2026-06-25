@@ -113,6 +113,8 @@ export const useUserStore = create<UserStore>()(
       },
 
       logout: () => {
+        // Clear Supabase session (invalidates the session cookie/localStorage entry)
+        supabase.auth.signOut();
         api.setToken(null);
         if (typeof window !== 'undefined') {
           localStorage.removeItem('refreshToken');
