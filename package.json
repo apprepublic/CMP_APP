@@ -16,13 +16,16 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "devDependencies": {
-    "turbo": "^2.0.0",
+    "caniuse-lite": "^1.0.30001600",
     "prettier": "^3.2.5",
-    "typescript": "^5.3.3",
-    "caniuse-lite": "^1.0.30001600"
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.3"
   },
   "packageManager": "npm@10.2.4",
   "engines": {
     "node": ">=20"
+  },
+  "optionalDependencies": {
+    "@next/swc-win32-x64-msvc": "^14.2.33"
   }
 }
