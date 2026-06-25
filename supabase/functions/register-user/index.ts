@@ -54,28 +54,15 @@ const handler = async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "Please enter your full name (at least 2 characters)" });
     }
 
-    // Check existing user in auth.users (source of truth for registered emails)
-    const { data: existingAuthUsers, error: authListError } = await supabase.auth.admin.listUsers({
-      filter: {
-        email: email,
-      },
+    // Check existing user in auth.users using helper RPC (source of truth for registered emails)
+    const { data: emailExists, error: rpcError } = await supabase.rpc("check_email_exists", {
+      email_to_check: email,
     });
-    if (authListError) {
-      console.error("Auth list error:", authListError);
+    if (rpcError) {
+      console.error("RPC check_email_exists error:", rpcError);
       return jsonResponse({ error: "Database error. Please try again." });
     }
-    if (existingAuthUsers?.users && existingAuthUsers.users.length > 0) {
-      return jsonResponse({ error: "An account with this email already exists. Please sign in." });
-    }
-
-    // Also check profiles table in case of orphaned records
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (existingProfile) {
+    if (emailExists) {
       return jsonResponse({ error: "An account with this email already exists. Please sign in." });
     }
 
