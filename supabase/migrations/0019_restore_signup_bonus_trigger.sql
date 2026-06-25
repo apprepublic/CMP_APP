@@ -43,7 +43,7 @@ BEGIN
 
     -- Record the signup bonus in coin_transactions (matching live columns: user_id, type, amount, balance_after)
     INSERT INTO public.coin_transactions (id, user_id, type, amount, balance_after, description)
-    VALUES (gen_random_uuid(), NEW.id, 'EARN', 500, 500, 'Signup bonus — Welcome to CMPapp!');
+    VALUES (gen_random_uuid(), NEW.id, 'earn', 500, 500, 'Signup bonus — Welcome to CMPapp!');
   END IF;
   RETURN NEW;
 END;

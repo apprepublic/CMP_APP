@@ -97,9 +97,9 @@ const handler = async (req: Request): Promise<Response> => {
     const userId = authData.user.id;
     console.log("Auth user created:", userId);
 
-    // Generate username from email or full name
-    const baseUsername = pendingReg.full_name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30);
-    const username = `${baseUsername}_${userId.slice(0, 4)}`; // Add unique suffix
+    // Generate unique username from full name + user ID suffix
+    const baseUsername = (pendingReg.full_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 25);
+    const username = `${baseUsername}_${userId.slice(0, 8)}`; // 8-char UUID suffix for uniqueness
 
     // Check if profile already exists
     const { data: profileCheck } = await supabase.from("profiles").select("id").eq("id", userId).maybeSingle();
@@ -116,7 +116,8 @@ const handler = async (req: Request): Promise<Response> => {
         id: userId,
         full_name: pendingReg.full_name,
         username: username,
-        referral_code: pendingReg.referral_code || undefined,
+        // referral_code is intentionally omitted — DB DEFAULT generates a unique code for the new user.
+        // pendingReg.referral_code is the *referrer's* code (used to look up referredBy above).
         referred_by: referredBy,
       });
       if (profileError) {
@@ -126,21 +127,8 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Profile created for user:", userId);
     }
 
-    // Ensure users table row exists (needed for FK on wallets table)
-    // Migration 0009 dropped the auth trigger that used to do this automatically.
-    const { data: userCheck } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
-    if (!userCheck) {
-      const { error: userRowError } = await supabase.from("users").insert({
-        id: userId,
-        email: pendingReg.email,
-        full_name: pendingReg.full_name,
-      });
-      if (userRowError) {
-        console.error("Users row error:", userRowError);
-        // Non-fatal — wallet creation may still work via RLS service role
-      }
-    }
 
+    // Note: wallets.user_id has no FK constraint in the live DB, so no public.users row is needed.
     // Create wallet with 500-coin signup bonus (correct table + column names)
     const { data: walletCheck } = await supabase.from("wallets").select("id").eq("user_id", userId).maybeSingle();
     if (!walletCheck) {
@@ -150,9 +138,8 @@ const handler = async (req: Request): Promise<Response> => {
       const { error: walletError } = await supabase.from("wallets").insert({
         id: walletId,
         user_id: userId,
-        coin_balance: SIGNUP_BONUS,
+        balance: SIGNUP_BONUS,
         lifetime_earned: SIGNUP_BONUS,
-        lifetime_spent: 0,
       });
 
       if (walletError) {
@@ -162,8 +149,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Log the signup bonus transaction
       await supabase.from("coin_transactions").insert({
-        wallet_id: walletId,
-        type: "EARN",
+        user_id: userId,
+        type: "earn",
         amount: SIGNUP_BONUS,
         balance_after: SIGNUP_BONUS,
         description: "Signup bonus — Welcome to CMPapp!",
