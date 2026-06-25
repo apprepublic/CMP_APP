@@ -54,9 +54,17 @@ const handler = async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "Please enter your full name (at least 2 characters)" });
     }
 
-    // Efficient duplicate check: use getUserByEmail (O(1)) instead of listUsers() (O(N))
-    const { data: existingAuthUser } = await supabase.auth.admin.getUserByEmail(email);
-    if (existingAuthUser?.user) {
+    // Check existing user in auth.users (source of truth for registered emails)
+    const { data: existingAuthUsers, error: authListError } = await supabase.auth.admin.listUsers({
+      filter: {
+        email: email,
+      },
+    });
+    if (authListError) {
+      console.error("Auth list error:", authListError);
+      return jsonResponse({ error: "Database error. Please try again." });
+    }
+    if (existingAuthUsers?.users && existingAuthUsers.users.length > 0) {
       return jsonResponse({ error: "An account with this email already exists. Please sign in." });
     }
 
