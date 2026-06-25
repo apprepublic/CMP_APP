@@ -11,8 +11,8 @@ export default function VerifyPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'loading' | 'code' | 'password'>('loading');
   const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [referralCode, setReferralCode] = useState('');
+  // verificationToken is preserved from the URL link so the password step can re-use it
+  const [verificationToken, setVerificationToken] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,15 +26,18 @@ export default function VerifyPage() {
     const token = params.get('token');
     const urlEmail = params.get('email');
 
-    if (urlEmail) setEmail(urlEmail);
+    if (urlEmail) setEmail(decodeURIComponent(urlEmail));
 
     if (token) {
+      // Token from email link — verify it immediately; password is then collected in mode='password'
+      setVerificationToken(token);
       verifyWithToken(token);
     } else {
       setMode('code');
     }
   }, []);
 
+  /** Step 1a: Verify via email-link token. Returns requiresPassword — we then collect the password. */
   const verifyWithToken = async (token: string) => {
     setIsLoading(true);
     setError('');
@@ -48,33 +51,32 @@ export default function VerifyPage() {
       if (data?.error) throw new Error(data.error);
 
       if (data?.requiresPassword) {
-        setEmail(data.email);
-        setFullName(data.fullName);
-        setReferralCode(data.referralCode || '');
+        setEmail(data.email || '');
         setMode('password');
       } else if (data?.success) {
         setSuccess(true);
         setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed');
+      setError(err.message || 'Verification failed. Please try entering the code manually.');
       setMode('code');
     } finally {
       setIsLoading(false);
     }
   };
 
+  /** Step 1b: Verify via 6-digit code entered manually. Returns requiresPassword. */
   const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (code.length !== 6) {
-      setError('Please enter a 6-digit verification code');
+      setError('Please enter the 6-digit verification code');
       return;
     }
 
     if (!email) {
-      setError('Email not found. Please register again.');
+      setError('Email address is required. Please go back to registration.');
       return;
     }
 
@@ -89,9 +91,7 @@ export default function VerifyPage() {
       if (data?.error) throw new Error(data.error);
 
       if (data?.requiresPassword) {
-        setEmail(data.email);
-        setFullName(data.fullName);
-        setReferralCode(data.referralCode || '');
+        setEmail(data.email || email);
         setMode('password');
       } else if (data?.success) {
         setSuccess(true);
@@ -104,6 +104,16 @@ export default function VerifyPage() {
     }
   };
 
+  /**
+   * Step 2: Set password and create the account.
+   *
+   * CRITICAL: The edge function needs to look up the pending_registrations row.
+   * - If the user came via EMAIL LINK → we have `verificationToken`, send { token, email, password }
+   * - If the user came via CODE ENTRY → we have `code` + `email`, send { code, email, password }
+   *
+   * Without this, token-flow users send { code: "", email, password } which fails the
+   * CODE_RE test in the edge function and returns "Token or code+email required".
+   */
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -126,8 +136,13 @@ export default function VerifyPage() {
     setIsLoading(true);
 
     try {
+      // Build the lookup payload — prefer token if available (came via email link)
+      const lookupPayload = verificationToken
+        ? { token: verificationToken, email, password }
+        : { code, email, password };
+
       const { data, error: funcError } = await supabase.functions.invoke('verify-registration', {
-        body: { code, email, password },
+        body: lookupPayload,
       });
 
       if (funcError) throw new Error(funcError.message || 'Failed to create account');
@@ -136,6 +151,8 @@ export default function VerifyPage() {
       if (data?.success) {
         setSuccess(true);
         setTimeout(() => router.push('/login'), 2000);
+      } else {
+        throw new Error('Account creation failed. Please try again.');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
@@ -166,7 +183,7 @@ export default function VerifyPage() {
         {mode === 'loading' ? (
           <div className="text-center py-12">
             <Loader2 className="w-10 h-10 animate-spin text-[#B8860B] mx-auto mb-4" />
-            <p className="text-on-surface-variant">Verifying...</p>
+            <p className="text-on-surface-variant">Verifying your email...</p>
           </div>
         ) : mode === 'code' ? (
           <form onSubmit={handleCodeSubmit} className="space-y-6">
@@ -176,7 +193,8 @@ export default function VerifyPage() {
               </div>
               <h2 className="font-h3 text-h3 text-primary-container mb-2">Verify Your Email</h2>
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Enter the 6-digit code sent to {email || 'your email'}
+                Enter the 6-digit code sent to{' '}
+                <span className="text-[#B8860B] font-semibold">{email || 'your email'}</span>
               </p>
             </div>
 
@@ -184,6 +202,28 @@ export default function VerifyPage() {
               <div className="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm font-body-sm flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {/* Email field — shown when email is missing from URL params */}
+            {!email && (
+              <div>
+                <label className="block font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase" htmlFor="email-field">
+                  Email Address
+                </label>
+                <div className="relative rounded-lg">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
+                  <input
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-alt border border-outline-variant rounded-lg text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:border-primary-container transition-colors"
+                    id="email-field"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
+                    placeholder="your@email.com"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             )}
 
@@ -204,6 +244,7 @@ export default function VerifyPage() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
                   disabled={isLoading}
+                  autoComplete="one-time-code"
                 />
               </div>
             </div>
@@ -230,6 +271,7 @@ export default function VerifyPage() {
             </div>
           </form>
         ) : (
+          /* mode === 'password' */
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
             <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#B8860B]/30 mb-4">
@@ -237,7 +279,8 @@ export default function VerifyPage() {
               </div>
               <h2 className="font-h3 text-h3 text-primary-container mb-2">Create Password</h2>
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Almost done! Create a password for your account
+                Almost done! Create a secure password for{' '}
+                <span className="text-[#B8860B] font-semibold">{email}</span>
               </p>
             </div>
 
@@ -262,6 +305,7 @@ export default function VerifyPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={isLoading}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -289,6 +333,7 @@ export default function VerifyPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={isLoading}
+                  autoComplete="new-password"
                 />
               </div>
             </div>
