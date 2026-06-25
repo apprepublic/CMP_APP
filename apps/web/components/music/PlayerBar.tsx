@@ -21,14 +21,18 @@ export function PlayerBar() {
 
   return (
     <div
-      className={`fixed bottom-16 lg:bottom-0 z-50 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 ${
+      className={`fixed bottom-16 lg:bottom-0 z-30 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 ${
         isCollapsed
           ? 'w-full lg:w-[calc(100%-72px)] lg:left-[72px]'
           : 'w-full lg:w-[calc(100%-16rem)] lg:left-64'
       }`}
     >
-      {/* Progress Bar */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-surface-variant/20 cursor-pointer">
+      {/* Progress Bar — scoped to its own container, does NOT span the full bar */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-surface-variant/20">
+        <div className="h-full bg-secondary-container relative" style={{ width: `${pct}%` }}>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-secondary-fixed rounded-full shadow-md pointer-events-none"></div>
+        </div>
+        {/* Seek input overlaid only on the 1px progress track */}
         <input
           type="range"
           min={0}
@@ -36,11 +40,9 @@ export function PlayerBar() {
           value={progress}
           onChange={(e) => seek(Number(e.target.value))}
           aria-label="Seek"
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          style={{ zIndex: 2 }}
         />
-        <div className="h-full bg-secondary-container relative" style={{ width: `${pct}%` }}>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-secondary-fixed rounded-full shadow-md scale-0 hover:scale-100 transition-transform pointer-events-none"></div>
-        </div>
       </div>
 
       <div className="h-[72px] px-4 md:px-6 flex items-center justify-between">
