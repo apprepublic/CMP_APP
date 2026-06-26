@@ -4,35 +4,52 @@ GRANT INSERT ON public.wallets TO authenticated;
 GRANT INSERT ON public.coin_transactions TO authenticated;
 GRANT SELECT ON public.coin_transactions TO authenticated;
 
--- Fix 2: Add RLS policies so users can update their OWN wallet
--- and creators can update the earner's wallet via approval
-CREATE POLICY "Users can update own wallet"
-  ON public.wallets
-  FOR UPDATE
-  TO authenticated
-  USING (user_id = auth.uid());
+-- Fix 2: Add RLS policies idempotently using DO blocks to avoid "already exists" errors
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy
+    WHERE polrelid = 'wallets'::regclass AND polname = 'Users can update own wallet'
+  ) THEN
+    CREATE POLICY "Users can update own wallet"
+      ON public.wallets
+      FOR UPDATE
+      TO authenticated
+      USING (user_id = auth.uid());
+  END IF;
+END $$;
 
--- Fix 3: Add RLS policy allowing insert to coin_transactions for own user
-CREATE POLICY "Users can insert own transactions"
-  ON public.coin_transactions
-  FOR UPDATE
-  TO authenticated
-  USING (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy
+    WHERE polrelid = 'coin_transactions'::regclass AND polname = 'Users can insert transactions'
+  ) THEN
+    CREATE POLICY "Users can insert transactions"
+      ON public.coin_transactions
+      FOR INSERT
+      TO authenticated
+      WITH CHECK (user_id = auth.uid());
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert transactions"
-  ON public.coin_transactions
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy
+    WHERE polrelid = 'coin_transactions'::regclass AND polname = 'Users can select own transactions'
+  ) THEN
+    CREATE POLICY "Users can select own transactions"
+      ON public.coin_transactions
+      FOR SELECT
+      TO authenticated
+      USING (user_id = auth.uid());
+  END IF;
+END $$;
 
-CREATE POLICY "Users can select own transactions"
-  ON public.coin_transactions
-  FOR SELECT
-  TO authenticated
-  USING (user_id = auth.uid());
-
--- Fix 4: Create a SECURITY DEFINER function so task creators can credit 
--- another user's wallet on approval (bypasses RLS safely)
+-- Fix 3: Create a SECURITY DEFINER function so task creators can credit
+-- another user's wallet on approval (bypasses RLS safely).
+-- Uses CREATE OR REPLACE so it is always idempotent.
 CREATE OR REPLACE FUNCTION public.approve_task_completion(
   p_completion_id UUID,
   p_reviewer_id UUID,
@@ -48,7 +65,6 @@ DECLARE
   v_wallet RECORD;
   v_new_balance NUMERIC;
   v_new_lifetime NUMERIC;
-  v_tx_id UUID;
   v_creator_id UUID;
 BEGIN
   -- Verify the reviewer is the task creator
@@ -97,9 +113,8 @@ BEGIN
   WHERE id = v_wallet.id;
 
   -- Record the transaction
-  v_tx_id := gen_random_uuid();
   INSERT INTO coin_transactions (id, user_id, type, amount, balance_after, description, reference_id)
-  VALUES (v_tx_id, v_completion.user_id, 'earn', v_completion.coins_earned, v_new_balance, 'Earned from posted task', p_posted_task_id::text);
+  VALUES (gen_random_uuid(), v_completion.user_id, 'earn', v_completion.coins_earned, v_new_balance, 'Earned from posted task', p_posted_task_id::text);
 
   RETURN jsonb_build_object(
     'success', true,
