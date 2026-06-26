@@ -143,6 +143,7 @@ export interface ReferralStats {
   activeReferrals: number;
   totalEarned: number;
   weeklyEarnings: number;
+  weeklyData: { name: string; coins: number }[];
 }
 
 function unwrap<T>(res: { data: T | null; error: any }): T {
@@ -220,17 +221,29 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
   let totalEarned = 0;
   let weeklyEarnings = 0;
   
+  const now = new Date();
+  const weeks = Array.from({ length: 4 }).map((_, i) => {
+    const end = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+    const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return { name: `Week ${4 - i}`, start, end, coins: 0 };
+  }).reverse();
+  
   const { data: txs } = await db.from('coin_transactions').select('amount, created_at').eq('user_id', userId).eq('type', 'earn');
   if (txs) {
     totalEarned = txs.reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
     
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const oneWeekAgoStr = oneWeekAgo.toISOString();
-    
+    const oneWeekAgo = weeks[3].start;
     weeklyEarnings = txs
-      .filter((tx: any) => tx.created_at >= oneWeekAgoStr)
+      .filter((tx: any) => new Date(tx.created_at) >= oneWeekAgo)
       .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+      
+    txs.forEach((tx: any) => {
+      const txDate = new Date(tx.created_at);
+      const week = weeks.find(w => txDate >= w.start && txDate <= w.end);
+      if (week) {
+        week.coins += Number(tx.amount);
+      }
+    });
   }
 
   return {
@@ -238,6 +251,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
     activeReferrals,
     totalEarned,
     weeklyEarnings,
+    weeklyData: weeks.map(w => ({ name: w.name, coins: w.coins })),
   };
 }
 

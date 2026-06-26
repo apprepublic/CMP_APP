@@ -11,6 +11,7 @@ export interface Wallet {
   lifetime_earned: number;
   created_at: string;
   updated_at: string;
+  referral_code: string;
 }
 
 async function fetchWallet(): Promise<Wallet | null> {
@@ -19,7 +20,7 @@ async function fetchWallet(): Promise<Wallet | null> {
 
   const { data, error } = await supabase
     .from('wallets')
-    .select('id, user_id, balance, lifetime_earned, created_at, updated_at')
+    .select('id, user_id, balance, lifetime_earned, created_at, updated_at, referral_code')
     .eq('user_id', session.user.id)
     .single();
 
@@ -33,6 +34,7 @@ async function fetchWallet(): Promise<Wallet | null> {
     lifetime_earned: Number(w.lifetime_earned) || 0,
     created_at: w.created_at,
     updated_at: w.updated_at,
+    referral_code: w.referral_code,
   };
 }
 
