@@ -28,7 +28,7 @@ function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose:
   const actions = requirements.actions || [];
   const targetUrl = requirements.targetUrl || '';
   const requiresScreenshot = requirements.requiresScreenshot || false;
-  const needsActionUrl = !!(platform || targetUrl || actions.length > 0);
+  const needsActionUrl = task.type === 'SHARE_SOCIAL';
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

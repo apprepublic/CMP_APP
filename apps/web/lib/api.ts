@@ -721,11 +721,8 @@ class ApiService {
     if (requirements.requiresScreenshot && !proofData?.screenshot) {
       throw new Error('Screenshot proof is required');
     }
-    if (requirements.targetUrl && !proofData?.actionUrl) {
-      throw new Error('You must provide the URL of your action (e.g., share link, comment link)');
-    }
-    if (requirements.platform === 'twitter' && !proofData?.actionUrl) {
-      throw new Error('Please provide the link to your tweet/like/share');
+    if (task.type === 'SHARE_SOCIAL' && !proofData?.actionUrl) {
+      throw new Error('You must provide the URL of your shared post/action');
     }
 
     const isStreamMusic = task.type === 'STREAM_MUSIC' || proofData?.platform === 'STREAM_MUSIC';
