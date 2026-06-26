@@ -2,8 +2,10 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTasks, useDailyTasks, useCompleteTask, usePostedTasks, useCompletePostedTask } from '@/lib/hooks';
 import { api } from '@/lib/api';
+import { usePlayer } from '@/components/music/PlayerProvider';
 
 interface ProofModalState {
   isOpen: boolean;
@@ -285,6 +287,8 @@ function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose:
 }
 
 export default function EarnMarketplacePage() {
+  const router = useRouter();
+  const { play } = usePlayer();
   const { data: resp, isLoading: systemTasksLoading } = useTasks();
   const { data: dailyResp } = useDailyTasks();
   const { data: postedResp, isLoading: postedTasksLoading } = usePostedTasks();
@@ -343,19 +347,34 @@ export default function EarnMarketplacePage() {
       
       const isDownloadEnabled = task.isDownloadEnabled || task.is_download_enabled || false;
       
-      const queryParams = new URLSearchParams({
-        play: 'true',
-        taskId: task.id,
-        songId: songId,
-        audioUrl: audioUrl,
-        title: task.title || '',
-        coverUrl: coverUrl,
-        coinReward: String(coinReward),
-        isPosted: task.isPostedTask ? 'true' : 'false',
-        isDownloadEnabled: isDownloadEnabled ? 'true' : 'false',
+      play({
+        id: songId || 'temp-task-song',
+        artist_id: 'task-creator',
+        title: task.title || 'Stream Task Track',
+        slug: 'task-track',
+        description: 'Stream to earn coins',
+        audio_url: audioUrl,
+        cover_url: coverUrl || null,
+        duration_seconds: task.duration_seconds || 180,
+        genre: null,
+        coin_reward: coinReward,
+        play_count: 0,
+        is_featured: false,
+        is_download_enabled: isDownloadEnabled,
+        artist: {
+          id: 'creator',
+          stage_name: 'Task Artist',
+          slug: 'task-artist',
+          avatar_url: null,
+          is_verified: false
+        }
+      }, [], {
+        id: task.id,
+        isPosted: task.isPostedTask,
+        coinReward: coinReward
       });
       
-      window.location.href = `/music?${queryParams.toString()}`;
+      router.push('/music');
       return;
     }
 
