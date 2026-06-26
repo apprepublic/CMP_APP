@@ -650,6 +650,7 @@ class ApiService {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('Not authenticated');
 
+    // PENDING and PAUSED both go to ACTIVE; ACTIVE goes to PAUSED
     const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
     const isActive = newStatus === 'ACTIVE';
 
@@ -662,6 +663,7 @@ class ApiService {
       .single();
 
     if (error) throw new Error(error.message);
+    if (!data) throw new Error('Task not found or you do not have permission to update it');
     return { task: data };
   }
 
@@ -834,61 +836,17 @@ class ApiService {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('Not authenticated');
 
-    // Verify user is the task creator
-    const { data: task } = await supabase
-      .from('user_posted_tasks')
-      .select('creator_id')
-      .eq('id', postedTaskId)
-      .single();
-    if (!task || task.creator_id !== session.user.id) throw new Error('Only the task creator can approve');
+    // Use SECURITY DEFINER RPC to approve and credit wallet atomically.
+    // This is required because the task creator needs to credit a DIFFERENT user's wallet,
+    // which would be blocked by RLS if done from the client directly.
+    const { data, error } = await supabase.rpc('approve_task_completion', {
+      p_completion_id: completionId,
+      p_reviewer_id: session.user.id,
+      p_posted_task_id: postedTaskId,
+    });
 
-    // Get completion details
-    const { data: completion, error: completionError } = await supabase
-      .from('user_task_completions')
-      .select('*')
-      .eq('id', completionId)
-      .eq('status', 'PENDING')
-      .single();
-    if (completionError || !completion) throw new Error('Completion not found or already processed');
-
-    // Approve the completion
-    const { error: updateError } = await supabase
-      .from('user_task_completions')
-      .update({ status: 'APPROVED', reviewer_id: session.user.id, reviewed_at: new Date().toISOString() })
-      .eq('id', completionId);
-    if (updateError) throw new Error(updateError.message);
-
-    // Credit user's wallet
-    const { data: userWallet } = await supabase
-      .from('wallets')
-      .select('id, balance, lifetime_earned')
-      .eq('user_id', completion.user_id)
-      .single();
-
-    if (userWallet) {
-      const newBalance = Number((userWallet as any).balance) + completion.coins_earned;
-      const newLifetimeEarned = Number(userWallet.lifetime_earned) + completion.coins_earned;
-
-      await supabase
-        .from('wallets')
-        .update({ balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
-        .eq('id', userWallet.id);
-
-      const txId = crypto.randomUUID();
-      await supabase
-        .from('coin_transactions')
-        .insert({
-          id: txId,
-          user_id: completion.user_id,
-          type: 'earn',
-          amount: completion.coins_earned,
-          balance_after: newBalance,
-          description: `Earned from posted task`,
-          reference_id: postedTaskId,
-        });
-    }
-
-    return { message: 'Completion approved and coins credited' };
+    if (error) throw new Error(error.message);
+    return { message: 'Completion approved and coins credited', data };
   }
 
   async rejectCompletion(completionId: string, postedTaskId: string, reason: string) {
