@@ -91,7 +91,9 @@ const handler = async (req: Request): Promise<Response> => {
       if (authError.message?.includes("already been registered") || authError.message?.includes("User already exists")) {
         return jsonResponse({ error: "This email is already registered. Please sign in instead." });
       }
-      return jsonResponse({ error: "Failed to create account: " + authError.message });
+      // Fallback: include full error object if message missing
+      const errMsg = authError.message ?? (authError.msg ?? JSON.stringify(authError));
+      return jsonResponse({ error: "Failed to create account: " + errMsg });
     }
 
     const userId = authData.user.id;

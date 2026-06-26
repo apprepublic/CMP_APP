@@ -41,7 +41,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.wallets WHERE user_id = NEW.id) THEN
     v_wallet_id := gen_random_uuid();
 
-    INSERT INTO public.wallets (id, user_id, coin_balance, lifetime_earned)
+    INSERT INTO public.wallets (id, user_id, balance, lifetime_earned)
     VALUES (v_wallet_id, NEW.id, 500, 500);
 
     -- Record the signup bonus in coin_transactions (matching live columns: wallet_id, type, amount, balance_after)
