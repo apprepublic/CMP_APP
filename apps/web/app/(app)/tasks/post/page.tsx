@@ -167,6 +167,24 @@ export default function PostTaskPage() {
   const [selectedActions, setSelectedActions] = useState<string[]>(['LIKE']);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+
+  const addPollOption = () => {
+    setPollOptions(prev => [...prev, '']);
+  };
+
+  const removePollOption = (index: number) => {
+    if (pollOptions.length <= 2) return;
+    setPollOptions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updatePollOption = (index: number, value: string) => {
+    setPollOptions(prev => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
 
   const coinPerParticipant = useMemo(() => {
     return Math.floor(formData.totalBudget / formData.participantThreshold);
@@ -194,8 +212,13 @@ export default function PostTaskPage() {
       return baseValid && formData.targetUrl.length > 0 && selectedActions.length > 0;
     }
 
+    if (formData.type === 'VOTE') {
+      const nonEmptyOptions = pollOptions.filter(o => o.trim().length > 0);
+      return baseValid && nonEmptyOptions.length >= 2;
+    }
+
     return baseValid;
-  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading, audioUploaded]);
+  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading, audioUploaded, pollOptions]);
 
   useEffect(() => {
     const minBudget = TASK_TYPES.find(t => t.value === formData.type)?.minBudget ?? 1000;
@@ -261,13 +284,18 @@ export default function PostTaskPage() {
         title = `Stream Music: ${audioName}`;
         description = `Stream this ${data.genre || 'music'} track (${Math.floor(data.durationSeconds / 60)}:${(data.durationSeconds % 60).toString().padStart(2, '0')}) to earn ${coinPerParticipant} coins.${data.isDownloadEnabled ? ' Download also available.' : ''}`;
         break;
+      case 'VOTE':
+        const validOptionsCount = pollOptions.filter(o => o.trim().length > 0).length;
+        title = `Vote/Poll: ${pollOptions.find(o => o.trim().length > 0) || 'New Poll'}`;
+        description = `Participate in this poll with ${validOptionsCount} choices to earn ${coinPerParticipant} coins.`;
+        break;
       default:
         title = 'Complete Task';
         description = 'Complete this task to earn coins.';
     }
 
     return { title, description };
-  }, [selectedPlatform, selectedActions, coinPerParticipant]);
+  }, [selectedPlatform, selectedActions, coinPerParticipant, pollOptions]);
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
@@ -348,6 +376,12 @@ export default function PostTaskPage() {
           newErrors.actions = 'Select at least one action';
         }
         break;
+      case 'VOTE':
+        const nonEmptyOpts = pollOptions.filter(o => o.trim().length > 0);
+        if (nonEmptyOpts.length < 2) {
+          newErrors.pollOptions = 'At least 2 non-empty poll options are required';
+        }
+        break;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -384,6 +418,12 @@ export default function PostTaskPage() {
           genre: formData.genre || undefined,
           durationSeconds: formData.durationSeconds,
           isDownloadEnabled: formData.isDownloadEnabled,
+        };
+      }
+
+      if (formData.type === 'VOTE') {
+        payload.pollOptions = {
+          options: pollOptions.filter(o => o.trim().length > 0),
         };
       }
 
@@ -946,6 +986,52 @@ export default function PostTaskPage() {
           </div>
         )}
 
+        {formData.type === 'VOTE' && (
+          <div className="bg-surface rounded-xl p-6 border border-[#B8860B]/30">
+            <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]">how_to_vote</span>
+              Poll Requirements
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Options (Min 2)</label>
+                {pollOptions.map((option, index) => (
+                  <div key={index} className="flex items-center gap-3 mb-3">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => updatePollOption(index, e.target.value)}
+                      placeholder={`Option ${index + 1}`}
+                      className={`flex-1 bg-surface border rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] ${
+                        errors.pollOptions && pollOptions.filter(o => o.trim().length > 0).length < 2 ? 'border-error-alert' : 'border-outline-variant/30'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePollOption(index)}
+                      disabled={pollOptions.length <= 2}
+                      className="p-3 text-on-surface-variant hover:text-error-alert hover:bg-error-alert/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="material-symbols-outlined">delete</span>
+                    </button>
+                  </div>
+                ))}
+                {errors.pollOptions && (
+                  <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.pollOptions}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={addPollOption}
+                  className="flex items-center gap-2 text-[#B8860B] hover:text-[#8B6914] font-body-md text-body-md py-2 transition-colors"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                  Add Option
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isSocialEngagement && (
           <div className="bg-surface rounded-xl p-6 border border-[#B8860B]/30">
             <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
@@ -1289,6 +1375,21 @@ export default function PostTaskPage() {
                   </>
                 )}
                 
+                {formData.type === 'VOTE' && (
+                  <>
+                    <div>
+                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Poll Options</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {pollOptions.filter(o => o.trim().length > 0).map((opt, idx) => (
+                          <li key={idx} className="font-body-md text-body-md text-on-surface">
+                            {opt}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
+
                 {isSocialEngagement && (
                   <>
                     <div className="flex items-center gap-2">

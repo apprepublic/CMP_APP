@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { title, description, type, participantThreshold, totalBudget, socialRequirements, musicMetadata } = body;
+    const { title, description, type, participantThreshold, totalBudget, socialRequirements, musicMetadata, pollOptions } = body;
 
     // Validations
     if (!title || title.length < 3 || title.length > 200) {
@@ -107,6 +107,15 @@ const handler = async (req: Request): Promise<Response> => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (type === "VOTE") {
+      if (!pollOptions || !Array.isArray(pollOptions.options) || pollOptions.options.filter((o: string) => o.trim().length > 0).length < 2) {
+        return new Response(JSON.stringify({ error: "Vote/Poll tasks require at least 2 non-empty options" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const totalCost = CREATION_FEE + totalBudget;
@@ -180,8 +189,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       const taskResult = await client.queryObject`
-        INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id)
-        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId})
+        INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id, poll_options)
+        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId}, ${pollOptions ? JSON.stringify(pollOptions) : null}::jsonb)
         RETURNING id
       `;
       const postedTask = taskResult.rows[0] as any;

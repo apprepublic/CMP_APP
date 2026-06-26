@@ -571,6 +571,9 @@ class ApiService {
       durationSeconds?: number;
       isDownloadEnabled?: boolean;
     };
+    pollOptions?: {
+      options: string[];
+    };
   }) {
     const url = `${EDGE_FUNCTION_URL}/create-posted-task`;
     const { data: { session } } = await supabase.auth.getSession();
