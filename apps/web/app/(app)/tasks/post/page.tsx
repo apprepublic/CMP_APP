@@ -410,6 +410,54 @@ export default function PostTaskPage() {
         };
       }
 
+      if (formData.type === 'WATCH_VIDEO') {
+        let platform = 'YOUTUBE';
+        try {
+          const host = new URL(formData.videoUrl).hostname.toLowerCase();
+          if (host.includes('tiktok')) platform = 'TIKTOK';
+          else if (host.includes('instagram')) platform = 'INSTAGRAM';
+          else if (host.includes('facebook')) platform = 'FACEBOOK';
+          else if (host.includes('twitter') || host.includes('x.com')) platform = 'TWITTER';
+        } catch (e) {}
+
+        payload.socialRequirements = {
+          platform,
+          targetUrl: formData.videoUrl,
+          actions: ['WATCH'],
+          minWatchTime: formData.minWatchTime,
+          requiresScreenshot: true,
+        };
+      }
+
+      if (formData.type === 'APP_DOWNLOAD') {
+        payload.socialRequirements = {
+          targetUrl: formData.appStoreUrl,
+          actions: ['DOWNLOAD', ...(formData.requiresReview ? ['REVIEW'] : [])],
+          minRating: formData.requiresReview ? formData.minRating : undefined,
+          requiresScreenshot: true,
+        };
+      }
+
+      if (formData.type === 'COMPLETE_SURVEY') {
+        payload.socialRequirements = {
+          targetUrl: formData.surveyUrl,
+          actions: ['COMPLETE_SURVEY'],
+          minQuestions: formData.minQuestions,
+          requiresScreenshot: true,
+        };
+      }
+
+      if (formData.type === 'SHARE_SOCIAL') {
+        payload.socialRequirements = {
+          platform: formData.sharePlatform,
+          actions: ['SHARE'],
+          commentText: formData.shareMessage,
+          requiresHashtag: formData.requiresHashtag,
+          hashtag: formData.hashtag,
+          requiresScreenshot: true,
+        };
+      }
+
       if (formData.type === 'STREAM_MUSIC') {
         payload.musicMetadata = {
           audioUrl: formData.audioUrl,
