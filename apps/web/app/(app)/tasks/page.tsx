@@ -314,21 +314,29 @@ export default function EarnMarketplacePage() {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [proofModal, setProofModal] = useState<ProofModalState>({ isOpen: false, task: null });
 
-  const allSystemTasks = resp?.tasks?.map((t: any) => ({
-    ...t,
-    displayCategory: formatTaskType(t.type || t.category),
-  })) ?? [];
-  
-  const allPostedTasks = postedResp?.tasks?.map((t: any) => ({
-    ...t,
-    isPostedTask: true,
-    coinReward: t.coin_per_participant || t.coinPerParticipant,
-    displayCategory: formatTaskType(t.type),
-    current_participants: t.currentParticipants || t.current_participants,
-    participant_threshold: t.participantThreshold || t.participant_threshold,
-  })) ?? [];
-  
-  const allTasks = [...allSystemTasks, ...allPostedTasks];
+  const allTasks = useMemo(() => {
+    const sysTasks = resp?.tasks?.map((t: any) => ({
+      ...t,
+      displayCategory: formatTaskType(t.type || t.category),
+    })) ?? [];
+    
+    const pTasks = postedResp?.tasks?.map((t: any) => ({
+      ...t,
+      isPostedTask: true,
+      coinReward: t.coin_per_participant || t.coinPerParticipant,
+      displayCategory: formatTaskType(t.type),
+      current_participants: t.currentParticipants || t.current_participants,
+      participant_threshold: t.participantThreshold || t.participant_threshold,
+    })) ?? [];
+
+    const uniqueMap = new Map();
+    sysTasks.forEach((t: any) => uniqueMap.set(t.id, t));
+    pTasks.forEach((t: any) => uniqueMap.set(t.id, t));
+    
+    // Sort tasks logically or just return the values
+    return Array.from(uniqueMap.values());
+  }, [resp, postedResp]);
+
   const dailyTasks = dailyResp?.tasks ?? [];
 
   const categories = useMemo(() => {
@@ -466,7 +474,7 @@ export default function EarnMarketplacePage() {
         </div>
       </div>
 
-      <div className="flex overflow-x-auto pb-4 mb-8 gap-4 hide-scrollbar border-b border-outline-variant/30">
+      <div className="flex overflow-x-auto pb-4 mb-8 gap-4 hide-scrollbar border-b border-outline-variant/30 w-full max-w-full">
         {categories.map((category) => (
           <button
             key={category}
