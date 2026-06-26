@@ -190,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       const taskResult = await client.queryObject`
         INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id, vote_requirements)
-        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'PENDING', 0, false, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId}, ${voteRequirements ? JSON.stringify(voteRequirements) : null}::jsonb)
+        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'ACTIVE', 0, true, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId}, ${voteRequirements ? JSON.stringify(voteRequirements) : null}::jsonb)
         RETURNING id
       `;
       const postedTask = taskResult.rows[0] as any;
