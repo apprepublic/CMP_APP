@@ -286,6 +286,23 @@ function ProofSubmissionModal({ task, onClose, onSubmit }: { task: any; onClose:
   );
 }
 
+const TASK_TYPES_MAP: Record<string, string> = {
+  'WATCH_VIDEO': 'Watch Video',
+  'SHARE_SOCIAL': 'Share on Social',
+  'SOCIAL_ENGAGEMENT': 'Social Engagement',
+  'COMPLETE_SURVEY': 'Complete Survey',
+  'APP_DOWNLOAD': 'App Download',
+  'VOTE': 'Vote/Poll',
+  'STREAM_MUSIC': 'Stream Music',
+};
+
+const formatTaskType = (typeOrCategory: string) => {
+  if (!typeOrCategory) return 'Other';
+  if (TASK_TYPES_MAP[typeOrCategory]) return TASK_TYPES_MAP[typeOrCategory];
+  if (typeOrCategory === 'USER_CREATED') return 'Other';
+  return typeOrCategory.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+};
+
 export default function EarnMarketplacePage() {
   const router = useRouter();
   const { play } = usePlayer();
@@ -297,12 +314,16 @@ export default function EarnMarketplacePage() {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [proofModal, setProofModal] = useState<ProofModalState>({ isOpen: false, task: null });
 
-  const allSystemTasks = resp?.tasks ?? [];
+  const allSystemTasks = resp?.tasks?.map((t: any) => ({
+    ...t,
+    displayCategory: formatTaskType(t.type || t.category),
+  })) ?? [];
+  
   const allPostedTasks = postedResp?.tasks?.map((t: any) => ({
     ...t,
     isPostedTask: true,
     coinReward: t.coin_per_participant || t.coinPerParticipant,
-    category: t.category || 'USER_CREATED',
+    displayCategory: formatTaskType(t.type),
     current_participants: t.currentParticipants || t.current_participants,
     participant_threshold: t.participantThreshold || t.participant_threshold,
   })) ?? [];
@@ -312,13 +333,13 @@ export default function EarnMarketplacePage() {
 
   const categories = useMemo(() => {
     const set = new Set<string>();
-    allTasks.forEach((t: any) => t.category && set.add(t.category));
+    allTasks.forEach((t: any) => t.displayCategory && set.add(t.displayCategory));
     return ['All', ...Array.from(set)];
   }, [allTasks]);
 
   const filteredTasks = useMemo(() => {
     if (activeCategory === 'All') return allTasks;
-    return allTasks.filter((t: any) => t.category === activeCategory);
+    return allTasks.filter((t: any) => t.displayCategory === activeCategory);
   }, [allTasks, activeCategory]);
 
   const dailyStatusMap = useMemo(() => {
@@ -456,7 +477,7 @@ export default function EarnMarketplacePage() {
                 : 'bg-surface-alt text-on-surface-variant hover:bg-surface-dim border-outline-variant/50'
             }`}
           >
-            {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}
+            {category}
           </button>
         ))}
       </div>
