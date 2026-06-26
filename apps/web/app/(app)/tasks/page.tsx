@@ -419,12 +419,7 @@ export default function EarnMarketplacePage() {
   return (
     <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full">
       <div className="mb-10 mt-6 lg:mt-0 flex flex-col md:flex-row md:items-start justify-between gap-6">
-        <div>
-          <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-primary mb-4">Task Marketplace</h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-            Complete verified tasks to earn premium rewards and build your creative capital. Watch out for Ad-Gated premium tasks for higher payouts.
-          </p>
-        </div>
+
         <div className="flex flex-col sm:flex-row gap-4">
           <Link 
             href="/tasks/post"
