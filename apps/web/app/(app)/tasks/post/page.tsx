@@ -167,24 +167,10 @@ export default function PostTaskPage() {
   const [selectedActions, setSelectedActions] = useState<string[]>(['LIKE']);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
-  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
-
-  const addPollOption = () => {
-    setPollOptions(prev => [...prev, '']);
-  };
-
-  const removePollOption = (index: number) => {
-    if (pollOptions.length <= 2) return;
-    setPollOptions(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const updatePollOption = (index: number, value: string) => {
-    setPollOptions(prev => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-  };
+  const [voteTargetUrl, setVoteTargetUrl] = useState('');
+  const [voteTarget, setVoteTarget] = useState('');
+  const [voteContestDetails, setVoteContestDetails] = useState('');
+  const [voteRequiresScreenshot, setVoteRequiresScreenshot] = useState(true);
 
   const coinPerParticipant = useMemo(() => {
     return Math.floor(formData.totalBudget / formData.participantThreshold);
@@ -213,12 +199,18 @@ export default function PostTaskPage() {
     }
 
     if (formData.type === 'VOTE') {
-      const nonEmptyOptions = pollOptions.filter(o => o.trim().length > 0);
-      return baseValid && nonEmptyOptions.length >= 2;
+      let validUrl = false;
+      try {
+        if (voteTargetUrl) {
+          new URL(voteTargetUrl);
+          validUrl = true;
+        }
+      } catch {}
+      return baseValid && validUrl && voteTarget.trim().length > 0;
     }
 
     return baseValid;
-  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading, audioUploaded, pollOptions]);
+  }, [formData, coinPerParticipant, totalCost, coinBalance, selectedActions, uploading, audioUploaded, voteTargetUrl, voteTarget]);
 
   useEffect(() => {
     const minBudget = TASK_TYPES.find(t => t.value === formData.type)?.minBudget ?? 1000;
@@ -285,9 +277,8 @@ export default function PostTaskPage() {
         description = `Stream this ${data.genre || 'music'} track (${Math.floor(data.durationSeconds / 60)}:${(data.durationSeconds % 60).toString().padStart(2, '0')}) to earn ${coinPerParticipant} coins.${data.isDownloadEnabled ? ' Download also available.' : ''}`;
         break;
       case 'VOTE':
-        const validOptionsCount = pollOptions.filter(o => o.trim().length > 0).length;
-        title = `Vote/Poll: ${pollOptions.find(o => o.trim().length > 0) || 'New Poll'}`;
-        description = `Participate in this poll with ${validOptionsCount} choices to earn ${coinPerParticipant} coins.`;
+        title = `Vote: ${voteTarget || 'Target'}`;
+        description = `Vote for ${voteTarget || 'the specified target'} on the external platform to earn ${coinPerParticipant} coins.${voteRequiresScreenshot ? ' Screenshot proof required.' : ''}`;
         break;
       default:
         title = 'Complete Task';
@@ -295,7 +286,7 @@ export default function PostTaskPage() {
     }
 
     return { title, description };
-  }, [selectedPlatform, selectedActions, coinPerParticipant, pollOptions]);
+  }, [selectedPlatform, selectedActions, coinPerParticipant, voteTarget, voteRequiresScreenshot]);
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
@@ -377,9 +368,17 @@ export default function PostTaskPage() {
         }
         break;
       case 'VOTE':
-        const nonEmptyOpts = pollOptions.filter(o => o.trim().length > 0);
-        if (nonEmptyOpts.length < 2) {
-          newErrors.pollOptions = 'At least 2 non-empty poll options are required';
+        if (!voteTargetUrl) {
+          newErrors.voteTargetUrl = 'Target URL is required';
+        } else {
+          try {
+            new URL(voteTargetUrl);
+          } catch {
+            newErrors.voteTargetUrl = 'Please enter a valid URL (e.g., https://...)';
+          }
+        }
+        if (!voteTarget || voteTarget.trim().length === 0) {
+          newErrors.voteTarget = 'Vote Target is required';
         }
         break;
     }
@@ -422,8 +421,11 @@ export default function PostTaskPage() {
       }
 
       if (formData.type === 'VOTE') {
-        payload.pollOptions = {
-          options: pollOptions.filter(o => o.trim().length > 0),
+        payload.voteRequirements = {
+          targetUrl: voteTargetUrl,
+          voteTarget: voteTarget.trim(),
+          contestDetails: voteContestDetails.trim() || undefined,
+          requiresScreenshot: voteRequiresScreenshot,
         };
       }
 
@@ -990,43 +992,69 @@ export default function PostTaskPage() {
           <div className="bg-surface rounded-xl p-6 border border-[#B8860B]/30">
             <h3 className="font-h3 text-h3 text-on-surface mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-[#B8860B]">how_to_vote</span>
-              Poll Requirements
+              External Voting Requirements
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block font-body-md text-body-md text-on-surface mb-2">Options (Min 2)</label>
-                {pollOptions.map((option, index) => (
-                  <div key={index} className="flex items-center gap-3 mb-3">
-                    <input
-                      type="text"
-                      value={option}
-                      onChange={(e) => updatePollOption(index, e.target.value)}
-                      placeholder={`Option ${index + 1}`}
-                      className={`flex-1 bg-surface border rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] ${
-                        errors.pollOptions && pollOptions.filter(o => o.trim().length > 0).length < 2 ? 'border-error-alert' : 'border-outline-variant/30'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removePollOption(index)}
-                      disabled={pollOptions.length <= 2}
-                      className="p-3 text-on-surface-variant hover:text-error-alert hover:bg-error-alert/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className="material-symbols-outlined">delete</span>
-                    </button>
-                  </div>
-                ))}
-                {errors.pollOptions && (
-                  <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.pollOptions}</p>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Target URL *</label>
+                <input
+                  type="url"
+                  value={voteTargetUrl}
+                  onChange={(e) => setVoteTargetUrl(e.target.value)}
+                  placeholder="https://..."
+                  className={`w-full bg-surface border rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] ${
+                    errors.voteTargetUrl ? 'border-error-alert' : 'border-outline-variant/30'
+                  }`}
+                />
+                {errors.voteTargetUrl && (
+                  <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.voteTargetUrl}</p>
                 )}
-                <button
-                  type="button"
-                  onClick={addPollOption}
-                  className="flex items-center gap-2 text-[#B8860B] hover:text-[#8B6914] font-body-md text-body-md py-2 transition-colors"
-                >
-                  <span className="material-symbols-outlined">add</span>
-                  Add Option
-                </button>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Link to the external website where users will vote.
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Vote Target *</label>
+                <input
+                  type="text"
+                  value={voteTarget}
+                  onChange={(e) => setVoteTarget(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className={`w-full bg-surface border rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B] ${
+                    errors.voteTarget ? 'border-error-alert' : 'border-outline-variant/30'
+                  }`}
+                />
+                {errors.voteTarget && (
+                  <p className="text-error-alert font-body-sm text-body-sm mt-1">{errors.voteTarget}</p>
+                )}
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Specify clearly who or what the user should vote for.
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-body-md text-body-md text-on-surface mb-2">Contest Details (Optional)</label>
+                <input
+                  type="text"
+                  value={voteContestDetails}
+                  onChange={(e) => setVoteContestDetails(e.target.value)}
+                  placeholder="e.g. Best Actor Category"
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-[#B8860B]"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 mt-4">
+                <input
+                  type="checkbox"
+                  id="voteRequiresScreenshot"
+                  checked={voteRequiresScreenshot}
+                  onChange={(e) => setVoteRequiresScreenshot(e.target.checked)}
+                  className="w-5 h-5 rounded border-outline-variant/30 text-[#B8860B] focus:ring-[#B8860B]"
+                />
+                <label htmlFor="voteRequiresScreenshot" className="font-body-md text-body-md text-on-surface">
+                  Require a screenshot as proof of voting
+                </label>
               </div>
             </div>
           </div>
@@ -1377,15 +1405,32 @@ export default function PostTaskPage() {
                 
                 {formData.type === 'VOTE' && (
                   <>
-                    <div>
-                      <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Poll Options</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        {pollOptions.filter(o => o.trim().length > 0).map((opt, idx) => (
-                          <li key={idx} className="font-body-md text-body-md text-on-surface">
-                            {opt}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Vote Target</p>
+                        <p className="font-body-md text-body-md text-on-surface break-words">{voteTarget}</p>
+                      </div>
+                      <div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Target URL</p>
+                        <a href={voteTargetUrl} target="_blank" rel="noopener noreferrer" className="font-body-md text-body-md text-primary hover:underline break-all">
+                          {voteTargetUrl}
+                        </a>
+                      </div>
+                      {voteContestDetails && (
+                        <div>
+                          <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Contest Details</p>
+                          <p className="font-body-md text-body-md text-on-surface">{voteContestDetails}</p>
+                        </div>
+                      )}
+                      {voteRequiresScreenshot && (
+                        <div>
+                          <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1 text-xs">Proof Required</p>
+                          <p className="font-body-md text-body-md text-error-alert flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">photo_camera</span>
+                            Screenshot
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}

@@ -571,8 +571,11 @@ class ApiService {
       durationSeconds?: number;
       isDownloadEnabled?: boolean;
     };
-    pollOptions?: {
-      options: string[];
+    voteRequirements?: {
+      targetUrl: string;
+      voteTarget: string;
+      contestDetails?: string;
+      requiresScreenshot?: boolean;
     };
   }) {
     const url = `${EDGE_FUNCTION_URL}/create-posted-task`;
