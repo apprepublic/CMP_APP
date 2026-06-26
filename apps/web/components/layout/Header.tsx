@@ -155,7 +155,7 @@ export function Header() {
                     <Wallet className="h-4 w-4 text-neo-secondary" />
                   </NeuIconBadge>
                   <span className="font-body-md text-body-md">
-                    Wallet ({new Intl.NumberFormat('en-NG').format(user?.wallet?.coinBalance || 0)})
+                    Wallet ({new Intl.NumberFormat('en-NG').format(wallet?.balance || 0)})
                   </span>
                 </button>
               </Link>
