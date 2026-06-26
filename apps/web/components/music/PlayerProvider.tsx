@@ -112,10 +112,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 description: `Successfully streamed and earned ${actTask.coinReward} coins.`,
                 variant: 'success',
               });
-              // Refresh wallet and streak everywhere in the app immediately
-              queryClient.invalidateQueries({ queryKey: ['wallet'] });
-              queryClient.invalidateQueries({ queryKey: ['streak'] });
-              // Update the task completion streak record
               try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session?.user?.id) {
@@ -124,6 +120,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
               } catch (e) {
                 console.warn('[PlayerProvider] Failed to update streak:', e);
               }
+              // Refresh wallet and streak everywhere in the app immediately
+              queryClient.invalidateQueries({ queryKey: ['wallet'] });
+              queryClient.invalidateQueries({ queryKey: ['streak'] });
             })
             .catch((err: any) => {
               console.error('Failed to complete streaming task:', err);
