@@ -718,12 +718,15 @@ class ApiService {
       throw new Error('Please provide the link to your tweet/like/share');
     }
 
+    const isStreamMusic = task.type === 'STREAM_MUSIC' || proofData?.platform === 'STREAM_MUSIC';
+    
     // Use atomic RPC function to insert completion and increment count in one transaction
     const { data: completionId, error: completionError } = await supabase.rpc('complete_posted_task_with_increment', {
       p_user_id: session.user.id,
       p_posted_task_id: id,
       p_coins_earned: task.coin_per_participant,
       p_proof_data: proofData || null,
+      p_auto_approve: isStreamMusic,
     });
 
     if (completionError) {
@@ -753,7 +756,7 @@ class ApiService {
           posted_task_id: id,
           coins_earned: task.coin_per_participant,
           proof_data: proofData || null,
-          status: 'PENDING',
+          status: isStreamMusic ? 'APPROVED' : 'PENDING',
         });
 
       if (insertError) {
@@ -766,12 +769,42 @@ class ApiService {
       // Try atomic increment as fallback
       const { error: updateError } = await supabase.rpc('increment_participant_count', { p_task_id: id });
       if (updateError) console.error('[API] Failed to increment participant count:', updateError);
+      
+      // Auto credit wallet if fallback is used and it's stream music
+      if (isStreamMusic && !insertError) {
+        const { data: wallet } = await supabase
+          .from('wallets')
+          .select('id, balance, lifetime_earned')
+          .eq('user_id', session.user.id)
+          .single() as any;
+
+        if (wallet) {
+          const newBalance = Number(wallet.balance) + Number(task.coin_per_participant);
+          const newLifetime = Number(wallet.lifetime_earned) + Number(task.coin_per_participant);
+          await supabase
+            .from('wallets')
+            .update({ balance: newBalance, lifetime_earned: newLifetime, updated_at: new Date().toISOString() })
+            .eq('id', wallet.id);
+
+          await supabase.from('coin_transactions').insert({
+            id: crypto.randomUUID(),
+            user_id: session.user.id,
+            type: 'earn',
+            amount: task.coin_per_participant,
+            balance_after: newBalance,
+            description: `Auto-approved streaming task`,
+            reference_id: id,
+          });
+        }
+      }
     }
 
     return {
       coinsEarned: task.coin_per_participant,
-      message: 'Proof submitted! Coins will be credited after creator approval (auto-approved in 24hrs if no action)',
-      status: 'PENDING',
+      message: isStreamMusic 
+        ? 'Stream completed! Coins have been credited to your wallet.' 
+        : 'Proof submitted! Coins will be credited after creator approval (auto-approved in 24hrs if no action)',
+      status: isStreamMusic ? 'APPROVED' : 'PENDING',
     };
   }
 
