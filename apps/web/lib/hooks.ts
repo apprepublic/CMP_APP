@@ -119,10 +119,10 @@ export const usePostTask = () => {
 export const usePostedTasks = () =>
   useQuery({ queryKey: ['postedTasks'], queryFn: () => api.getPostedTasks() });
 
-export const useActivatePostedTask = () => {
+export const useTogglePostedTaskStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.activatePostedTask(id),
+    mutationFn: ({ id, currentStatus }: { id: string, currentStatus: string }) => api.togglePostedTaskStatus(id, currentStatus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
     },

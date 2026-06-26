@@ -646,16 +646,18 @@ class ApiService {
     return { tasks };
   }
 
-  async activatePostedTask(id: string) {
+  async togglePostedTaskStatus(id: string, currentStatus: string) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('Not authenticated');
 
+    const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    const isActive = newStatus === 'ACTIVE';
+
     const { data, error } = await supabase
       .from('user_posted_tasks')
-      .update({ status: 'ACTIVE', is_active: true, updated_at: new Date().toISOString() })
+      .update({ status: newStatus, is_active: isActive, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('creator_id', session.user.id)
-      .eq('status', 'PENDING')
       .select()
       .single();
 

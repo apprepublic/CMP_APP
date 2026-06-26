@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePostedTasks, useActivatePostedTask, useTaskCompletions, useApproveCompletion, useRejectCompletion } from '@/lib/hooks';
+import { usePostedTasks, useTogglePostedTaskStatus, useTaskCompletions, useApproveCompletion, useRejectCompletion } from '@/lib/hooks';
 
 function CompletionReview({ taskId }: { taskId: string }) {
   const { data: resp, isLoading } = useTaskCompletions(taskId);
@@ -200,21 +200,22 @@ function CompletionReview({ taskId }: { taskId: string }) {
 
 export default function PostedTasksPage() {
   const { data: resp, isLoading } = usePostedTasks();
-  const activateTask = useActivatePostedTask();
+  const toggleTask = useTogglePostedTaskStatus();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const tasks = resp?.tasks ?? [];
 
-  const handleActivate = async (id: string) => {
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
     try {
-      await activateTask.mutateAsync(id);
+      await toggleTask.mutateAsync({ id, currentStatus });
     } catch (err) {
-      console.error('Failed to activate task:', err);
+      console.error('Failed to toggle task status:', err);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING': return 'bg-surface-container-high text-on-surface-variant';
+      case 'PAUSED': return 'bg-warning-alert/10 text-warning-alert';
       case 'ACTIVE': return 'bg-success-verified/10 text-success-verified';
       case 'COMPLETED': return 'bg-primary-container/20 text-primary';
       case 'EXPIRED':
@@ -332,14 +333,26 @@ export default function PostedTasksPage() {
                       {task.expiresAt && ` · Expires ${new Date(task.expiresAt).toLocaleDateString()}`}
                     </p>
                     <div className="flex gap-3">
-                      {task.status === 'PENDING' && (
+                      {(task.status === 'PENDING' || task.status === 'ACTIVE' || task.status === 'PAUSED') && (
                         <button
-                          onClick={() => handleActivate(task.id)}
-                          disabled={activateTask.isPending}
-                          className="bg-success-verified text-white font-body-md text-body-md px-4 py-2 rounded-lg hover:bg-success-verified/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                          onClick={() => handleToggleStatus(task.id, task.status)}
+                          disabled={toggleTask.isPending}
+                          className={`${
+                            task.status === 'ACTIVE'
+                              ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                              : 'bg-success-verified text-white hover:bg-success-verified/90'
+                          } font-body-md text-body-md px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2`}
                         >
-                          <span className="material-symbols-outlined text-sm">play_arrow</span>
-                          <span>{activateTask.isPending ? 'Activating...' : 'Activate'}</span>
+                          <span className="material-symbols-outlined text-sm">
+                            {task.status === 'ACTIVE' ? 'pause' : 'play_arrow'}
+                          </span>
+                          <span>
+                            {toggleTask.isPending
+                              ? 'Processing...'
+                              : task.status === 'ACTIVE'
+                              ? 'Pause'
+                              : 'Activate'}
+                          </span>
                         </button>
                       )}
                       {task.status === 'ACTIVE' && (
