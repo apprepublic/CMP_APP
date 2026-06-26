@@ -114,7 +114,7 @@ BEGIN
 
   -- Record the transaction
   INSERT INTO coin_transactions (id, user_id, type, amount, balance_after, description, reference_id)
-  VALUES (gen_random_uuid(), v_completion.user_id, 'earn', v_completion.coins_earned, v_new_balance, 'Earned from posted task', p_posted_task_id::text);
+  VALUES (gen_random_uuid(), v_completion.user_id, 'earn', v_completion.coins_earned, v_new_balance, 'Earned from posted task', p_posted_task_id);
 
   RETURN jsonb_build_object(
     'success', true,
