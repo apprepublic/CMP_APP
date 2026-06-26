@@ -474,12 +474,12 @@ export default function EarnMarketplacePage() {
         </div>
       </div>
 
-      <div className="flex overflow-x-auto pb-4 mb-8 gap-4 hide-scrollbar border-b border-outline-variant/30 w-full max-w-full">
+      <div className="flex flex-wrap pb-4 mb-8 gap-4 border-b border-outline-variant/30 w-full">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setActiveCategory(category)}
-            className={`px-6 py-2 rounded-full font-body-md text-body-md whitespace-nowrap flex-shrink-0 transition-colors border ${
+            className={`px-6 py-2 rounded-full font-body-md text-body-md transition-colors border ${
               activeCategory === category
                 ? 'bg-primary text-on-primary shadow-sm border-transparent'
                 : 'bg-surface-alt text-on-surface-variant hover:bg-surface-dim border-outline-variant/50'
