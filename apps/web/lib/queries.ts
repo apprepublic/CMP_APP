@@ -142,6 +142,7 @@ export interface ReferralStats {
   totalReferrals: number;
   activeReferrals: number;
   totalEarned: number;
+  referralEarnings: number;
   weeklyEarnings: number;
   weeklyData: { name: string; coins: number }[];
 }
@@ -219,6 +220,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
   const activeReferrals = referrals.filter(r => r.status === 'ACTIVE').length;
   
   let totalEarned = 0;
+  let referralEarnings = 0;
   let weeklyEarnings = 0;
   
   const now = new Date();
@@ -228,28 +230,41 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
     return { name: `Week ${4 - i}`, start, end, coins: 0 };
   }).reverse();
   
-  const { data: txs } = await db.from('coin_transactions').select('amount, created_at').eq('user_id', userId).eq('type', 'earn');
-  if (txs) {
-    totalEarned = txs.reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+  // Fetch all earn transactions for total calculation
+  const { data: allTxs } = await db.from('coin_transactions').select('amount, type, created_at').eq('user_id', userId);
+  if (allTxs) {
+    // All-time earnings (all positive/earn type transactions)
+    totalEarned = allTxs
+      .filter((tx: any) => ['earn', 'EARN', 'referral', 'REFERRAL', 'task', 'TASK', 'stream', 'STREAM'].includes(tx.type))
+      .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
     
+    // Referral-specific earnings
+    referralEarnings = allTxs
+      .filter((tx: any) => ['referral', 'REFERRAL'].includes(tx.type))
+      .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
+
     const oneWeekAgo = weeks[3].start;
-    weeklyEarnings = txs
-      .filter((tx: any) => new Date(tx.created_at) >= oneWeekAgo)
+    weeklyEarnings = allTxs
+      .filter((tx: any) => ['referral', 'REFERRAL'].includes(tx.type) && new Date(tx.created_at) >= oneWeekAgo)
       .reduce((sum: number, tx: any) => sum + Number(tx.amount), 0);
       
-    txs.forEach((tx: any) => {
-      const txDate = new Date(tx.created_at);
-      const week = weeks.find(w => txDate >= w.start && txDate <= w.end);
-      if (week) {
-        week.coins += Number(tx.amount);
-      }
-    });
+    // Group REFERRAL transactions into weekly buckets for the chart
+    allTxs
+      .filter((tx: any) => ['referral', 'REFERRAL'].includes(tx.type))
+      .forEach((tx: any) => {
+        const txDate = new Date(tx.created_at);
+        const week = weeks.find(w => txDate >= w.start && txDate <= w.end);
+        if (week) {
+          week.coins += Number(tx.amount);
+        }
+      });
   }
 
   return {
     totalReferrals: referrals.length,
     activeReferrals,
     totalEarned,
+    referralEarnings,
     weeklyEarnings,
     weeklyData: weeks.map(w => ({ name: w.name, coins: w.coins })),
   };

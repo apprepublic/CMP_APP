@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useUserStore } from '@/stores/userStore';
+import { useWallet } from '@/lib/useWallet';
 
 export function AuthHeader() {
   const { isAuthenticated, user } = useUserStore();
+  const { wallet } = useWallet();
 
   return (
     <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
@@ -17,7 +19,7 @@ export function AuthHeader() {
             <div className="premium-border-gold rounded-full px-4 py-1 flex items-center gap-2 bg-white/10 backdrop-blur-md">
               <span className="material-symbols-outlined text-secondary-fixed text-xl">paid</span>
               <span className="font-data-md text-data-md text-secondary-fixed">
-                {user.wallet?.coinBalance || 0}
+                {wallet?.balance?.toLocaleString() || 0}
               </span>
             </div>
             <button className="text-white hover:text-secondary-fixed transition-colors">

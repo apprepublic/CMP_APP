@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { useReferralStats, useReferrals } from '@/lib/hooks';
-import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
 
@@ -11,14 +10,14 @@ import { useUserStore } from '@/stores/userStore';
 export default function ReferralsPage() {
   const [copied, setCopied] = useState(false);
   const { user } = useUserStore();
-  const { wallet } = useWallet();
   const { data: stats, isLoading: statsLoading } = useReferralStats(user?.id || '');
   const { data: referrals = [], isLoading: referralsLoading } = useReferrals(user?.id || '');
 
-  const referralCode = wallet?.referral_code || '...';
+  // Referral code lives in profiles table, available via userStore
+  const referralCode = user?.referralCode || '...';
   const totalReferrals = stats?.totalReferrals || 0;
   const activeReferrals = stats?.activeReferrals || 0;
-  const totalEarned = stats?.totalEarned || 0;
+  const totalEarned = stats?.referralEarnings || 0;
   const weeklyEarnings = stats?.weeklyEarnings || 0;
   const chartData = stats?.weeklyData || [
     { name: 'Week 1', coins: 0 },

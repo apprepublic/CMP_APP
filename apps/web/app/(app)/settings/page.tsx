@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUserStore } from '@/stores/userStore';
+import { useWallet } from '@/lib/useWallet';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -9,6 +10,7 @@ type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 
 export default function SettingsPage() {
   const { user, logout } = useUserStore();
+  const { wallet } = useWallet();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
@@ -436,7 +438,7 @@ export default function SettingsPage() {
                 </p>
                 <div className="flex items-center gap-3 text-on-primary-container font-body-sm text-body-sm">
                   <span className="material-symbols-outlined text-secondary-fixed" style={{ fontSize: '18px' }}>toll</span>
-                  <span className="text-secondary-fixed font-data-md text-data-md">{user?.wallet?.coinBalance?.toLocaleString() || '0'}</span>
+                  <span className="text-secondary-fixed font-data-md text-data-md">{wallet?.balance?.toLocaleString() || '0'}</span>
                   <span>coins</span>
                 </div>
               </section>

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
 import { useUserStore } from '@/stores/userStore';
+import { useWallet } from '@/lib/useWallet';
 import { cn } from '@/lib/utils';
 import {
   Coins,
@@ -38,6 +39,7 @@ export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated } = useUserStore();
+  const { wallet } = useWallet();
 
   const navItems = isAuthenticated ? authenticatedNavItems : publicNavItems;
 
@@ -78,7 +80,7 @@ export function Header() {
                 <Button variant="neumorphic" size="sm" className="gap-2">
                   <Wallet className="h-4 w-4 text-neo-secondary" />
                   <span className="font-semibold text-neo-text-primary">
-                    {new Intl.NumberFormat('en-NG').format(user.wallet?.coinBalance || 0)}
+                    {new Intl.NumberFormat('en-NG').format(wallet?.balance || 0)}
                   </span>
                 </Button>
               </Link>

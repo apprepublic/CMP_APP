@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
+import { useWallet } from '@/lib/useWallet';
 import { supabase } from '@/lib/supabase';
 import { CheckCircle } from 'lucide-react';
 
 export default function LandingPage() {
   const { isAuthenticated, user } = useUserStore();
+  const { wallet } = useWallet();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,7 +66,7 @@ export default function LandingPage() {
               <div className="premium-border-gold rounded-full px-4 py-1 flex items-center gap-2 bg-white/10 backdrop-blur-md">
                 <span className="material-symbols-outlined text-secondary-fixed text-xl">paid</span>
                 <span className="font-data-md text-data-md text-secondary-fixed">
-                  {user.wallet?.coinBalance || 0}
+                  {wallet?.balance?.toLocaleString() || 0}
                 </span>
               </div>
               <button className="text-white hover:text-secondary-fixed transition-colors">
