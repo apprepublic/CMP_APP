@@ -113,7 +113,7 @@ export default function MusicPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Find artists, songs, podcasts..."
-                className="w-full bg-surface-container-lowest/10 backdrop-blur-sm border-2 border-outline-variant/30 text-on-primary placeholder-on-primary-container/70 rounded-xl pl-14 pr-12 py-4 font-body-lg focus:border-secondary focus:ring-0 transition-all shadow-inner outline-none"
+                className="w-full bg-surface-container-lowest/10 backdrop-blur-sm border-2 border-outline-variant/30 text-on-surface placeholder-on-primary-container/70 rounded-xl pl-14 pr-12 py-4 font-body-lg focus:border-secondary focus:ring-0 transition-all shadow-inner outline-none"
               />
               {searchQuery && (
                 <button
