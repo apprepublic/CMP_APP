@@ -125,6 +125,7 @@ export const useTogglePostedTaskStatus = () => {
     mutationFn: ({ id, currentStatus }: { id: string, currentStatus: string }) => api.togglePostedTaskStatus(id, currentStatus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 };

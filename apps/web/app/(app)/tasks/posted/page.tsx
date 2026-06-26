@@ -207,7 +207,8 @@ export default function PostedTasksPage() {
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     try {
       await toggleTask.mutateAsync({ id, currentStatus });
-    } catch (err) {
+    } catch (err: any) {
+      alert(err.message || 'Failed to toggle task status');
       console.error('Failed to toggle task status:', err);
     }
   };
@@ -347,7 +348,7 @@ export default function PostedTasksPage() {
                             {task.status === 'ACTIVE' ? 'pause' : 'play_arrow'}
                           </span>
                           <span>
-                            {toggleTask.isPending
+                            {toggleTask.isPending && toggleTask.variables?.id === task.id
                               ? 'Processing...'
                               : task.status === 'ACTIVE'
                               ? 'Pause'

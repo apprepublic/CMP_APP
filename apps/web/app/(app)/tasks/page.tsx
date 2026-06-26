@@ -446,7 +446,7 @@ export default function EarnMarketplacePage() {
   }, [proofModal.task, completePostedTask]);
 
   return (
-    <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full">
+    <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full overflow-x-hidden">
       <div className="mb-10 mt-6 lg:mt-0 flex flex-col md:flex-row md:items-start justify-between gap-6">
 
         <div className="flex flex-col sm:flex-row gap-4">
@@ -479,7 +479,7 @@ export default function EarnMarketplacePage() {
           <button
             key={category}
             onClick={() => setActiveCategory(category)}
-            className={`px-6 py-2 rounded-full font-body-md text-body-md whitespace-nowrap transition-colors border ${
+            className={`px-6 py-2 rounded-full font-body-md text-body-md whitespace-nowrap flex-shrink-0 transition-colors border ${
               activeCategory === category
                 ? 'bg-primary text-on-primary shadow-sm border-transparent'
                 : 'bg-surface-alt text-on-surface-variant hover:bg-surface-dim border-outline-variant/50'
