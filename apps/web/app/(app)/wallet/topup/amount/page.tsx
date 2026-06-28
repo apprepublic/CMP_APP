@@ -4,29 +4,33 @@ import { useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWallet } from '@/lib/useWallet';
+import { useCurrency } from '@/lib/useCurrency';
 
 function TopUpAmountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const method = searchParams?.get('method') || 'paystack';
   const { wallet } = useWallet();
+  const { currency, activeRate, formatFiat, getCoinsFromFiat, loadingLocation } = useCurrency();
 
-  const [activeCurrency, setActiveCurrency] = useState<'usd' | 'cmp'>('usd');
+  const [activeInput, setActiveInput] = useState<'fiat' | 'cmp'>('fiat');
   const [amount, setAmount] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
   const numAmount = parseFloat(amount) || 0;
-  const processingFee = activeCurrency === 'usd' ? 0.45 : 2;
+  
+  // Example fee logic: 0.45 USD or 500 NGN or 2 CMP
+  const processingFee = activeInput === 'fiat' ? (currency === 'USD' ? 0.45 : 50) : 2;
   const serviceFee = numAmount * 0.005;
   const totalPayable = numAmount + processingFee + serviceFee;
 
   const formatCurrency = useCallback((val: number) => {
-    if (activeCurrency === 'usd') {
-      return `$${val.toFixed(2)}`;
+    if (activeInput === 'fiat') {
+      return `${activeRate.symbol}${val.toFixed(2)}`;
     }
     return `${val.toFixed(1)} CMP`;
-  }, [activeCurrency]);
+  }, [activeInput, activeRate]);
 
   const handleSetAmount = (val: number) => {
     setAmount(val.toString());
@@ -80,20 +84,20 @@ function TopUpAmountContent() {
                 <label className="font-label-caps text-label-caps text-on-surface-variant block">Select Asset</label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
-                    onClick={() => setActiveCurrency('usd')}
+                    onClick={() => setActiveInput('fiat')}
                     className={`flex items-center justify-center gap-3 py-4 rounded-lg border-2 transition-all duration-200 ${
-                      activeCurrency === 'usd'
+                      activeInput === 'fiat'
                         ? 'border-primary-container bg-primary-container text-white'
                         : 'border-outline-variant/50 text-on-surface-variant hover:bg-surface-alt'
                     }`}
                   >
                     <span className="material-symbols-outlined">payments</span>
-                    <span className="font-bold">USD</span>
+                    <span className="font-bold">{loadingLocation ? '...' : currency}</span>
                   </button>
                   <button
-                    onClick={() => setActiveCurrency('cmp')}
+                    onClick={() => setActiveInput('cmp')}
                     className={`flex items-center justify-center gap-3 py-4 rounded-lg border-2 transition-all duration-200 ${
-                      activeCurrency === 'cmp'
+                      activeInput === 'cmp'
                         ? 'border-primary-container bg-primary-container text-white'
                         : 'border-outline-variant/50 text-on-surface-variant hover:bg-surface-alt'
                     }`}
@@ -109,20 +113,20 @@ function TopUpAmountContent() {
                 <div className="flex justify-between items-end">
                   <label className="font-label-caps text-label-caps text-on-surface-variant block">Amount to Add</label>
                   <span className="font-data-md text-data-md text-secondary-container bg-primary-container px-3 py-1 rounded-full uppercase">
-                    {activeCurrency === 'usd' ? 'United States Dollars' : 'CMP Tokens'}
+                    {activeInput === 'fiat' ? (loadingLocation ? 'Detecting...' : currency === 'USD' ? 'United States Dollars' : 'Nigerian Naira') : 'CMP Tokens'}
                   </span>
                 </div>
                 <div className="relative">
                   <div className="absolute left-6 top-1/2 -translate-y-1/2">
                     <span className="font-h2 text-h3 text-on-surface-variant">
-                      {activeCurrency === 'usd' ? '$' : '🪙'}
+                      {activeInput === 'fiat' ? activeRate.symbol : '🪙'}
                     </span>
                   </div>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder={activeCurrency === 'usd' ? '0.00' : '0'}
+                    placeholder={activeInput === 'fiat' ? '0.00' : '0'}
                     className="w-full bg-surface-alt border-none py-6 pl-12 pr-6 rounded-lg font-data-lg text-h2 text-on-surface placeholder:text-outline-variant/60 focus:outline-none focus:ring-2 focus:ring-primary-container/20"
                   />
                 </div>
@@ -130,13 +134,13 @@ function TopUpAmountContent() {
 
               {/* Quick Select Buttons */}
               <div className="grid grid-cols-3 gap-3">
-                {(activeCurrency === 'usd' ? [10, 50, 100] : [500, 2000, 5000]).map((val) => (
+                {(activeInput === 'fiat' ? (currency === 'USD' ? [10, 50, 100] : [1000, 5000, 10000]) : [500, 2000, 5000]).map((val) => (
                   <button
                     key={val}
                     onClick={() => handleSetAmount(val)}
                     className="py-3 rounded-lg border border-outline-variant text-on-surface font-semibold hover:border-secondary transition-colors focus:bg-secondary-fixed focus:border-secondary-container"
                   >
-                    +{activeCurrency === 'usd' ? `$${val}` : `${val.toLocaleString()}`}
+                    +{activeInput === 'fiat' ? `${activeRate.symbol}${val}` : `${val.toLocaleString()}`}
                   </button>
                 ))}
               </div>

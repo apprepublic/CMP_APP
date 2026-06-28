@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useWallet } from '@/lib/useWallet';
 import { useTransactions } from '@/lib/hooks';
+import { useCurrency } from '@/lib/useCurrency';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -12,10 +13,9 @@ function formatDate(dateStr: string) {
 export default function WalletPage() {
   const { wallet, loading: walletLoading } = useWallet();
   const { data: transactions = [], isLoading: txLoading } = useTransactions(wallet?.id || '');
+  const { formatFiat, loadingLocation } = useCurrency();
 
   const coinBalance = wallet?.balance ?? 0;
-  // Assume 100 coins = 1 NGN for display purposes
-  const fiatEquivalent = (coinBalance / 100).toFixed(2);
 
   return (
     <main className="flex-1 pt-8 pb-24 lg:pb-12 px-margin-mobile lg:px-margin-desktop max-w-container-max mx-auto w-full space-y-gutter">
@@ -32,7 +32,7 @@ export default function WalletPage() {
             </span>
           </div>
           <p className="font-data-md text-data-md text-on-primary-container bg-on-primary-fixed/50 inline-block px-3 py-1 rounded-full border border-outline/30">
-            ≈ ₦{fiatEquivalent} NGN
+            {loadingLocation ? 'Detecting currency...' : `≈ ${formatFiat(coinBalance)}`}
           </p>
         </div>
       </section>

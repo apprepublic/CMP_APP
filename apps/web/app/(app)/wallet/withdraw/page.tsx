@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/lib/useWallet';
 import { useWithdrawStore } from '@/stores/withdrawStore';
+import { useCurrency } from '@/lib/useCurrency';
 
 export default function WithdrawAmountPage() {
   const router = useRouter();
@@ -13,21 +14,12 @@ export default function WithdrawAmountPage() {
   
   const { amountCoins, setAmountCoins } = useWithdrawStore();
   const [coins, setCoins] = useState<string>(amountCoins > 0 ? amountCoins.toString() : '');
+  const { activeRate, formatFiat, loadingLocation } = useCurrency();
 
   const parsedCoins = parseInt(coins) || 0;
   const isOverBalance = parsedCoins > availableBalance;
   const isUnderMin = parsedCoins < 100 && parsedCoins > 0;
   const isValid = parsedCoins >= 100 && parsedCoins <= availableBalance;
-  
-  const nairaAmount = useMemo(() => {
-    // 1 Coin = ₦10.50
-    return (parsedCoins * 10.50).toFixed(2);
-  }, [parsedCoins]);
-
-  const formattedNaira = parseFloat(nairaAmount).toLocaleString('en-NG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,12 +112,16 @@ export default function WithdrawAmountPage() {
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
             <div className="flex justify-between items-center mb-2">
               <span className="font-body-sm text-on-surface-variant">Conversion Rate</span>
-              <span className="font-data-md text-data-md text-on-surface-variant">1 CMP = ₦10.50</span>
+              <span className="font-data-md text-data-md text-on-surface-variant">
+                {loadingLocation ? '...' : `1 CMP = ${activeRate.symbol}${activeRate.ratePerCmp} ${activeRate.code}`}
+              </span>
             </div>
             <div className="flex justify-between items-end border-t border-outline-variant/20 pt-3">
               <span className="font-body-md text-on-surface">You will receive:</span>
               <div className="text-right">
-                <span className="font-data-lg text-data-lg text-primary block">₦{formattedNaira}</span>
+                <span className="font-data-lg text-data-lg text-primary block">
+                  {loadingLocation ? '...' : formatFiat(parsedCoins)}
+                </span>
                 <span className="font-label-caps text-label-caps text-success-verified mt-1 block">No hidden fees</span>
               </div>
             </div>
