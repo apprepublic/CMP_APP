@@ -1,9 +1,19 @@
 -- Migration: Seed articles for CMP App
 -- Adds sample articles so the Earn > Articles section is populated
 
+-- Ensure cover_image_url column exists (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'articles' AND column_name = 'cover_image_url'
+  ) THEN
+    ALTER TABLE public.articles ADD COLUMN cover_image_url text;
+  END IF;
+END $$;
+
 INSERT INTO articles (id, title, slug, excerpt, content, category, read_time_minutes, coin_reward, cover_image_url, is_published)
 VALUES
-
 (
   gen_random_uuid(),
   'The Future of Creative Finance in Africa',
@@ -13,10 +23,9 @@ VALUES
   'Finance',
   8,
   50,
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuCc-7--9nnzDWkZCQxo5aIwCqNw6_l81K2eHxpM5iMNicuDcuA8VzftZ_XdRcDF5rjZ6qurkUA_5BrZkSbpWfqaWXkDBAzIUshYXdXfrMXBnlVlQbjDd8ktghuAK40_ppLJfPz5sSLF2rTGJkZAWvYXZHMdS5CmCKeOTKLRql2CTzOwTyHJsyxOxc3jXM0FwB5b0Rd9UzCxt6p2orX6Ba4mn8nfeHRHf78EAvOc8X-AwjZ2LHW_QsWeWM4TJWsEKH9V6hJEoT4MO6o',
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuCc-7--9nnzDWkZCQxo5aIwCqNw6_l81K2eHxpM5iMNicuDcuA8VzftZ_XdRcDF5rjZ6qurkUA_5BrZkSbpWfqaWXkDBAzIUshYXdXfrMXBnlVlQbjDd8ktghuAK40_ppLJfPz5sSLF2rTGJkZAWvYXZHMdS5CmCKeOTKLRql2CTzOwTyHJsyxOxc3jXM0FwB5b0Rd9UzCxt6p2orX6Ba4mn8nfeHRf78EAvOc8X-AwjZ2LHW_QsWeWM4TJWsEKH9V6hJEoT4MO6o',
   true
 ),
-
 (
   gen_random_uuid(),
   'How to Maximize Your CMP Coin Earnings',
@@ -29,7 +38,6 @@ VALUES
   null,
   true
 ),
-
 (
   gen_random_uuid(),
   'Understanding the CMP Withdrawal System',
@@ -42,7 +50,6 @@ VALUES
   null,
   true
 ),
-
 (
   gen_random_uuid(),
   'The Rise of Afrobeats: A Cultural and Economic Phenomenon',
@@ -55,7 +62,6 @@ VALUES
   null,
   true
 ),
-
 (
   gen_random_uuid(),
   'Your Complete Guide to CMP App Referrals',
@@ -68,5 +74,4 @@ VALUES
   null,
   true
 )
-
 ON CONFLICT (slug) DO NOTHING;

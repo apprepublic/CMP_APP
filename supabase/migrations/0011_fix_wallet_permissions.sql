@@ -1,12 +1,11 @@
--- Fix Wallet table permissions for service_role
--- Wrapped in DO block so it skips gracefully on fresh projects where "Wallet" may not exist
+-- Fix wallets table permissions for service_role
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'Wallet') THEN
-    GRANT ALL ON "Wallet" TO service_role;
-    ALTER TABLE "Wallet" ENABLE ROW LEVEL SECURITY;
-    DROP POLICY IF EXISTS "Service role has full access" ON "Wallet";
-    CREATE POLICY "Service role has full access" ON "Wallet"
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'wallets') THEN
+    GRANT ALL ON wallets TO service_role;
+    ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS "Service role has full access" ON wallets;
+    CREATE POLICY "Service role has full access" ON wallets
       FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;

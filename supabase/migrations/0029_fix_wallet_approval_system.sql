@@ -4,6 +4,24 @@ GRANT INSERT ON public.wallets TO authenticated;
 GRANT INSERT ON public.coin_transactions TO authenticated;
 GRANT SELECT ON public.coin_transactions TO authenticated;
 
+-- Ensure the user_id column exists on coin_transactions, with FK and index
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'coin_transactions'
+      AND column_name = 'user_id'
+  ) THEN
+    ALTER TABLE public.coin_transactions
+      ADD COLUMN user_id uuid NOT NULL;
+    ALTER TABLE public.coin_transactions
+      ADD CONSTRAINT coin_transactions_user_id_fkey
+        FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+    CREATE INDEX IF NOT EXISTS idx_coin_transactions_user_id ON public.coin_transactions(user_id);
+  END IF;
+END $$;
+
 -- Fix 2: Add RLS policies idempotently using DO blocks to avoid "already exists" errors
 DO $$
 BEGIN
@@ -54,12 +72,7 @@ CREATE OR REPLACE FUNCTION public.approve_task_completion(
   p_completion_id UUID,
   p_reviewer_id UUID,
   p_posted_task_id UUID
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   v_completion RECORD;
   v_wallet RECORD;
@@ -127,4 +140,5 @@ $$;
 -- Allow authenticated users to call this function
 GRANT EXECUTE ON FUNCTION public.approve_task_completion(UUID, UUID, UUID) TO authenticated;
 
+-- Notify PostgREST to reload schema
 NOTIFY pgrst, 'reload schema';
