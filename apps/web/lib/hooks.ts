@@ -15,36 +15,37 @@ import {
   getReferralStats,
   getReferrals,
   getNotifications,
+  getLatestAnnouncement,
 } from './queries';
 
 export const useSongs = (opts: { genre?: string; search?: string } = {}) =>
-  useQuery({ queryKey: ['songs', opts], queryFn: () => getSongs(opts) });
+  useQuery({ queryKey: ['songs', opts], queryFn: () => getSongs(opts), staleTime: 10 * 60 * 1000 });
 
 export const useFeaturedSongs = () =>
-  useQuery({ queryKey: ['songs', 'featured'], queryFn: getFeaturedSongs });
+  useQuery({ queryKey: ['songs', 'featured'], queryFn: getFeaturedSongs, staleTime: 10 * 60 * 1000 });
 
-export const useArtists = () => useQuery({ queryKey: ['artists'], queryFn: () => getArtists() });
+export const useArtists = () => useQuery({ queryKey: ['artists'], queryFn: () => getArtists(), staleTime: 10 * 60 * 1000 });
 
 export const useArtist = (slug: string) =>
   useQuery({ queryKey: ['artist', slug], queryFn: () => getArtistBySlug(slug), enabled: !!slug });
 
-export const useStores = () => useQuery({ queryKey: ['stores'], queryFn: getStores });
+export const useStores = () => useQuery({ queryKey: ['stores'], queryFn: getStores, staleTime: 10 * 60 * 1000 });
 
 export const useStore = (slug: string) =>
-  useQuery({ queryKey: ['store', slug], queryFn: () => getStoreBySlug(slug), enabled: !!slug });
+  useQuery({ queryKey: ['store', slug], queryFn: () => getStoreBySlug(slug), enabled: !!slug, staleTime: 10 * 60 * 1000 });
 
-export const useProducts = () => useQuery({ queryKey: ['products'], queryFn: () => getProducts() });
+export const useProducts = () => useQuery({ queryKey: ['products'], queryFn: () => getProducts(), staleTime: 10 * 60 * 1000 });
 
-export const useContests = () => useQuery({ queryKey: ['contests'], queryFn: getContests });
+export const useContests = () => useQuery({ queryKey: ['contests'], queryFn: getContests, staleTime: 10 * 60 * 1000 });
 
 export const useTasks = (category?: string) =>
-  useQuery({ queryKey: ['tasks', category], queryFn: () => api.getTasks(undefined, category) });
+  useQuery({ queryKey: ['tasks', category], queryFn: () => api.getTasks(undefined, category), staleTime: 5 * 60 * 1000 });
 
 export const useDailyTasks = () =>
-  useQuery({ queryKey: ['tasks', 'daily'], queryFn: () => api.getDailyTasks() });
+  useQuery({ queryKey: ['tasks', 'daily'], queryFn: () => api.getDailyTasks(), staleTime: 5 * 60 * 1000 });
 
 export const useStreak = () =>
-  useQuery({ queryKey: ['streak'], queryFn: () => api.getStreak() });
+  useQuery({ queryKey: ['streak'], queryFn: () => api.getStreak(), staleTime: 5 * 60 * 1000 });
 
 export const useCompleteTask = () => {
   const queryClient = useQueryClient();
@@ -117,7 +118,7 @@ export const usePostTask = () => {
 };
 
 export const usePostedTasks = () =>
-  useQuery({ queryKey: ['postedTasks'], queryFn: () => api.getPostedTasks() });
+  useQuery({ queryKey: ['postedTasks'], queryFn: () => api.getPostedTasks(), staleTime: 2 * 60 * 1000 });
 
 export const useTogglePostedTaskStatus = () => {
   const queryClient = useQueryClient();
@@ -145,7 +146,7 @@ export const useCompletePostedTask = () => {
 };
 
 export const useTaskCompletions = (taskId: string) =>
-  useQuery({ queryKey: ['taskCompletions', taskId], queryFn: () => api.getTaskCompletions(taskId), enabled: !!taskId });
+  useQuery({ queryKey: ['taskCompletions', taskId], queryFn: () => api.getTaskCompletions(taskId), enabled: !!taskId, staleTime: 2 * 60 * 1000 });
 
 export const useApproveCompletion = () => {
   const queryClient = useQueryClient();
@@ -173,19 +174,22 @@ export const useRejectCompletion = () => {
 };
 
 export const useArticle = (slug: string) =>
-  useQuery({ queryKey: ['article', slug], queryFn: () => api.getArticleBySlug(slug), enabled: !!slug });
+  useQuery({ queryKey: ['article', slug], queryFn: () => api.getArticleBySlug(slug), enabled: !!slug, staleTime: 30 * 60 * 1000 });
 
 export const useArticles = (opts: { category?: string; search?: string } = {}) =>
-  useQuery({ queryKey: ['articles', opts], queryFn: () => api.getArticles(opts) });
+  useQuery({ queryKey: ['articles', opts], queryFn: () => api.getArticles(opts), staleTime: 10 * 60 * 1000 });
 
 export const useTransactions = (walletId: string) => 
-  useQuery({ queryKey: ['transactions', walletId], queryFn: () => getTransactions(walletId), enabled: !!walletId });
+  useQuery({ queryKey: ['transactions', walletId], queryFn: () => getTransactions(walletId), enabled: !!walletId, staleTime: 2 * 60 * 1000 });
 
 export const useReferralStats = (userId: string) =>
-  useQuery({ queryKey: ['referralStats', userId], queryFn: () => getReferralStats(userId), enabled: !!userId });
+  useQuery({ queryKey: ['referralStats', userId], queryFn: () => getReferralStats(userId), enabled: !!userId, staleTime: 5 * 60 * 1000 });
 
 export const useReferrals = (userId: string) =>
-  useQuery({ queryKey: ['referrals', userId], queryFn: () => getReferrals(userId), enabled: !!userId });
+  useQuery({ queryKey: ['referrals', userId], queryFn: () => getReferrals(userId), enabled: !!userId, staleTime: 5 * 60 * 1000 });
 
 export const useNotifications = (userId: string) =>
-  useQuery({ queryKey: ['notifications', userId], queryFn: () => getNotifications(userId), enabled: !!userId });
+  useQuery({ queryKey: ['notifications', userId], queryFn: () => getNotifications(userId), enabled: !!userId, staleTime: 2 * 60 * 1000 });
+
+export const useLatestAnnouncement = (enabled: boolean) =>
+  useQuery({ queryKey: ['latestAnnouncement'], queryFn: () => getLatestAnnouncement(), enabled, staleTime: 60 * 60 * 1000 });

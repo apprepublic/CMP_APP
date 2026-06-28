@@ -238,8 +238,8 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
     return { name: `Week ${4 - i}`, start, end, coins: 0 };
   }).reverse();
   
-  // Fetch all earn transactions for total calculation
-  const { data: allTxs } = await db.from('coin_transactions').select('amount, type, created_at').eq('user_id', userId);
+  // Fetch recent earn transactions — capped at 500 rows to prevent full table scans
+  const { data: allTxs } = await db.from('coin_transactions').select('amount, type, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(500);
   if (allTxs) {
     // All-time earnings (all positive/earn type transactions)
     totalEarned = allTxs
@@ -453,6 +453,21 @@ export async function getNotifications(userId: string): Promise<AppNotification[
       .order('created_at', { ascending: false })
       .limit(20)
   );
+}
+
+export async function getLatestAnnouncement(): Promise<Task | null> {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const { data, error } = await db
+    .from('tasks')
+    .select('id, title, coin_reward')
+    .eq('is_active', true)
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  return data as Task;
 }
 
 export async function markNotificationRead(id: string): Promise<void> {

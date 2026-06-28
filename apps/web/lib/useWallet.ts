@@ -53,11 +53,11 @@ export function useWallet() {
     queryFn: fetchWallet,
     // Don't fetch until auth is resolved and user is logged in
     enabled: !authLoading && !!user,
-    // Refresh every 60 seconds automatically as a safety net
-    refetchInterval: 60_000,
-    // Always refetch when the window regains focus
-    refetchOnWindowFocus: true,
-    staleTime: 10_000, // consider fresh for 10s to avoid excessive round-trips
+    // 5 min cache — invalidateQueries() handles live updates after mutations
+    staleTime: 5 * 60 * 1000,
+    // Never poll; rely on explicit invalidation (saves ~100 Supabase hits/user/hour)
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
   });
 
   return { wallet: wallet ?? null, loading: isLoading || authLoading, user };

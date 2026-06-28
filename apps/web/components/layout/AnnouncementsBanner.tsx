@@ -2,50 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
-
-interface Task {
-  id: string;
-  title: string;
-  coin_reward: number;
-}
+import { useLatestAnnouncement } from '@/lib/hooks';
 
 export default function AnnouncementsBanner() {
-  const [latestTask, setLatestTask] = useState<Task | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [dismissedId, setDismissedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLatestTask = async () => {
-      // Get the latest active global task created within the last 7 days
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('id, title, coin_reward')
-        .eq('is_active', true)
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle() as any;
-
-      if (!error && data) {
-        const dismissedId = localStorage.getItem('dismissedTaskBannerId');
-        if (dismissedId !== data.id) {
-          setLatestTask(data);
-          setIsVisible(true);
-        }
-      }
-    };
-
-    fetchLatestTask();
+    setIsClient(true);
+    setDismissedId(localStorage.getItem('dismissedTaskBannerId'));
   }, []);
 
-  if (!isVisible || !latestTask) return null;
+  // Only run the query if we are on the client.
+  // We can't really skip the query purely based on dismissedId because a NEW announcement might have a DIFFERENT id.
+  // But by using React Query, this fetch is cached for 1 hour, so we don't spam Supabase on every route change!
+  const { data: latestTask } = useLatestAnnouncement(isClient);
+
+  if (!isClient || !latestTask) return null;
+  if (dismissedId === latestTask.id) return null;
 
   const handleDismiss = () => {
     localStorage.setItem('dismissedTaskBannerId', latestTask.id);
-    setIsVisible(false);
+    setDismissedId(latestTask.id);
   };
 
   return (
