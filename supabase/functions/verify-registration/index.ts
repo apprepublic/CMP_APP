@@ -78,21 +78,49 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Creating auth user...");
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: pendingReg.email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: pendingReg.full_name },
-    });
+
+    // Retry up to 3 times for transient AuthRetryableFetchError (Supabase Auth 500s)
+    let authData: any = null;
+    let authError: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const result = await supabase.auth.admin.createUser({
+        email: pendingReg.email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: pendingReg.full_name },
+      });
+      authData = result.data;
+      authError = result.error;
+
+      if (!authError) break; // success
+
+      const isRetryable = authError?.name === "AuthRetryableFetchError" || authError?.status === 500;
+      console.error(`Auth error (attempt ${attempt}):`, JSON.stringify({
+        name: authError?.name,
+        message: authError?.message,
+        status: authError?.status,
+        code: authError?.code,
+      }));
+
+      if (!isRetryable || attempt === 3) break; // don't retry non-retryable errors
+
+      // Wait 1s before retrying
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
 
     if (authError) {
-      console.error("Auth error:", authError);
-      // If user already exists, try to sign in instead
-      if (authError.message?.includes("already been registered") || authError.message?.includes("User already exists")) {
+      console.error("Auth error final:", authError);
+      // If user already exists, guide them to sign in
+      if (
+        authError.message?.includes("already been registered") ||
+        authError.message?.includes("User already exists")
+      ) {
         return jsonResponse({ error: "This email is already registered. Please sign in instead." });
       }
-      // Fallback: include full error object if message missing
-      const errMsg = authError.message ?? (authError.msg ?? JSON.stringify(authError));
+      const errMsg = authError.message
+        ?? authError.msg
+        ?? authError.code
+        ?? JSON.stringify(authError);
       return jsonResponse({ error: "Failed to create account: " + errMsg });
     }
 
