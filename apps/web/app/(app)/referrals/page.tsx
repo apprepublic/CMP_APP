@@ -27,7 +27,7 @@ export default function ReferralsPage() {
   ];
   
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/register?ref=${referralCode}` : '';
-  const shareText = `Join me on AppRepublic and earn rewards! Use my invite code: ${referralCode}`;
+  const shareText = `Join me on CMP App and earn rewards! Use my invite code: ${referralCode}`;
 
   const copyCode = () => {
     if (referralCode === '...') return;

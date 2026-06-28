@@ -172,13 +172,13 @@ export async function processWithdrawal(
   const { data: wallet, error: walletError } = await db.from('wallets').select('*').eq('id', walletId).single();
   if (walletError) throw new Error('Failed to load wallet');
   
-  const currentBalance = parseFloat(wallet.balance || '0');
+  const currentBalance = parseFloat(wallet.coin_balance || '0');
   if (currentBalance < amountCoins) throw new Error('Insufficient balance');
   
   const newBalance = currentBalance - amountCoins;
 
   // 2. Update wallet balance
-  const { error: updateError } = await db.from('wallets').update({ balance: newBalance.toString() }).eq('id', walletId);
+  const { error: updateError } = await db.from('wallets').update({ coin_balance: newBalance.toString() }).eq('id', walletId);
   if (updateError) throw new Error('Failed to update balance');
 
   // 3. Insert transaction record
@@ -195,6 +195,14 @@ export async function processWithdrawal(
     // If this fails, we ideally should rollback the balance, but skipping for prototype simplicity
     throw new Error('Failed to create transaction record');
   }
+
+  // Send Notification
+  await db.from('notifications').insert({
+    user_id: wallet.user_id,
+    type: 'SYSTEM',
+    title: 'Withdrawal Initiated',
+    message: `Your withdrawal of ${amountCoins} coins is being processed.`,
+  });
 
   return txn.id;
 }

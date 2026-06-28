@@ -85,7 +85,7 @@ export default async function handler(
     // Get user's wallet
     const { data: wallet, error: walletError } = await supabase
       .from('wallets')
-      .select('id, balance')
+      .select('id, coin_balance')
       .eq('user_id', userId)
       .single();
 
@@ -100,12 +100,12 @@ export default async function handler(
 
     if (internalStatus === 'COMPLETED') {
       // Update wallet balance
-      const newBalance = BigInt(wallet.balance) + BigInt(coinAmount);
+      const newBalance = BigInt(wallet.coin_balance) + BigInt(coinAmount);
       
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ 
-          balance: newBalance.toString(),
+          coin_balance: newBalance.toString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', wallet.id);
@@ -131,6 +131,14 @@ export default async function handler(
         console.error('Failed to create transaction:', txError);
         // Don't fail here, wallet already updated
       }
+
+      // Send Notification
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'SYSTEM',
+        title: 'Top-up Successful',
+        message: `Your deposit of ${coinAmount} coins via ${pay_currency.toUpperCase()} has been credited.`,
+      });
     } else if (internalStatus === 'FAILED') {
       // Log failed payment
       await supabase
@@ -139,7 +147,7 @@ export default async function handler(
           user_id: userId,
           type: 'refund',
           amount: 0,
-          balance_after: wallet.balance,
+          balance_after: wallet.coin_balance,
           description: `Failed crypto top-up via NOWPayments (${pay_currency.toUpperCase()})`,
           reference_id: payment_id,
         });

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import SideNavBar from './SideNavBar';
 import TopNavBar from './TopNavBar';
 import BottomNavBar from './BottomNavBar';
+import AnnouncementsBanner from './AnnouncementsBanner';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
@@ -97,6 +98,7 @@ export default function DashboardLayout({
           )}
         >
           <TopNavBar />
+          <AnnouncementsBanner />
           {children}
         </div>
 
