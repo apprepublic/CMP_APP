@@ -77,54 +77,52 @@ const handler = async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "Password must be 8-128 characters" });
     }
 
-    console.log("Creating auth user...");
+    console.log("Creating auth user via direct Auth Admin API...");
 
-    // Retry up to 3 times for transient AuthRetryableFetchError (Supabase Auth 500s)
-    let authData: any = null;
-    let authError: any = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const result = await supabase.auth.admin.createUser({
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Log env diagnostics (mask key for safety)
+    console.log("SUPABASE_URL:", supabaseUrl ? supabaseUrl.slice(0, 30) + "..." : "MISSING");
+    console.log("SERVICE_ROLE_KEY present:", !!serviceRoleKey);
+
+    // Call Auth Admin API directly — more reliable than auth-js admin client in edge functions
+    const adminRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceRoleKey,
+        "Authorization": `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
         email: pendingReg.email,
         password,
         email_confirm: true,
         user_metadata: { full_name: pendingReg.full_name },
-      });
-      authData = result.data;
-      authError = result.error;
+      }),
+    });
 
-      if (!authError) break; // success
+    const adminBody = await adminRes.json().catch(() => ({}));
+    console.log("Auth Admin API response:", adminRes.status, JSON.stringify(adminBody));
 
-      const isRetryable = authError?.name === "AuthRetryableFetchError" || authError?.status === 500;
-      console.error(`Auth error (attempt ${attempt}):`, JSON.stringify({
-        name: authError?.name,
-        message: authError?.message,
-        status: authError?.status,
-        code: authError?.code,
-      }));
+    if (!adminRes.ok) {
+      const errMsg = adminBody?.msg
+        ?? adminBody?.message
+        ?? adminBody?.error_description
+        ?? adminBody?.error
+        ?? `Auth API returned ${adminRes.status}`;
 
-      if (!isRetryable || attempt === 3) break; // don't retry non-retryable errors
-
-      // Wait 1s before retrying
-      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-    }
-
-    if (authError) {
-      console.error("Auth error final:", authError);
-      // If user already exists, guide them to sign in
       if (
-        authError.message?.includes("already been registered") ||
-        authError.message?.includes("User already exists")
+        typeof errMsg === "string" &&
+        (errMsg.includes("already been registered") || errMsg.includes("User already exists"))
       ) {
         return jsonResponse({ error: "This email is already registered. Please sign in instead." });
       }
-      const errMsg = authError.message
-        ?? authError.msg
-        ?? authError.code
-        ?? JSON.stringify(authError);
+      console.error("Auth Admin API error:", adminRes.status, JSON.stringify(adminBody));
       return jsonResponse({ error: "Failed to create account: " + errMsg });
     }
 
-    const userId = authData.user.id;
+    const userId: string = adminBody.id;
     console.log("Auth user created:", userId);
 
     // Handle referral if provided
