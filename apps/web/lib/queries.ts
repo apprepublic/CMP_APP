@@ -378,9 +378,9 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
 export async function getArticles(opts: { category?: string; search?: string; limit?: number } = {}): Promise<Article[]> {
   let q = db
     .from('articles')
-    .select('*, author:users(id, display_name)')
+    .select('*')
     .eq('is_published', true)
-    .order('published_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(opts.limit ?? 50);
   if (opts.category) q = q.eq('category', opts.category);
   if (opts.search) q = q.ilike('title', `%${opts.search}%`);
@@ -388,7 +388,7 @@ export async function getArticles(opts: { category?: string; search?: string; li
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const res = (await db.from('articles').select('*, author:users(id, display_name)').eq('slug', slug).eq('is_published', true).single()) as {
+  const res = (await db.from('articles').select('*').eq('slug', slug).eq('is_published', true).single()) as {
     data: Article | null;
     error: any;
   };

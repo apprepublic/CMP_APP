@@ -1,7 +1,7 @@
 -- Migration: Seed articles for CMP App
 -- Adds sample articles so the Earn > Articles section is populated
 
-INSERT INTO articles (id, title, slug, excerpt, content, category, read_time_minutes, coin_reward, cover_image_url, is_published, published_at)
+INSERT INTO articles (id, title, slug, excerpt, content, category, read_time_minutes, coin_reward, cover_image_url, is_published)
 VALUES
 
 (
@@ -14,8 +14,7 @@ VALUES
   8,
   50,
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCc-7--9nnzDWkZCQxo5aIwCqNw6_l81K2eHxpM5iMNicuDcuA8VzftZ_XdRcDF5rjZ6qurkUA_5BrZkSbpWfqaWXkDBAzIUshYXdXfrMXBnlVlQbjDd8ktghuAK40_ppLJfPz5sSLF2rTGJkZAWvYXZHMdS5CmCKeOTKLRql2CTzOwTyHJsyxOxc3jXM0FwB5b0Rd9UzCxt6p2orX6Ba4mn8nfeHRHf78EAvOc8X-AwjZ2LHW_QsWeWM4TJWsEKH9V6hJEoT4MO6o',
-  true,
-  NOW()
+  true
 ),
 
 (
@@ -28,8 +27,7 @@ VALUES
   6,
   40,
   null,
-  true,
-  NOW() - INTERVAL '1 day'
+  true
 ),
 
 (
@@ -42,8 +40,7 @@ VALUES
   5,
   35,
   null,
-  true,
-  NOW() - INTERVAL '2 days'
+  true
 ),
 
 (
@@ -56,8 +53,7 @@ VALUES
   7,
   45,
   null,
-  true,
-  NOW() - INTERVAL '3 days'
+  true
 ),
 
 (
@@ -70,8 +66,7 @@ VALUES
   5,
   30,
   null,
-  true,
-  NOW() - INTERVAL '4 days'
+  true
 )
 
 ON CONFLICT (slug) DO NOTHING;
