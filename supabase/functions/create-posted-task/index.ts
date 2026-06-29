@@ -200,12 +200,12 @@ const handler = async (req: Request): Promise<Response> => {
         UPDATE wallets SET coin_balance = ${newBalance}, updated_at = NOW() WHERE id = ${wallet.id}
       `;
 
-      // Record transaction
-      const txId = crypto.randomUUID();
-      await client.queryObject`
-        INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description, reference_id)
-        VALUES (${txId}, ${wallet.id}, 'spend', ${totalCost}, ${newBalance}, ${`Posted task: ${title}`}, ${postedTask.id})
-      `;
+// Record transaction
+    const txId = crypto.randomUUID();
+    await client.queryObject`
+      INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description)
+      VALUES (${txId}, ${wallet.id}, 'spend', ${totalCost}, ${newBalance}, ${`Posted task: ${title}`})
+    `;
 
       return new Response(JSON.stringify({
         message: "Task created successfully",

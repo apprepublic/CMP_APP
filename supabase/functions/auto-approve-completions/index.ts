@@ -96,8 +96,8 @@ const handler = async (req: Request): Promise<Response> => {
             // Create coin transaction
             const txId = crypto.randomUUID();
             await client.queryObject`
-              INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description, reference_id)
-              VALUES (${txId}, ${wallet.id}, 'bonus', ${Number(completion.coins_earned)}, ${newBalance}, ${'Auto-approved task completion'}, ${completion.posted_task_id})
+              INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description)
+              VALUES (${txId}, ${wallet.id}, 'bonus', ${Number(completion.coins_earned)}, ${newBalance}, ${'Auto-approved task completion'})
             `;
           }
 
