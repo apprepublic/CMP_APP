@@ -168,7 +168,13 @@ export default function SettingsPage() {
             {/* User card */}
             <div className="flex items-center gap-4 mb-8 relative z-10">
               <div className="w-12 h-12 rounded-full bg-secondary-fixed/20 flex items-center justify-center border-2 border-secondary-fixed/50 text-secondary-fixed font-bold text-lg">
-                {user?.displayName?.[0]?.toUpperCase() || 'U'}
+                {(() => {
+                    const name = user?.displayName || 'User';
+                    const parts = name.trim().split(/\s+/);
+                    return parts.length >= 2
+                      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                      : name[0].toUpperCase();
+                  })()}
               </div>
               <div>
                 <h3 className="font-body-md text-body-md font-bold text-white">{user?.displayName || 'User'}</h3>

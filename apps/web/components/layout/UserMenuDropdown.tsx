@@ -30,7 +30,10 @@ export default function UserMenuDropdown() {
   };
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
-  const initials = displayName.substring(0, 2).toUpperCase();
+  const nameParts = displayName.trim().split(/\s+/);
+  const initials = nameParts.length >= 2
+    ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+    : displayName.substring(0, 2).toUpperCase();
 
   return (
     <div className="relative" ref={dropdownRef}>

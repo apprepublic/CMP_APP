@@ -127,34 +127,44 @@ export const useUserStore = create<UserStore>()(
         if (!authUser) return;
 
         try {
-          // Fetch profile from Supabase
           const { data: profile } = await supabase
-            .from('profiles')
-            .select('id, full_name, username, referral_code')
+            .from('users')
+            .select('id, full_name, email, avatar_url, kyc_status')
             .eq('id', authUser.id)
             .single();
 
-          // Fetch wallet from Supabase (correct table and column names)
           const { data: wallet } = await supabase
             .from('wallets')
-            .select('balance, lifetime_earned')
+            .select('coin_balance, lifetime_earned, lifetime_spent, referral_code')
             .eq('user_id', authUser.id)
             .single();
 
+          const { data: streak } = await supabase
+            .from('streaks')
+            .select('current_streak, longest_streak, freezes_owned')
+            .eq('user_id', authUser.id)
+            .maybeSingle();
+
           if (profile) {
+            const p = profile as Record<string, any>;
             const user: User = {
               id: authUser.id,
-              email: authUser.email || null,
-              phone: '', // Not stored in profiles
-              displayName: (profile as any).full_name || authUser.email || '',
-              username: (profile as any).username || '',
+              email: authUser.email || p.email || null,
+              phone: '',
+              displayName: p.full_name || authUser.email || '',
+              username: authUser.user_metadata?.username || '',
               role: 'USER',
-              kycStatus: 'NONE',
-              referralCode: (profile as any).referral_code || '',
+              kycStatus: (p.kyc_status as User['kycStatus']) || 'NONE',
+              referralCode: (wallet as any)?.referral_code || '',
               wallet: wallet ? {
-                coinBalance: Number((wallet as any).balance) || 0,
+                coinBalance: Number((wallet as any).coin_balance) || 0,
                 lifetimeEarned: Number((wallet as any).lifetime_earned) || 0,
-                lifetimeSpent: 0,
+                lifetimeSpent: Number((wallet as any).lifetime_spent) || 0,
+              } : undefined,
+              streakRecord: streak ? {
+                currentStreak: (streak as any).current_streak || 0,
+                longestStreak: (streak as any).longest_streak || 0,
+                freezesOwned: (streak as any).freezes_owned || 0,
               } : undefined,
             };
             set({ user, isAuthenticated: true });

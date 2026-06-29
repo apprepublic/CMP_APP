@@ -87,7 +87,13 @@ export function Header() {
               <Link href="/profile">
                 <NeuIconBadge size="sm">
                   <span className="h-6 w-6 rounded-full bg-neo-primary flex items-center justify-center text-white text-sm font-bold">
-                    {(user.displayName || user.email)?.[0]?.toUpperCase() || 'U'}
+                    {(() => {
+                      const name = user.displayName || user.email || 'U';
+                      const parts = name.trim().split(/\s+/);
+                      return parts.length >= 2
+                        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                        : name[0].toUpperCase();
+                    })()}
                   </span>
                 </NeuIconBadge>
               </Link>

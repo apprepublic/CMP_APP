@@ -125,6 +125,66 @@ const handler = async (req: Request): Promise<Response> => {
     const userId: string = adminBody.id;
     console.log("Auth user created:", userId);
 
+    // Insert into users table (profile data)
+    const { error: usersError } = await supabase.from("users").insert({
+      id: userId,
+      email: pendingReg.email,
+      full_name: pendingReg.full_name,
+      phone_number: null,  // Not stored in pending_registrations
+      avatar_url: null,    // Not stored in pending_registrations
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (usersError) {
+      console.error("Users table insert error:", usersError);
+      return jsonResponse({ error: "Failed to create user profile" });
+    }
+
+    console.log("User profile created in users table:", userId);
+
+    // Create wallet with 500 signup bonus (matching migration 0021)
+    const { data: walletData, error: walletError } = await supabase
+      .from("wallets")
+      .insert({
+        user_id: userId,
+        coin_balance: 500,
+        lifetime_earned: 500,
+        lifetime_spent: 0,
+        referral_code: null,  // Will be auto-generated on insert
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (walletError) {
+      console.error("Wallet creation error:", walletError);
+      return jsonResponse({ error: "Failed to create wallet" });
+    }
+
+    const walletId = walletData?.id;
+    console.log("Wallet created for user:", userId, "wallet_id:", walletId);
+
+    // Record signup bonus in coin_transactions
+    if (walletId) {
+      const { error: coinTransactionError } = await supabase.from("coin_transactions").insert({
+        id: crypto.randomUUID(),
+        wallet_id: walletId,
+        type: 'earn',
+        amount: 500,
+        balance_after: 500,
+        description: 'Signup bonus — Welcome to CMPapp!',
+        created_at: new Date().toISOString(),
+      });
+
+      if (coinTransactionError) {
+        console.error("Coin transaction error:", coinTransactionError);
+      } else {
+        console.log("Signup bonus transaction recorded");
+      }
+    }
+
     // Handle referral if provided
     if (pendingReg.referral_code) {
       // Find referrer user_id from wallets table using referral_code
@@ -139,6 +199,7 @@ const handler = async (req: Request): Promise<Response> => {
           referrer_id: referrerWallet.user_id,
           referred_user_id: userId,
           status: "PENDING",
+          created_at: new Date().toISOString(),
         });
         if (referralError) {
           console.error("Referral creation error:", referralError);
