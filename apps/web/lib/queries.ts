@@ -49,6 +49,7 @@ export interface Article {
   coin_reward: number;
   cover_image_url: string | null;
   view_count: number;
+  tags: string[] | null;
   published_at: string | null;
   created_at: string;
   author?: { display_name: string } | null;

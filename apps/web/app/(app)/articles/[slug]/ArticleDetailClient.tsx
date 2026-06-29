@@ -9,8 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function ArticleDetailClient({ slug }: { slug: string }) {
   const router = useRouter();
-  const { data: articleData, isLoading } = useArticle(slug);
-  const article = (articleData as any)?.article;
+  const { data: article, isLoading } = useArticle(slug);
   const claimArticle = useClaimArticle();
   const { wallet } = useWallet();
   const [hasClaimed, setHasClaimed] = useState(false);

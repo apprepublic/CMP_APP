@@ -9,10 +9,9 @@ export default function ArticlesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: articlesData, isLoading: articlesLoading } = useArticles(
+  const { data: articles = [], isLoading: articlesLoading } = useArticles(
     selectedCategory ? { category: selectedCategory, search: searchQuery } : { search: searchQuery }
   );
-  const articles: any[] = (articlesData as any)?.articles ?? [];
 
   const categories = useMemo(() => {
     const set = new Set<string>();

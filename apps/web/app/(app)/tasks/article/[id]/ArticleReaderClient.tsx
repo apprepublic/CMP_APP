@@ -20,8 +20,7 @@ function createConfetti() {
 
 export default function ArticleReaderClient({ slug }: { slug: string }) {
   const router = useRouter();
-  const { data: resp, isLoading } = useArticle(slug);
-  const article = resp?.article;
+  const { data: article, isLoading } = useArticle(slug);
   const claimArticle = useClaimArticle();
 
   const [readingProgress, setReadingProgress] = useState(0);
@@ -167,7 +166,7 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
               <span className="bg-secondary text-on-secondary px-3 py-1 rounded-lg font-label-caps text-[10px]">
                 {article.category?.toUpperCase() || 'ARTICLE'}
               </span>
-              <span className="text-on-surface-variant font-body-sm">• {article.readTimeMinutes ?? article.read_time_minutes ?? '5'} Min Read</span>
+              <span className="text-on-surface-variant font-body-sm">• {article.read_time_minutes ?? '5'} Min Read</span>
             </div>
             <h1 className="font-h1 text-h1-mobile md:text-h1 text-primary leading-tight">{article.title}</h1>
             {article.excerpt && (

@@ -16,6 +16,8 @@ import {
   getReferrals,
   getNotifications,
   getLatestAnnouncement,
+  getArticles,
+  getArticleBySlug,
 } from './queries';
 
 export const useSongs = (opts: { genre?: string; search?: string } = {}) =>
@@ -174,10 +176,10 @@ export const useRejectCompletion = () => {
 };
 
 export const useArticle = (slug: string) =>
-  useQuery({ queryKey: ['article', slug], queryFn: () => api.getArticleBySlug(slug), enabled: !!slug, staleTime: 30 * 60 * 1000 });
+  useQuery({ queryKey: ['article', slug], queryFn: () => getArticleBySlug(slug), enabled: !!slug, staleTime: 30 * 60 * 1000 });
 
 export const useArticles = (opts: { category?: string; search?: string } = {}) =>
-  useQuery({ queryKey: ['articles', opts], queryFn: () => api.getArticles(opts), staleTime: 10 * 60 * 1000 });
+  useQuery({ queryKey: ['articles', opts], queryFn: () => getArticles(opts), staleTime: 10 * 60 * 1000 });
 
 export const useTransactions = (walletId: string) => 
   useQuery({ queryKey: ['transactions', walletId], queryFn: () => getTransactions(walletId), enabled: !!walletId, staleTime: 2 * 60 * 1000 });
