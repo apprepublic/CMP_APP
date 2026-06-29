@@ -79,25 +79,25 @@ const handler = async (req: Request): Promise<Response> => {
 
           // Credit user's wallet
           const walletResult = await client.queryObject`
-            SELECT id, balance, lifetime_earned FROM wallets WHERE user_id = ${completion.user_id} LIMIT 1
+            SELECT id, coin_balance, lifetime_earned FROM wallets WHERE user_id = ${completion.user_id} LIMIT 1
           `;
           const wallet = walletResult.rows[0] as any;
 
           if (wallet) {
-            const newBalance = Number(wallet.balance) + Number(completion.coins_earned);
+            const newBalance = Number(wallet.coin_balance) + Number(completion.coins_earned);
             const newLifetimeEarned = Number(wallet.lifetime_earned) + Number(completion.coins_earned);
 
             await client.queryObject`
               UPDATE wallets
-              SET balance = ${newBalance}, lifetime_earned = ${newLifetimeEarned}, updated_at = NOW()
+              SET coin_balance = ${newBalance}, lifetime_earned = ${newLifetimeEarned}, updated_at = NOW()
               WHERE id = ${wallet.id}
             `;
 
             // Create coin transaction
             const txId = crypto.randomUUID();
             await client.queryObject`
-              INSERT INTO coin_transactions (id, user_id, type, amount, balance_after, description, reference_id)
-              VALUES (${txId}, ${completion.user_id}, 'bonus', ${Number(completion.coins_earned)}, ${newBalance}, ${'Auto-approved task completion'}, ${completion.posted_task_id})
+              INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description, reference_id)
+              VALUES (${txId}, ${wallet.id}, 'bonus', ${Number(completion.coins_earned)}, ${newBalance}, ${'Auto-approved task completion'}, ${completion.posted_task_id})
             `;
           }
 

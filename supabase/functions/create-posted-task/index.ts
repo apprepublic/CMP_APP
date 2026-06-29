@@ -126,20 +126,20 @@ const handler = async (req: Request): Promise<Response> => {
     const client = await pool.connect();
 
     try {
-      // Get wallet
-      const walletResult = await client.queryObject`
-        SELECT id, balance, lifetime_earned FROM wallets WHERE user_id = ${user.id} LIMIT 1
-      `;
-      const wallet = walletResult.rows[0] as any;
+// Get wallet
+    const walletResult = await client.queryObject`
+      SELECT id, coin_balance, lifetime_earned FROM wallets WHERE user_id = ${user.id} LIMIT 1
+    `;
+    const wallet = walletResult.rows[0] as any;
 
-      if (!wallet) {
-        return new Response(JSON.stringify({ error: "Wallet not found" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!wallet) {
+      return new Response(JSON.stringify({ error: "Wallet not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-      const currentBalance = Number(wallet.balance);
+    const currentBalance = Number(wallet.coin_balance);
       if (currentBalance < totalCost) {
         return new Response(JSON.stringify({
           error: "Insufficient balance. Please top up your wallet.",
@@ -197,13 +197,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Task created:", postedTask.id);
 
       await client.queryObject`
-        UPDATE wallets SET balance = ${newBalance}, updated_at = NOW() WHERE id = ${wallet.id}
+        UPDATE wallets SET coin_balance = ${newBalance}, updated_at = NOW() WHERE id = ${wallet.id}
       `;
 
+      // Record transaction
       const txId = crypto.randomUUID();
       await client.queryObject`
-        INSERT INTO coin_transactions (id, user_id, type, amount, balance_after, description, reference_id)
-        VALUES (${txId}, ${user.id}, 'spend', ${totalCost}, ${newBalance}, ${`Posted task: ${title}`}, ${postedTask.id})
+        INSERT INTO coin_transactions (id, wallet_id, type, amount, balance_after, description, reference_id)
+        VALUES (${txId}, ${wallet.id}, 'spend', ${totalCost}, ${newBalance}, ${`Posted task: ${title}`}, ${postedTask.id})
       `;
 
       return new Response(JSON.stringify({
