@@ -1,20 +1,20 @@
 'use client';
 
-import Link from 'next/link';
+import { useState } from 'react';
 import { useArtist } from '@/lib/hooks';
 import { usePlayer } from '@/components/music/PlayerProvider';
-import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/page-transition';
-import { NeuCard } from '@/components/ui/neu-card';
-import { NeuIconBadge } from '@/components/ui/neu-icon-badge';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { Play, Pause, UserPlus, UserMinus, Verified, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import type { Song } from '@/lib/queries';
 
 function formatNumber(num: number): string {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toString();
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 export default function ArtistProfileClient({ slug }: { slug: string }) {
@@ -24,262 +24,246 @@ export default function ArtistProfileClient({ slug }: { slug: string }) {
 
   if (isLoading) {
     return (
-      <PageTransition className="min-h-screen bg-neu-bg pb-32">
-        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat border-b border-neu-bg-dark">
-          <div className="flex items-center gap-3">
-            <NeuIconBadge size="sm" active>
-              <span className="material-symbols-outlined text-neo-primary">person</span>
-            </NeuIconBadge>
-            <span className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</span>
-          </div>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full shadow-neu-flat text-neo-text-secondary">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-        </header>
-        <main className="pt-[60px] max-w-container-max mx-auto md:px-gutter px-margin-mobile">
-          <div className="h-48 md:h-64 rounded-xl neo-skeleton mb-24" />
-          <div className="h-64 rounded-neo neo-skeleton" />
-        </main>
-      </PageTransition>
+      <div className="animate-pulse space-y-6 pb-24">
+        <div className="h-[300px] md:h-[400px] bg-surface-variant rounded-2xl" />
+        <div className="max-w-5xl mx-auto px-margin-mobile md:px-margin-desktop space-y-6">
+          <div className="h-8 w-48 bg-surface-variant rounded-lg" />
+          <div className="h-64 bg-surface-variant rounded-xl" />
+        </div>
+      </div>
     );
   }
 
   if (!data) {
     return (
-      <PageTransition className="min-h-screen bg-neu-bg pb-32">
-        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat border-b border-neu-bg-dark">
-          <div className="flex items-center gap-3">
-            <NeuIconBadge size="sm" active>
-              <span className="material-symbols-outlined text-neo-primary">person</span>
-            </NeuIconBadge>
-            <span className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</span>
-          </div>
-        </header>
-        <main className="pt-[60px] max-w-container-max mx-auto md:px-gutter px-margin-mobile">
-          <div className="text-center py-20 text-neo-text-secondary">
-            <span className="material-symbols-outlined text-[64px] mb-4">person</span>
-            <h2 className="font-h3 text-h3 text-neo-text-primary mb-2">Artist not found</h2>
-            <p>The artist you're looking for doesn't exist or has been removed.</p>
-          </div>
-        </main>
-      </PageTransition>
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <span className="material-symbols-outlined text-[64px] text-on-surface-variant mb-4">person_off</span>
+        <h2 className="font-h3 text-h3 text-on-background mb-2">Artist not found</h2>
+        <p className="font-body-md text-on-surface-variant">The artist you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+      </div>
     );
   }
 
   const { artist, songs } = data;
 
-  return (
-    <PageTransition className="min-h-screen bg-neu-bg pb-32">
-      {/* TopAppBar */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 bg-neu-bg shadow-neu-flat border-b border-neu-bg-dark">
-        <div className="flex items-center gap-3">
-          <NeuIconBadge size="sm" active>
-            <span className="material-symbols-outlined text-neo-primary">person</span>
-          </NeuIconBadge>
-          <span className="font-h3 text-h3 text-neo-primary font-bold">CMPapp</span>
-        </div>
-        <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neu-bg shadow-neu-flat transition-colors text-neo-text-secondary">
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
-      </header>
+  const playSong = (song: Song, list: Song[]) => {
+    if (song.taskId) {
+      play(song, list, { id: song.taskId, isPosted: true, coinReward: song.coin_reward });
+    } else {
+      play(song, list);
+    }
+  };
 
-      <main className="pt-[60px] max-w-container-max mx-auto md:px-gutter px-margin-mobile">
-        {/* Hero Section */}
-        <section className="mt-4">
-          <NeuCard padding="none" className="relative rounded-xl overflow-hidden shadow-neu-raised">
-            <div className="h-48 md:h-64 w-full bg-gradient-to-br from-neo-primary/20 to-neo-secondary/20 relative">
-              {artist.cover_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img alt="Artist Cover" className="w-full h-full object-cover opacity-80" src={artist.cover_url} />
+  const togglePlay = (song: Song, list: Song[]) => {
+    if (current?.id === song.id) {
+      toggle();
+    } else {
+      playSong(song, list);
+    }
+  };
+
+  return (
+    <div className="pb-24">
+      {/* Hero Section */}
+      <section className="relative bg-primary-container text-on-primary overflow-hidden">
+        <div className="h-48 md:h-72 w-full bg-gradient-to-br from-primary via-primary-container to-secondary-fixed/20 relative">
+          {artist.cover_url && (
+            <img alt="" className="w-full h-full object-cover opacity-60" src={artist.cover_url} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-primary-container via-primary-container/70 to-transparent" />
+        </div>
+
+        <div className="max-w-5xl mx-auto px-margin-mobile md:px-margin-desktop relative z-10 -mt-20 md:-mt-28">
+          <div className="flex flex-col md:flex-row gap-6 md:items-end">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden border-4 border-secondary-fixed shadow-2xl shrink-0 bg-surface-variant">
+              {artist.avatar_url ? (
+                <img className="w-full h-full object-cover" src={artist.avatar_url} alt={artist.stage_name} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-primary text-secondary-fixed">
+                  <span className="material-symbols-outlined text-[48px]">person</span>
+                </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-neo-primary/80 to-transparent"></div>
             </div>
-            <div className="absolute bottom-0 left-0 w-full p-6 flex flex-col md:flex-row md:items-end gap-6 translate-y-12 md:translate-y-8">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-neu-bg overflow-hidden shadow-neu-raised flex-shrink-0 bg-neu-bg relative z-10 flex items-center justify-center bg-gradient-to-br from-neo-secondary to-neo-primary">
-                {artist.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img alt="Artist Profile" className="w-full h-full object-cover" src={artist.avatar_url} />
-                ) : (
-                  <span className="font-h1 text-h1 text-white font-bold">{artist.stage_name?.[0]?.toUpperCase() || 'A'}</span>
+
+            <div className="flex-grow pb-4">
+              <div className="flex flex-wrap items-center gap-4 mb-3">
+                <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-secondary-fixed">{artist.stage_name}</h1>
+                {artist.is_verified && (
+                  <span className="bg-success-verified/20 text-success-verified px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    Verified
+                  </span>
                 )}
               </div>
-              <div className="flex-grow pb-12 md:pb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-                <div className="text-white md:text-neo-text-primary">
-                  <div className="flex items-center gap-2">
-                    <h1 className="font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 text-white drop-shadow-md md:drop-shadow-none md:text-neo-primary">{artist.stage_name}</h1>
-                    {artist.is_verified && (
-                      <NeuIconBadge size="sm" active className="bg-blue-500/20 p-0">
-                        <Verified className="w-5 h-5 text-blue-500" />
-                      </NeuIconBadge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="font-data-lg text-data-lg text-neo-secondary">{formatNumber(artist.monthly_listeners)}</span>
-                    <span className="font-body-sm text-body-sm text-white/80 md:text-neo-text-secondary uppercase tracking-wider">Monthly Listeners</span>
-                  </div>
+              {artist.bio && (
+                <p className="font-body-lg text-on-primary-container max-w-2xl mb-6">{artist.bio}</p>
+              )}
+              <div className="flex flex-wrap gap-6 items-center">
+                <div>
+                  <span className="font-label-caps text-on-primary-container">Followers</span>
+                  <span className="font-data-lg text-h3 text-white block">{formatNumber(artist.follower_count)}</span>
                 </div>
-                <Button
-                  size="lg"
-                  variant={isFollowing ? 'outline' : 'default'}
-                  onClick={() => setIsFollowing(!isFollowing)}
-                  className="gap-2 shadow-neu-raised-sm"
-                >
-                  {isFollowing ? (
-                    <>
-                      <UserMinus className="w-5 h-5" />
-                      Following
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-5 h-5" />
-                      Follow
-                    </>
-                  )}
-                </Button>
+                <div className="w-px h-10 bg-outline-variant/20" />
+                <div>
+                  <span className="font-label-caps text-on-primary-container">Total Streams</span>
+                  <span className="font-data-lg text-h3 text-white block">{formatNumber(artist.monthly_listeners)}</span>
+                </div>
+                <div className="w-px h-10 bg-outline-variant/20" />
+                <div>
+                  <span className="font-label-caps text-on-primary-container">Genre</span>
+                  <span className="font-data-lg text-h3 text-secondary-fixed block">{artist.genre || 'Various'}</span>
+                </div>
+                <div className="flex gap-4 ml-auto">
+                  <button
+                    onClick={() => setIsFollowing(!isFollowing)}
+                    className={`font-bold px-8 py-3 rounded-lg transition-all flex items-center gap-2 ${
+                      isFollowing
+                        ? 'bg-white/10 text-white border border-secondary-fixed'
+                        : 'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined">{isFollowing ? 'check' : 'person_add'}</span>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                  <button className="bg-white/10 text-white p-3 rounded-lg hover:bg-white/20 transition-all">
+                    <span className="material-symbols-outlined">share</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </NeuCard>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        {/* Tracklist Section */}
-        <section className="mt-24 md:mt-16">
-          <NeuCard padding="lg" className="shadow-neu-flat">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-h3 text-h3 text-neo-text-primary">Top Tracks</h2>
-            </div>
-            {songs.length === 0 ? (
-              <div className="text-center py-10 text-neo-text-secondary">
-                <span className="material-symbols-outlined text-[48px] mb-2">music_note</span>
-                <p>No tracks available yet.</p>
+      {/* Content Grid */}
+      <div className="max-w-5xl mx-auto px-margin-mobile md:px-margin-desktop -mt-6 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Tracks List */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/20">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-h3 text-h3 text-on-background">Popular Tracks</h2>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-neu-bg-dark text-neo-text-secondary font-label-caps text-label-caps">
-                      <th className="pb-3 pl-2 w-12 text-center">#</th>
-                      <th className="pb-3 pl-2">Title</th>
-                      <th className="pb-3 pl-2 hidden sm:table-cell">Duration</th>
-                      <th className="pb-3 pr-2 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="font-body-md text-body-md">
-                    {songs.map((track, index) => {
-                      const active = current?.id === track.id && isPlaying;
-                      return (
-                        <motion.tr 
-                          key={track.id} 
-                          className={`border-b border-neu-bg-dark/50 hover:bg-neu-bg transition-colors group cursor-pointer ${active ? 'bg-neu-bg/50' : ''}`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <td className="py-4 pl-2 text-center text-neo-text-secondary font-data-md text-data-md">{index + 1}</td>
-                          <td className="py-4 pl-2">
-                            <div className="flex items-center gap-3">
-                              <NeuCard padding="none" className="w-10 h-10 rounded bg-neu-bg overflow-hidden flex-shrink-0 hidden sm:block shadow-neu-flat">
-                                {track.cover_url ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img alt="Album Art" className="w-full h-full object-cover" src={track.cover_url} />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neo-primary/20 to-neo-secondary/20">
-                                    <span className="material-symbols-outlined text-[20px] text-neo-text-muted">music_note</span>
-                                  </div>
-                                )}
-                              </NeuCard>
-                              <div>
-                                <div className={`font-body-lg text-body-lg group-hover:text-neo-secondary transition-colors ${active ? 'text-neo-secondary' : 'text-neo-text-primary'}`}>{track.title}</div>
-                                <div className="font-body-sm text-body-sm text-neo-text-secondary sm:hidden">{track.duration_seconds}s</div>
+
+              {songs.length === 0 ? (
+                <div className="text-center py-10 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[48px] mb-2">music_note</span>
+                  <p>No tracks available yet.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {songs.map((track, index) => {
+                    const active = current?.id === track.id;
+                    return (
+                      <div
+                        key={track.id}
+                        onClick={() => togglePlay(track, songs)}
+                        className={`group flex items-center gap-4 p-3 rounded-lg transition-colors cursor-pointer ${
+                          active ? 'bg-secondary-container/20' : 'hover:bg-surface-alt'
+                        }`}
+                      >
+                        <span className="font-data-md text-on-surface-variant w-4 text-center">{index + 1}</span>
+                        <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-variant flex items-center justify-center">
+                          {track.cover_url ? (
+                            <img className="w-full h-full object-cover" src={track.cover_url} alt="" />
+                          ) : (
+                            <span className="material-symbols-outlined text-on-surface-variant">music_note</span>
+                          )}
+                        </div>
+                        <div className="flex-grow min-w-0">
+                          <p className={`font-body-md font-bold truncate transition-colors ${
+                            active ? 'text-secondary' : 'text-on-background group-hover:text-secondary'
+                          }`}>
+                            {track.title}
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 text-on-surface-variant text-xs">
+                              <span className="material-symbols-outlined text-[14px]">play_arrow</span>
+                              <span className="font-data-md">{formatNumber(track.play_count)}</span>
+                            </div>
+                            {track.coin_reward > 0 && (
+                              <div className="flex items-center gap-1 border border-secondary-fixed/50 px-2 py-0.5 rounded-full bg-secondary-fixed/10">
+                                <span className="material-symbols-outlined text-[14px] text-on-secondary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
+                                <span className="font-data-md text-[10px] text-on-secondary-container">+{track.coin_reward} CMP</span>
                               </div>
-                            </div>
-                          </td>
-                          <td className="py-4 pl-2 text-neo-text-secondary hidden sm:table-cell font-data-md text-data-md">{Math.floor(track.duration_seconds / 60)}:{(track.duration_seconds % 60).toString().padStart(2, '0')}</td>
-                          <td className="py-4 pr-2 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <NeuIconBadge 
-                                size="sm" 
-                                interactive 
-                                className={`cursor-pointer transition-colors ${active ? 'bg-neo-secondary text-neo-primary' : 'text-neo-text-primary hover:bg-neo-primary hover:text-white'}`}
-                                onClick={() => play(track, songs)}
-                              >
-                                {active && isPlaying ? (
-                                  <Pause className="w-4 h-4 fill-current" />
-                                ) : (
-                                  <Play className="w-4 h-4 fill-current" />
-                                )}
-                              </NeuIconBadge>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </NeuCard>
-        </section>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); togglePlay(track, songs); }}
+                          className="bg-primary text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:bg-primary/80"
+                        >
+                          <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: active && isPlaying ? "'FILL' 1" : "'FILL' 0" }}>
+                            {active && isPlaying ? 'pause_circle' : 'play_circle'}
+                          </span>
+                        </button>
+                        <span className="font-data-md text-on-surface-variant hidden md:block shrink-0">{formatDuration(track.duration_seconds)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* About Section */}
-        <section className="mt-6">
-          <NeuCard padding="lg" className="shadow-neu-flat">
-            <h2 className="font-h3 text-h3 text-neo-text-primary mb-4">About</h2>
-            {artist.bio ? (
-              <p className="font-body-md text-body-md text-neo-text-secondary">{artist.bio}</p>
-            ) : (
-              <p className="font-body-md text-body-md text-neo-text-secondary">No bio available.</p>
-            )}
-            <div className="flex gap-4 mt-4 flex-wrap">
-              {artist.is_verified && (
-                <div className="flex items-center gap-2">
-                  <NeuIconBadge size="sm" active className="bg-neo-secondary/20">
-                    <Verified className="w-4 h-4 text-neo-secondary" />
-                  </NeuIconBadge>
-                  <span className="font-body-sm text-body-sm text-neo-text-secondary">Verified Artist</span>
-                </div>
+          {/* Sidebar */}
+          <div className="flex flex-col gap-8">
+            {/* Stream & Earn CTA */}
+            <div className="bg-primary-container rounded-xl p-6 border-2 border-secondary-fixed/30 relative overflow-hidden">
+              <div className="absolute -right-4 -bottom-4 opacity-20 pointer-events-none">
+                <span className="material-symbols-outlined text-[120px] text-secondary-fixed">monetization_on</span>
+              </div>
+              <h3 className="font-h3 text-white mb-2 relative z-10">Stream &amp; Earn</h3>
+              <p className="text-on-primary-container text-sm mb-6 relative z-10">
+                Support {artist.stage_name} while earning CMP tokens. Every listen contributes to their growth and your wallet.
+              </p>
+              {songs.length > 0 && (
+                <button
+                  onClick={() => playSong(songs[0], songs)}
+                  className="w-full bg-secondary text-white font-bold py-3 rounded-lg hover:bg-on-secondary-fixed-variant transition-all relative z-10 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined">play_circle</span>
+                  Start Session
+                </button>
               )}
-              {artist.genre && (
-                <div className="flex items-center gap-2">
-                  <NeuIconBadge size="sm" active>
-                    <MapPin className="w-4 h-4 text-neo-text-primary" />
-                  </NeuIconBadge>
-                  <span className="font-body-sm text-body-sm text-neo-text-secondary">{artist.genre}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <NeuIconBadge size="sm" active className="bg-neo-secondary/20">
-                  <span className="material-symbols-outlined text-[16px] text-neo-secondary">people</span>
-                </NeuIconBadge>
-                <span className="font-body-sm text-body-sm text-neo-text-secondary">{formatNumber(artist.follower_count)} followers</span>
+            </div>
+
+            {/* Socials & Links */}
+            <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/20">
+              <h3 className="font-h3 text-on-background mb-4 text-[20px]">Connect</h3>
+              <div className="flex flex-col gap-4">
+                <a className="flex items-center justify-between p-3 border border-outline-variant/30 rounded-lg hover:border-secondary-fixed transition-colors" href="#">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-[20px]">language</span>
+                    </div>
+                    <span className="font-body-md font-semibold text-on-background">Instagram</span>
+                  </div>
+                  <span className="material-symbols-outlined text-on-surface-variant">open_in_new</span>
+                </a>
+                <a className="flex items-center justify-between p-3 border border-outline-variant/30 rounded-lg hover:border-secondary-fixed transition-colors" href="#">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-[20px]">music_note</span>
+                    </div>
+                    <span className="font-body-md font-semibold text-on-background">TikTok</span>
+                  </div>
+                  <span className="material-symbols-outlined text-on-surface-variant">open_in_new</span>
+                </a>
+                <a className="flex items-center justify-between p-3 border border-outline-variant/30 rounded-lg hover:border-secondary-fixed transition-colors" href="#">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-[20px]">podcasts</span>
+                    </div>
+                    <span className="font-body-md font-semibold text-on-background">Spotify</span>
+                  </div>
+                  <span className="material-symbols-outlined text-on-surface-variant">open_in_new</span>
+                </a>
               </div>
             </div>
-          </NeuCard>
-        </section>
-      </main>
-
-      {/* BottomNavBar (Mobile Only) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-2 py-3 bg-neu-bg shadow-neu-raised">
-        <Link href="/" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
-          <span className="material-symbols-outlined">home</span>
-          <span className="font-label-caps text-label-caps mt-1">Home</span>
-        </Link>
-        <Link href="/tasks" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
-          <span className="material-symbols-outlined">payments</span>
-          <span className="font-label-caps text-label-caps mt-1">Tasks</span>
-        </Link>
-        <button className="flex flex-col items-center justify-center bg-neo-secondary text-neo-primary rounded-xl px-3 py-1 scale-90 transition-all shadow-neu-raised-sm">
-          <span className="material-symbols-outlined fill">music_note</span>
-          <span className="font-label-caps text-label-caps mt-1">Music</span>
-        </button>
-        <Link href="/marketplace" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
-          <span className="material-symbols-outlined">storefront</span>
-          <span className="font-label-caps text-label-caps mt-1">Market</span>
-        </Link>
-        <Link href="/wallet" className="flex flex-col items-center justify-center text-neo-text-secondary px-3 py-1 hover:text-neo-secondary transition-colors">
-          <span className="material-symbols-outlined">account_balance_wallet</span>
-          <span className="font-label-caps text-label-caps mt-1">Wallet</span>
-        </Link>
-      </nav>
-    </PageTransition>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
