@@ -62,9 +62,14 @@ export default function ArticleReader({ slug }: { slug: string }) {
   const [adTimer, setAdTimer] = useState(5);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const unlocked = readingProgress >= 95;
-
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setIsAuthenticated(!!user));
+  }, []);
+
+  useEffect(() => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+    setReadingProgress(0);
   }, []);
 
   useEffect(() => {
