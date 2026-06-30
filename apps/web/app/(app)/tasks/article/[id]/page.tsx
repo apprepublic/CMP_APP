@@ -9,7 +9,7 @@ export async function generateStaticParams() {
   return (articles || []).map((a: { slug: string }) => ({ id: a.slug }));
 }
 
-export default async function ArticleReaderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function ArticleReaderPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   return <ArticleReader slug={id} />;
 }
