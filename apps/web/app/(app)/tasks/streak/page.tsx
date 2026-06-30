@@ -187,7 +187,7 @@ export default function StreakPage() {
                 {completedCount}/{dailyTasksForDisplay.length} Completed
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="max-h-[220px] overflow-y-auto space-y-3">
               {tasksLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="h-16 bg-surface animate-pulse rounded-lg" />
