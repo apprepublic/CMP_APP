@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUserStore } from '@/stores/userStore';
 import { useWallet } from '@/lib/useWallet';
 import { supabase } from '@/lib/supabase';
+import { uploadFile, STORAGE_BUCKETS } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 
 type SettingsTab = 'profile' | 'security' | 'notifications';
@@ -36,6 +37,12 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [saveMessageType, setSaveMessageType] = useState<'success' | 'error'>('success');
+
+  // Avatar
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Security fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -75,6 +82,7 @@ export default function SettingsPage() {
         setUsername(p.username || '');
         setBio(p.bio || '');
         setCountry(p.country || 'NG');
+        setAvatarUrl(p.avatar_url || null);
 
         const s = parseSettings(p.settings);
         setTransactionAlerts(s.transactionAlerts ?? true);
@@ -106,6 +114,57 @@ export default function SettingsPage() {
       .eq('id', authUser.id);
 
     if (error) throw error;
+  };
+
+  // Handle avatar upload
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setSaveMessageType('error');
+      setSaveMessage('Image must be under 10MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setSaveMessageType('error');
+      setSaveMessage('Only image files are allowed');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setSaveMessage('');
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const result = await uploadFile(STORAGE_BUCKETS.PROFILE_PHOTOS, file, authUser.id);
+
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      const { error: updateError } = await supabase
+        .from('users' as any)
+        .update({ avatar_url: result.url } as any)
+        .eq('id', authUser.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(result.url);
+      useUserStore.getState().updateAvatar(result.url);
+      setSaveMessageType('success');
+      setSaveMessage('Profile picture updated');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (err: any) {
+      setSaveMessageType('error');
+      setSaveMessage(err?.message || 'Failed to upload image');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   // Save profile changes
@@ -282,15 +341,19 @@ export default function SettingsPage() {
           <div className="bg-primary-container rounded-xl p-6 sticky top-28 border border-outline-variant/20 overflow-hidden relative">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-fixed/10 rounded-full blur-2xl" />
 
-            <div className="flex items-center gap-4 mb-8 relative z-10">
-              <div className="w-12 h-12 rounded-full bg-secondary-fixed/20 flex items-center justify-center border-2 border-secondary-fixed/50 text-secondary-fixed font-bold text-lg">
-                {(() => {
-                    const name = user?.displayName || 'User';
-                    const parts = name.trim().split(/\s+/);
-                    return parts.length >= 2
-                      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-                      : name[0].toUpperCase();
-                  })()}
+              <div className="flex items-center gap-4 mb-8 relative z-10">
+              <div className="w-12 h-12 rounded-full bg-secondary-fixed/20 flex items-center justify-center border-2 border-secondary-fixed/50 text-secondary-fixed font-bold text-lg overflow-hidden">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  (() => {
+                      const name = user?.displayName || 'User';
+                      const parts = name.trim().split(/\s+/);
+                      return parts.length >= 2
+                        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                        : name[0].toUpperCase();
+                    })()
+                )}
               </div>
               <div>
                 <h3 className="font-body-md text-body-md font-bold text-white">{user?.displayName || 'User'}</h3>
@@ -350,14 +413,39 @@ export default function SettingsPage() {
               <div className="flex flex-col md:flex-row gap-8 mb-8 relative z-10">
                 <div className="flex flex-col items-center gap-4 w-full md:w-auto">
                   <div className="relative group cursor-pointer">
-                    <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center border-2 border-secondary-fixed/50 group-hover:border-secondary-fixed transition-colors text-secondary-fixed">
-                      <span className="material-symbols-outlined" style={{ fontSize: '48px' }}>account_circle</span>
-                    </div>
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="Avatar"
+                        onClick={() => setShowAvatarPreview(true)}
+                        className="w-32 h-32 rounded-full object-cover border-2 border-secondary-fixed/50 group-hover:border-secondary-fixed transition-colors"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center border-2 border-secondary-fixed/50 group-hover:border-secondary-fixed transition-colors text-secondary-fixed">
+                        <span className="material-symbols-outlined" style={{ fontSize: '48px' }}>account_circle</span>
+                      </div>
+                    )}
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
                       <span className="material-symbols-outlined text-white">photo_camera</span>
                     </div>
                   </div>
-                  <button className="font-body-sm text-body-sm text-on-primary-container hover:text-white transition-colors">Change Picture</button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="font-body-sm text-body-sm text-on-primary-container hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {isUploadingAvatar ? 'Uploading...' : 'Change Picture'}
+                  </button>
                 </div>
 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -518,6 +606,24 @@ export default function SettingsPage() {
 
         </div>
       </div>
+
+      {/* Avatar preview lightbox */}
+      {showAvatarPreview && avatarUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center cursor-pointer"
+          onClick={() => setShowAvatarPreview(false)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <img src={avatarUrl} alt="Profile picture" className="max-w-full max-h-[85vh] rounded-lg" />
+            <button
+              onClick={() => setShowAvatarPreview(false)}
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-colors"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

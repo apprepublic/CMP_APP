@@ -9,6 +9,7 @@ interface User {
   phone: string;
   displayName: string;
   username: string;
+  avatarUrl: string | null;
   role: 'USER' | 'ARTIST' | 'BUSINESS' | 'ADMIN' | 'SUPER_ADMIN';
   kycStatus: 'NONE' | 'PENDING' | 'VERIFIED' | 'REJECTED';
   referralCode: string;
@@ -54,6 +55,7 @@ interface UserStore {
   fetchUser: () => Promise<void>;
   updateWallet: (wallet: User['wallet']) => void;
   updateStreak: (streak: User['streakRecord']) => void;
+  updateAvatar: (url: string) => void;
 }
 
 export const useUserStore = create<UserStore>()(
@@ -153,6 +155,7 @@ export const useUserStore = create<UserStore>()(
               phone: '',
               displayName: p.full_name || authUser.email || '',
               username: authUser.user_metadata?.username || '',
+              avatarUrl: p.avatar_url || null,
               role: 'USER',
               kycStatus: (p.kyc_status as User['kycStatus']) || 'NONE',
               referralCode: (wallet as any)?.referral_code || '',
@@ -183,6 +186,12 @@ export const useUserStore = create<UserStore>()(
       updateStreak: (streak) => {
         set((state) => ({
           user: state.user ? { ...state.user, streakRecord: streak } : null,
+        }));
+      },
+
+      updateAvatar: (url) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, avatarUrl: url } : null,
         }));
       },
     }),

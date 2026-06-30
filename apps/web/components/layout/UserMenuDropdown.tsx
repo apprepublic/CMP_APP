@@ -39,9 +39,13 @@ export default function UserMenuDropdown() {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-fixed font-bold text-sm border-2 border-transparent hover:border-secondary transition-all active:scale-95"
+        className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-fixed font-bold text-sm border-2 border-transparent hover:border-secondary transition-all active:scale-95 overflow-hidden"
       >
-        {initials}
+        {user?.avatarUrl ? (
+          <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          initials
+        )}
       </button>
 
       {isOpen && (
