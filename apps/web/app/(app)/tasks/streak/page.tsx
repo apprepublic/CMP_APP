@@ -65,7 +65,7 @@ export default function StreakPage() {
     return left > 0 ? left : 0;
   }
 
-  const dailyTasksForDisplay = dailyTasks.slice(0, 3);
+  const dailyTasksForDisplay = dailyTasks;
   const completedCount = dailyTasksForDisplay.filter((t: any) => t.completedToday > 0).length;
 
   const handleBuyFreeze = async () => {

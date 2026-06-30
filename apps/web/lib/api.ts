@@ -289,11 +289,7 @@ class ApiService {
     const articleCompletionsMap = new Map(
       (completions || [])
         .filter((c: any) => !c.task_id && c.proof_data?.articleId)
-        .map((c: any) => {
-          const lastCompleted = c.last_completed_at ? new Date(c.last_completed_at) : null;
-          const completedToday = lastCompleted && lastCompleted >= today ? (c.completion_count || 1) : 0;
-          return [c.proof_data.articleId, completedToday];
-        })
+        .map((c: any) => [c.proof_data.articleId, c.completion_count || 1])
     );
 
     const articleTasks = articles.map((a: any) => {
@@ -574,21 +570,14 @@ class ApiService {
 
     if (!article) throw new Error('Article not found or not published');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
     const { data: existingClaim } = await supabase
       .from('task_completions')
       .select('id')
       .eq('user_id', session.user.id)
       .eq('proof_data->>articleId', articleId)
-      .gte('last_completed_at', today.toISOString())
-      .lt('last_completed_at', tomorrow.toISOString())
       .maybeSingle();
 
-    if (existingClaim) throw new Error('Article already claimed today');
+    if (existingClaim) throw new Error('You have already earned coins for this article.');
 
     const { data: wallet } = await supabase
       .from('wallets')

@@ -56,6 +56,7 @@ export const useCompleteTask = () => {
       api.completeTask(taskId, adWatched),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'daily'] });
       queryClient.invalidateQueries({ queryKey: ['streak'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
     },
@@ -68,6 +69,7 @@ export const useClaimArticle = () => {
     mutationFn: ({ articleId }: { articleId: string }) => api.claimArticle(articleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'daily'] });
       queryClient.invalidateQueries({ queryKey: ['streak'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
     },
