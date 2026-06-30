@@ -285,7 +285,7 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
 export async function getSongs(opts: { genre?: string; search?: string; limit?: number } = {}): Promise<Song[]> {
   let q = db
     .from('user_posted_tasks')
-    .select('*, creator:users!creator_id(id, first_name, last_name, avatar_url)')
+    .select('*, creator:users!creator_id(id, full_name, avatar_url)')
     .eq('type', 'STREAM_MUSIC')
     .eq('is_active', true)
     .eq('status', 'ACTIVE')
@@ -300,7 +300,7 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
 
   return tasks.map((t: any) => {
     const creator = t.creator || {};
-    const stageName = [creator.first_name, creator.last_name].filter(Boolean).join(' ') || 'Artist';
+    const stageName = creator.full_name || 'Artist';
     return {
       id: t.id,
       artist_id: t.creator_id,
@@ -330,7 +330,7 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
 export async function getFeaturedSongs(): Promise<Song[]> {
   const { data: tasks, error } = await db
     .from('user_posted_tasks')
-    .select('*, creator:users!creator_id(id, first_name, last_name, avatar_url)')
+    .select('*, creator:users!creator_id(id, full_name, avatar_url)')
     .eq('type', 'STREAM_MUSIC')
     .eq('is_active', true)
     .eq('status', 'ACTIVE')
@@ -341,7 +341,7 @@ export async function getFeaturedSongs(): Promise<Song[]> {
 
   return tasks.map((t: any) => {
     const creator = t.creator || {};
-    const stageName = [creator.first_name, creator.last_name].filter(Boolean).join(' ') || 'Artist';
+    const stageName = creator.full_name || 'Artist';
     return {
       id: t.id,
       artist_id: t.creator_id,
@@ -371,7 +371,7 @@ export async function getFeaturedSongs(): Promise<Song[]> {
 export async function getArtists(limit = 20): Promise<Artist[]> {
   const { data: tasks, error } = await db
     .from('user_posted_tasks')
-    .select('creator_id, creator:users!creator_id(id, first_name, last_name, avatar_url, bio)')
+    .select('creator_id, creator:users!creator_id(id, full_name, avatar_url, bio)')
     .eq('type', 'STREAM_MUSIC')
     .eq('is_active', true)
     .eq('status', 'ACTIVE');
@@ -390,7 +390,7 @@ export async function getArtists(limit = 20): Promise<Artist[]> {
       const c = t.creator || {};
       return {
         id: t.creator_id,
-        stage_name: [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Artist',
+        stage_name: c.full_name || 'Artist',
         slug: `user-${t.creator_id}`,
         bio: c.bio || null,
         avatar_url: c.avatar_url || null,
@@ -409,7 +409,7 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
 
   const artist: Artist = {
     id: user.data.id,
-    stage_name: [user.data.first_name, user.data.last_name].filter(Boolean).join(' ') || 'Artist',
+    stage_name: user.data.full_name || 'Artist',
     slug: `user-${user.data.id}`,
     bio: user.data.bio || null,
     avatar_url: user.data.avatar_url || null,
