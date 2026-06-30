@@ -14,19 +14,42 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const validateEmail = (value: string) => {
+    if (!value.trim()) return 'Email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address';
+    return '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const validationError = validateEmail(email);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await supabase.auth.resetPasswordForEmail(email, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
       });
+
+      if (resetError) throw resetError;
       
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to send recovery email');
+      const msg = err?.message || '';
+      if (msg.includes('rate_limit') || msg.includes('429') || msg.includes('too many')) {
+        setError('Too many requests. Please wait a few minutes before trying again.');
+      } else if (msg.includes('Email not found') || msg.includes('user_not_found')) {
+        // Don't reveal whether the email exists (security best practice)
+        setSuccess(true);
+      } else {
+        setError(msg || 'Failed to send recovery email. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

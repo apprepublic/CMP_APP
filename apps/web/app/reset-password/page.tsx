@@ -21,36 +21,37 @@ export default function ResetPasswordPage() {
   // Validate recovery session on mount
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        if (!cancelled) setPageState('ready');
+      }
+    });
 
     const init = async () => {
       const { data, error: sessionError } = await supabase.auth.getSession();
 
       if (cancelled) return;
 
-      if (sessionError || !data.session?.user) {
-        // No active session — the hash fragment may not have been processed yet.
-        // Listen for the PASSWORD_RECOVERY event as a backup.
-        const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-          if (event === 'PASSWORD_RECOVERY') {
-            if (!cancelled) setPageState('ready');
-          }
-        });
-
-        // Give the hash parser 3 seconds before declaring the link invalid
-        setTimeout(() => {
-          if (!cancelled && pageState === 'checking') {
-            setPageState('invalid');
-          }
-        }, 3000);
-
-        return () => listener.subscription.unsubscribe();
+      if (!sessionError && data.session?.user) {
+        setPageState('ready');
+        return;
       }
 
-      setPageState('ready');
+      // No session yet — give the hash parser 3 seconds
+      timeoutId = setTimeout(() => {
+        if (!cancelled) setPageState('invalid');
+      }, 3000);
     };
 
     init();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
