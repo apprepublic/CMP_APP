@@ -242,7 +242,7 @@ class ApiService {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return { tasks: [] };
 
-    const [tasksRes, articlesRes] = await Promise.all([
+    const [tasksRes, articlesRes, postedRes] = await Promise.all([
       supabase
         .from('tasks')
         .select('*')
@@ -253,10 +253,16 @@ class ApiService {
         .select('*')
         .eq('is_published', true)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('user_posted_tasks')
+        .select('*')
+        .eq('is_active', true)
+        .eq('status', 'ACTIVE'),
     ]);
 
     const tasks = tasksRes.data || [];
     const articles = articlesRes.data || [];
+    const postedTasks = postedRes.data || [];
 
     if (tasksRes.error && articlesRes.error) return { tasks: [] };
 
@@ -271,6 +277,14 @@ class ApiService {
       .eq('user_id', session.user.id)
       .eq('type', 'earn')
       .ilike('description', 'Read article:%');
+
+    const { data: postedCompletions } = await supabase
+      .from('user_task_completions')
+      .select('posted_task_id')
+      .eq('user_id', session.user.id)
+      .eq('status', 'APPROVED');
+
+    const approvedPosted = new Map((postedCompletions || []).map((c: any) => [c.posted_task_id, true]));
 
     const completionMap = new Map(
       (completions || []).map((c: any) => [c.task_id, c])
@@ -326,7 +340,25 @@ class ApiService {
       };
     });
 
-    return { tasks: [...articleTasks, ...tasksWithStatus] };
+    const postedWithStatus = postedTasks.map((t: any) => {
+      const completedToday = approvedPosted.has(t.id) ? 1 : 0;
+      return {
+        id: t.id,
+        title: t.title,
+        description: t.description || '',
+        type: t.type || 'USER_CREATED',
+        category: t.category || 'USER_CREATED',
+        coinReward: t.coin_per_participant || 0,
+        requiresAdGate: false,
+        dailyLimit: 1,
+        completedToday,
+        isLocked: completedToday >= 1,
+        canComplete: completedToday < 1,
+        linkedArticle: null,
+      };
+    });
+
+    return { tasks: [...articleTasks, ...tasksWithStatus, ...postedWithStatus] };
   }
 
   async getStreak() {
