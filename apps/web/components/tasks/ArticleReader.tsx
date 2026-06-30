@@ -114,7 +114,7 @@ export default function ArticleReader({ slug }: { slug: string }) {
   const coinReward: number = (article as any)?.coin_reward ?? 50;
   const circumference = 126;
   const strokeOffset = circumference - (readingProgress / 100) * circumference;
-  const { data: allArticles } = useArticles({ limit: 50 });
+  const { data: allArticles } = useArticles();
   const nextArticleSlug = useMemo(() => {
     if (!allArticles || !slug) return null;
     const idx = allArticles.findIndex((a: any) => a.slug === slug);
