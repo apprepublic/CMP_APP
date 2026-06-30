@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useArtist } from '@/lib/hooks';
 import { usePlayer } from '@/components/music/PlayerProvider';
 import type { Song } from '@/lib/queries';
@@ -20,7 +19,6 @@ function formatDuration(seconds: number): string {
 export default function ArtistProfileClient({ slug }: { slug: string }) {
   const { data, isLoading } = useArtist(slug);
   const { play, current, isPlaying, toggle } = usePlayer();
-  const [isFollowing, setIsFollowing] = useState(false);
 
   if (isLoading) {
     return (
@@ -100,11 +98,6 @@ export default function ArtistProfileClient({ slug }: { slug: string }) {
               )}
               <div className="flex flex-wrap gap-6 items-center">
                 <div>
-                  <span className="font-label-caps text-on-primary-container">Followers</span>
-                  <span className="font-data-lg text-h3 text-white block">{formatNumber(artist.follower_count)}</span>
-                </div>
-                <div className="w-px h-10 bg-outline-variant/20" />
-                <div>
                   <span className="font-label-caps text-on-primary-container">Total Streams</span>
                   <span className="font-data-lg text-h3 text-white block">{formatNumber(artist.monthly_listeners)}</span>
                 </div>
@@ -112,22 +105,6 @@ export default function ArtistProfileClient({ slug }: { slug: string }) {
                 <div>
                   <span className="font-label-caps text-on-primary-container">Genre</span>
                   <span className="font-data-lg text-h3 text-secondary-fixed block">{artist.genre || 'Various'}</span>
-                </div>
-                <div className="flex gap-4 ml-auto">
-                  <button
-                    onClick={() => setIsFollowing(!isFollowing)}
-                    className={`font-bold px-8 py-3 rounded-lg transition-all flex items-center gap-2 ${
-                      isFollowing
-                        ? 'bg-white/10 text-white border border-secondary-fixed'
-                        : 'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined">{isFollowing ? 'check' : 'person_add'}</span>
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </button>
-                  <button className="bg-white/10 text-white p-3 rounded-lg hover:bg-white/20 transition-all">
-                    <span className="material-symbols-outlined">share</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -228,42 +205,4 @@ export default function ArtistProfileClient({ slug }: { slug: string }) {
               )}
             </div>
 
-            {/* Socials & Links */}
-            <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/20">
-              <h3 className="font-h3 text-on-background mb-4 text-[20px]">Connect</h3>
-              <div className="flex flex-col gap-4">
-                <a className="flex items-center justify-between p-3 border border-outline-variant/30 rounded-lg hover:border-secondary-fixed transition-colors" href="#">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center">
-                      <span className="material-symbols-outlined text-primary text-[20px]">language</span>
-                    </div>
-                    <span className="font-body-md font-semibold text-on-background">Instagram</span>
-                  </div>
-                  <span className="material-symbols-outlined text-on-surface-variant">open_in_new</span>
-                </a>
-                <a className="flex items-center justify-between p-3 border border-outline-variant/30 rounded-lg hover:border-secondary-fixed transition-colors" href="#">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center">
-                      <span className="material-symbols-outlined text-primary text-[20px]">music_note</span>
-                    </div>
-                    <span className="font-body-md font-semibold text-on-background">TikTok</span>
-                  </div>
-                  <span className="material-symbols-outlined text-on-surface-variant">open_in_new</span>
-                </a>
-                <a className="flex items-center justify-between p-3 border border-outline-variant/30 rounded-lg hover:border-secondary-fixed transition-colors" href="#">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-surface-alt flex items-center justify-center">
-                      <span className="material-symbols-outlined text-primary text-[20px]">podcasts</span>
-                    </div>
-                    <span className="font-body-md font-semibold text-on-background">Spotify</span>
-                  </div>
-                  <span className="material-symbols-outlined text-on-surface-variant">open_in_new</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+            
