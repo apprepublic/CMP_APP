@@ -6,24 +6,18 @@ import { useWallet } from '@/lib/useWallet';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
+type SettingsTab = 'profile' | 'security' | 'notifications';
 
 const SETTINGS_DEFAULTS = {
-  emailUpdates: true,
   transactionAlerts: true,
   marketingPromos: false,
-  language: 'en',
-  currencyDisplay: 'usd' as const,
 };
 
 function parseSettings(settings: any) {
   if (!settings || typeof settings !== 'object') return SETTINGS_DEFAULTS;
   return {
-    emailUpdates: typeof settings.emailUpdates === 'boolean' ? settings.emailUpdates : SETTINGS_DEFAULTS.emailUpdates,
     transactionAlerts: typeof settings.transactionAlerts === 'boolean' ? settings.transactionAlerts : SETTINGS_DEFAULTS.transactionAlerts,
     marketingPromos: typeof settings.marketingPromos === 'boolean' ? settings.marketingPromos : SETTINGS_DEFAULTS.marketingPromos,
-    language: settings.language || SETTINGS_DEFAULTS.language,
-    currencyDisplay: settings.currencyDisplay || SETTINGS_DEFAULTS.currencyDisplay,
   };
 }
 
@@ -52,17 +46,10 @@ export default function SettingsPage() {
   const [passwordMessageType, setPasswordMessageType] = useState<'success' | 'error'>('success');
 
   // Notification prefs
-  const [emailUpdates, setEmailUpdates] = useState(SETTINGS_DEFAULTS.emailUpdates);
-  const [transactionAlerts, setTransactionAlerts] = useState(SETTINGS_DEFAULTS.transactionAlerts);
-  const [marketingPromos, setMarketingPromos] = useState(SETTINGS_DEFAULTS.marketingPromos);
+  const [transactionAlerts, setTransactionAlerts] = useState(true);
+  const [marketingPromos, setMarketingPromos] = useState(false);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
-
-  // Preferences
-  const [language, setLanguage] = useState(SETTINGS_DEFAULTS.language);
-  const [currencyDisplay, setCurrencyDisplay] = useState<'usd' | 'coins'>(SETTINGS_DEFAULTS.currencyDisplay);
-  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
-  const [preferencesMessage, setPreferencesMessage] = useState('');
 
   const showMessage = (setter: (m: string) => void, msg: string, duration = 3000) => {
     setter(msg);
@@ -90,11 +77,8 @@ export default function SettingsPage() {
         setCountry(p.country || 'NG');
 
         const s = parseSettings(p.settings);
-        setEmailUpdates(s.emailUpdates);
-        setTransactionAlerts(s.transactionAlerts);
-        setMarketingPromos(s.marketingPromos);
-        setLanguage(s.language);
-        setCurrencyDisplay(s.currencyDisplay);
+        setTransactionAlerts(s.transactionAlerts ?? true);
+        setMarketingPromos(s.marketingPromos ?? false);
       }
       setIsLoadingProfile(false);
     }
@@ -237,26 +221,12 @@ export default function SettingsPage() {
     setIsSavingNotifications(true);
     setNotificationMessage('');
     try {
-      await saveSettingsField({ emailUpdates, transactionAlerts, marketingPromos });
+      await saveSettingsField({ transactionAlerts, marketingPromos });
       showMessage(setNotificationMessage, 'Notification preferences saved');
     } catch (err: any) {
       showMessage(setNotificationMessage, err?.message || 'Failed to save');
     } finally {
       setIsSavingNotifications(false);
-    }
-  };
-
-  // Save preferences
-  const handleSavePreferences = async () => {
-    setIsSavingPreferences(true);
-    setPreferencesMessage('');
-    try {
-      await saveSettingsField({ language, currencyDisplay });
-      showMessage(setPreferencesMessage, 'Preferences saved');
-    } catch (err: any) {
-      showMessage(setPreferencesMessage, err?.message || 'Failed to save');
-    } finally {
-      setIsSavingPreferences(false);
     }
   };
 
@@ -290,7 +260,6 @@ export default function SettingsPage() {
     { id: 'profile' as SettingsTab, label: 'Profile', icon: 'account_circle' },
     { id: 'security' as SettingsTab, label: 'Security', icon: 'shield' },
     { id: 'notifications' as SettingsTab, label: 'Notifications', icon: 'notifications' },
-    { id: 'preferences' as SettingsTab, label: 'Preferences', icon: 'settings' },
   ];
 
   if (isLoadingProfile) {
@@ -506,29 +475,6 @@ export default function SettingsPage() {
                 </div>
               </section>
 
-              {/* Account Status Card */}
-              <section className="bg-gradient-to-br from-[#1a2b4c] to-[#0d1b35] rounded-xl p-6 border border-[#d4af37]/30 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#d4af37]/5 rounded-bl-full" />
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#d4af37]/20 flex items-center justify-center border border-[#d4af37]/50">
-                    <span className="material-symbols-outlined text-[#d4af37]">star</span>
-                  </div>
-                  <div>
-                    <h4 className="font-body-md text-body-md font-bold text-white">
-                      {user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' ? 'Admin' : 'Member'}
-                    </h4>
-                    <p className="font-body-sm text-body-sm text-[#d4af37]">KYC: {user?.kycStatus || 'NONE'}</p>
-                  </div>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-primary-container mb-4">
-                  You are currently enjoying access to all creative tools and earning features on CMPapp.
-                </p>
-                <div className="flex items-center gap-3 text-on-primary-container font-body-sm text-body-sm">
-                  <span className="material-symbols-outlined text-secondary-fixed" style={{ fontSize: '18px' }}>toll</span>
-                  <span className="text-secondary-fixed font-data-md text-data-md">{wallet?.balance?.toLocaleString() || '0'}</span>
-                  <span>coins</span>
-                </div>
-              </section>
             </div>
           )}
 
@@ -545,120 +491,30 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-4 relative z-10">
-                <ToggleRow label="Email Updates" desc="Weekly digest and platform news" checked={emailUpdates} onChange={setEmailUpdates} />
-                <ToggleRow label="Transaction Alerts" desc="Instant push notifications for sales" checked={transactionAlerts} onChange={setTransactionAlerts} />
+                <ToggleRow label="Transaction Alerts" desc="Email notifications for deposits and withdrawals" checked={transactionAlerts} onChange={setTransactionAlerts} />
                 <ToggleRow label="Marketing Promos" desc="Special offers and partner deals" checked={marketingPromos} onChange={setMarketingPromos} />
-                <ToggleRow label="Streak Reminders" desc="Daily reminders to maintain your streak" checked={true} onChange={() => {}} />
-                <ToggleRow label="Referral Activity" desc="Notify when referrals sign up or earn" checked={true} onChange={() => {}} />
               </div>
 
               {notificationMessage && (
-                <p className="font-body-sm text-body-sm text-success-verified mt-4 relative z-10">{notificationMessage}</p>
+                <p className={`font-body-sm text-body-sm mt-4 relative z-10 ${notificationMessage.includes('saved') ? 'text-success-verified' : 'text-error'}`}>
+                  {notificationMessage}
+                </p>
               )}
               <button onClick={handleSaveNotifications} disabled={isSavingNotifications}
                 className="mt-4 bg-[#d4af37] text-[#0d1b35] font-body-md text-body-md font-bold py-2.5 px-6 rounded-lg hover:bg-[#b8860b] transition-colors disabled:opacity-50 relative z-10">
-                {isSavingNotifications ? 'Saving...' : 'Save Notification Preferences'}
+                {isSavingNotifications ? 'Saving...' : 'Save Preferences'}
               </button>
             </section>
           )}
 
-          {/* ===== PREFERENCES ===== */}
-          {activeTab === 'preferences' && (
-            <section className="bg-primary-container rounded-xl p-6 lg:p-8 border border-outline-variant/20 relative overflow-hidden">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-fixed/5 rounded-full blur-2xl" />
-
-              <div className="mb-8 border-b border-white/10 pb-4 relative z-10">
-                <h3 className="font-h3 text-h3 text-white flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#d4af37]">tune</span>
-                  System Preferences
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="font-label-caps text-label-caps text-on-primary-container">Language</label>
-                    <div className="relative">
-                      <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors">
-                        <option value="en" className="bg-primary-container text-white">English</option>
-                        <option value="es" className="bg-primary-container text-white">Español</option>
-                        <option value="fr" className="bg-primary-container text-white">Français</option>
-                        <option value="yo" className="bg-primary-container text-white">Yorùbá</option>
-                        <option value="ig" className="bg-primary-container text-white">Igbo</option>
-                        <option value="ha" className="bg-primary-container text-white">Hausa</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-on-primary-container">
-                        <span className="material-symbols-outlined">expand_more</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="font-label-caps text-label-caps text-on-primary-container">Currency Display</label>
-                    <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
-                      <button onClick={() => setCurrencyDisplay('usd')}
-                        className={`flex-1 py-2 text-center rounded-md font-body-sm text-body-sm font-semibold transition-colors ${currencyDisplay === 'usd' ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'text-on-primary-container hover:text-white'}`}>
-                        USD ($)
-                      </button>
-                      <button onClick={() => setCurrencyDisplay('coins')}
-                        className={`flex-1 py-2 text-center rounded-md font-body-sm text-body-sm font-semibold transition-colors ${currencyDisplay === 'coins' ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'text-on-primary-container hover:text-white'}`}>
-                        CMP Coins
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="font-label-caps text-label-caps text-on-primary-container">Timezone</label>
-                    <div className="relative">
-                      <select className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors">
-                        <option value="WAT" className="bg-primary-container text-white">West Africa Time (WAT)</option>
-                        <option value="GMT" className="bg-primary-container text-white">GMT / UTC</option>
-                        <option value="EST" className="bg-primary-container text-white">Eastern (EST)</option>
-                        <option value="PST" className="bg-primary-container text-white">Pacific (PST)</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-on-primary-container">
-                        <span className="material-symbols-outlined">expand_more</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h4 className="font-body-md text-body-md font-semibold text-white">Data & Privacy</h4>
-
-                    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
-                      <div>
-                        <p className="font-body-md text-body-md text-white">Analytics Tracking</p>
-                        <p className="font-body-sm text-body-sm text-on-primary-container">Help us improve with usage data</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input type="checkbox" defaultChecked className="sr-only peer" />
-                        <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-white/10">
-                    <button onClick={handleLogout}
-                      className="w-full flex items-center justify-center gap-2 bg-white/10 text-white font-body-md text-body-md font-semibold py-3 rounded-lg hover:bg-white/20 border border-white/10 transition-colors">
-                      <span className="material-symbols-outlined">logout</span>
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {preferencesMessage && (
-                <p className="font-body-sm text-body-sm text-success-verified mt-4 relative z-10">{preferencesMessage}</p>
-              )}
-              <button onClick={handleSavePreferences} disabled={isSavingPreferences}
-                className="mt-4 bg-[#d4af37] text-[#0d1b35] font-body-md text-body-md font-bold py-2.5 px-6 rounded-lg hover:bg-[#b8860b] transition-colors disabled:opacity-50 relative z-10">
-                {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
-              </button>
-            </section>
-          )}
+          {/* ===== LOGOUT ===== */}
+          <div className="flex justify-center pt-4">
+            <button onClick={handleLogout}
+              className="flex items-center justify-center gap-2 bg-white/10 text-white font-body-md text-body-md font-semibold py-3 px-8 rounded-lg hover:bg-white/20 border border-white/10 transition-colors">
+              <span className="material-symbols-outlined">logout</span>
+              Sign Out
+            </button>
+          </div>
 
         </div>
       </div>
