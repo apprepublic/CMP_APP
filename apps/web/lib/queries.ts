@@ -36,6 +36,7 @@ export interface Song {
   is_featured: boolean;
   artist?: Pick<Artist, 'id' | 'stage_name' | 'slug' | 'avatar_url' | 'is_verified'> | null;
   is_download_enabled?: boolean;
+  taskId?: string;
 }
 
 export interface Article {
@@ -283,46 +284,153 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
 
 export async function getSongs(opts: { genre?: string; search?: string; limit?: number } = {}): Promise<Song[]> {
   let q = db
-    .from('songs')
-    .select('*, artist:artists(id, stage_name, slug, avatar_url, is_verified)')
-    .eq('is_published', true)
-    .order('play_count', { ascending: false })
-    .limit(opts.limit ?? 50);
-  if (opts.genre) q = q.eq('genre', opts.genre);
-  if (opts.search) q = q.ilike('title', `%${opts.search}%`);
-  
-  let songs: Song[] | null = null;
-  try {
-    const res = await q;
-    if (res.data && res.data.length > 0) {
-      songs = res.data as Song[];
-    }
-  } catch (e) {
-    console.error('getSongs query failed, using fallback:', e);
-  }
-  
-  if (songs && songs.length > 0) {
-    return songs;
-  }
-
-  // Fallback to active STREAM_MUSIC tasks
-  let taskQ = db
     .from('user_posted_tasks')
-    .select('*')
+    .select('*, creator:users!creator_id(id, first_name, last_name, avatar_url)')
     .eq('type', 'STREAM_MUSIC')
     .eq('is_active', true)
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: false })
     .limit(opts.limit ?? 50);
 
-  if (opts.genre) taskQ = taskQ.eq('genre', opts.genre);
-  if (opts.search) taskQ = taskQ.ilike('title', `%${opts.search}%`);
+  if (opts.genre) q = q.eq('genre', opts.genre);
+  if (opts.search) q = q.ilike('title', `%${opts.search}%`);
 
-  const { data: tasks, error } = await taskQ;
+  const { data: tasks, error } = await q;
   if (error || !tasks) return [];
 
-  return tasks.map((t: any) => ({
-    id: t.song_id || t.id,
+  return tasks.map((t: any) => {
+    const creator = t.creator || {};
+    const stageName = [creator.first_name, creator.last_name].filter(Boolean).join(' ') || 'Artist';
+    return {
+      id: t.id,
+      artist_id: t.creator_id,
+      title: t.title,
+      slug: `task-track-${t.id}`,
+      description: t.description,
+      audio_url: t.audio_url,
+      cover_url: t.cover_image_url || null,
+      duration_seconds: t.duration_seconds || 180,
+      genre: t.genre || null,
+      coin_reward: t.coin_per_participant || 0,
+      play_count: t.current_participants || 0,
+      is_featured: false,
+      artist: {
+        id: t.creator_id,
+        stage_name: stageName,
+        slug: `user-${t.creator_id}`,
+        avatar_url: creator.avatar_url || null,
+        is_verified: false,
+      },
+      taskId: t.id,
+      is_download_enabled: t.is_download_enabled || false,
+    } as Song;
+  });
+}
+
+export async function getFeaturedSongs(): Promise<Song[]> {
+  const { data: tasks, error } = await db
+    .from('user_posted_tasks')
+    .select('*, creator:users!creator_id(id, first_name, last_name, avatar_url)')
+    .eq('type', 'STREAM_MUSIC')
+    .eq('is_active', true)
+    .eq('status', 'ACTIVE')
+    .order('current_participants', { ascending: false })
+    .limit(12);
+
+  if (error || !tasks) return [];
+
+  return tasks.map((t: any) => {
+    const creator = t.creator || {};
+    const stageName = [creator.first_name, creator.last_name].filter(Boolean).join(' ') || 'Artist';
+    return {
+      id: t.id,
+      artist_id: t.creator_id,
+      title: t.title,
+      slug: `task-track-${t.id}`,
+      description: t.description,
+      audio_url: t.audio_url,
+      cover_url: t.cover_image_url || null,
+      duration_seconds: t.duration_seconds || 180,
+      genre: t.genre || null,
+      coin_reward: t.coin_per_participant || 0,
+      play_count: t.current_participants || 0,
+      is_featured: true,
+      artist: {
+        id: t.creator_id,
+        stage_name: stageName,
+        slug: `user-${t.creator_id}`,
+        avatar_url: creator.avatar_url || null,
+        is_verified: false,
+      },
+      taskId: t.id,
+      is_download_enabled: t.is_download_enabled || false,
+    } as Song;
+  });
+}
+
+export async function getArtists(limit = 20): Promise<Artist[]> {
+  const { data: tasks, error } = await db
+    .from('user_posted_tasks')
+    .select('creator_id, creator:users!creator_id(id, first_name, last_name, avatar_url, bio)')
+    .eq('type', 'STREAM_MUSIC')
+    .eq('is_active', true)
+    .eq('status', 'ACTIVE');
+
+  if (error || !tasks) return [];
+
+  const seen = new Set<string>();
+  return tasks
+    .filter((t: any) => {
+      if (seen.has(t.creator_id)) return false;
+      seen.add(t.creator_id);
+      return true;
+    })
+    .slice(0, limit)
+    .map((t: any) => {
+      const c = t.creator || {};
+      return {
+        id: t.creator_id,
+        stage_name: [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Artist',
+        slug: `user-${t.creator_id}`,
+        bio: c.bio || null,
+        avatar_url: c.avatar_url || null,
+        cover_url: null,
+        genre: null,
+        is_verified: false,
+        follower_count: 0,
+        monthly_listeners: 0,
+      } as Artist;
+    });
+}
+
+export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; songs: Song[] } | null> {
+  const user = (await db.from('users').select('*').eq('id', slug.replace('user-', '')).single()) as { data: any | null; error: any };
+  if (user.error || !user.data) return null;
+
+  const artist: Artist = {
+    id: user.data.id,
+    stage_name: [user.data.first_name, user.data.last_name].filter(Boolean).join(' ') || 'Artist',
+    slug: `user-${user.data.id}`,
+    bio: user.data.bio || null,
+    avatar_url: user.data.avatar_url || null,
+    cover_url: null,
+    genre: null,
+    is_verified: false,
+    follower_count: 0,
+    monthly_listeners: 0,
+  };
+
+  const { data: tasks } = await db
+    .from('user_posted_tasks')
+    .select('*')
+    .eq('creator_id', user.data.id)
+    .eq('type', 'STREAM_MUSIC')
+    .eq('is_active', true)
+    .eq('status', 'ACTIVE')
+    .order('created_at', { ascending: false });
+
+  const songs: Song[] = (tasks || []).map((t: any) => ({
+    id: t.id,
     artist_id: t.creator_id,
     title: t.title,
     slug: `task-track-${t.id}`,
@@ -332,46 +440,20 @@ export async function getSongs(opts: { genre?: string; search?: string; limit?: 
     duration_seconds: t.duration_seconds || 180,
     genre: t.genre || null,
     coin_reward: t.coin_per_participant || 0,
-    play_count: 0,
+    play_count: t.current_participants || 0,
     is_featured: false,
     artist: {
       id: t.creator_id,
-      stage_name: 'Artist Partner',
-      slug: 'artist-partner',
-      avatar_url: null,
+      stage_name: artist.stage_name,
+      slug: artist.slug,
+      avatar_url: artist.avatar_url,
       is_verified: false,
     },
-    // Keep reference to taskId so player can submit completions correctly
     taskId: t.id,
     is_download_enabled: t.is_download_enabled || false,
-  })) as Song[];
-}
+  }));
 
-export async function getFeaturedSongs(): Promise<Song[]> {
-  return unwrap<Song[]>(
-    await db
-      .from('songs')
-      .select('*, artist:artists(id, stage_name, slug, avatar_url, is_verified)')
-      .eq('is_published', true)
-      .eq('is_featured', true)
-      .order('play_count', { ascending: false })
-      .limit(12)
-  );
-}
-
-export async function getArtists(limit = 20): Promise<Artist[]> {
-  return unwrap<Artist[]>(
-    await db.from('artists').select('*').order('monthly_listeners', { ascending: false }).limit(limit)
-  );
-}
-
-export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; songs: Song[] } | null> {
-  const artist = (await db.from('artists').select('*').eq('slug', slug).single()) as { data: Artist | null; error: any };
-  if (artist.error || !artist.data) return null;
-  const songs = unwrap<Song[]>(
-    await db.from('songs').select('*').eq('artist_id', artist.data.id).eq('is_published', true).order('play_count', { ascending: false })
-  );
-  return { artist: artist.data, songs };
+  return { artist, songs };
 }
 
 /* ---------------------------- ARTICLES --------------------------- */

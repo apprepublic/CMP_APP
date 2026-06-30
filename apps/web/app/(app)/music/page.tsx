@@ -74,8 +74,8 @@ export default function MusicPage() {
   }, [allSongs]);
 
   const playSong = (song: Song, list: Song[]) => {
-    if ((song as any).taskId) {
-      play(song, list, { id: (song as any).taskId, isPosted: true, coinReward: song.coin_reward });
+    if (song.taskId) {
+      play(song, list, { id: song.taskId, isPosted: true, coinReward: song.coin_reward });
     } else {
       play(song, list);
     }
