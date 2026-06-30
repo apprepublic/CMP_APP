@@ -576,7 +576,7 @@ export default function EarnMarketplacePage() {
                 >
                   {isLocked ? (
                     <>
-                      <span>{isPending ? 'Pending' : isUserTask ? 'Full' : 'Completed'}</span>
+                      <span>{isPending ? 'Pending' : completedToday > 0 ? 'Claimed' : isUserTask ? 'Full' : 'Completed'}</span>
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{isPending ? 'pending' : 'check_circle'}</span>
                     </>
                   ) : isUserTask ? (
