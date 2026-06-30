@@ -391,7 +391,7 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
 
   const { data: userData } = await db
     .from('users')
-    .select('*')
+    .select('id, full_name, avatar_url')
     .eq('id', userId)
     .single();
 
@@ -401,7 +401,7 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
     id: userData.id,
     stage_name: userData.full_name || 'Artist',
     slug: `user-${userData.id}`,
-    bio: userData.bio || null,
+    bio: null,
     avatar_url: userData.avatar_url || null,
     cover_url: null,
     genre: null,
