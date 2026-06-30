@@ -262,20 +262,11 @@ class ApiService {
       (completions || []).map((c: any) => [c.task_id, c])
     );
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const tasksWithStatus = tasks.map((task: any) => {
       const completion = completionMap.get(task.id);
-      const lastCompleted = completion?.last_completed_at
-        ? new Date(completion.last_completed_at)
-        : null;
-      const completedToday =
-        lastCompleted && lastCompleted >= today
-          ? completion.completion_count || 0
-          : 0;
+      const completedToday = completion ? (completion.completion_count || 1) : 0;
       const dailyLimit = task.frequency === 'UNLIMITED' ? 9999 : 1;
-      const isLocked = completedToday >= dailyLimit;
+      const isLocked = completedToday >= 1;
 
       return {
         id: task.id,

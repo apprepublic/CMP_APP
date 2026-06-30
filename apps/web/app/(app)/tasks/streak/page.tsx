@@ -197,12 +197,13 @@ export default function StreakPage() {
               ) : (
                 dailyTasksForDisplay.map((task: any) => {
                   const isArticle = task.linkedArticle?.slug;
+                  const completed = task.completedToday > 0;
                   const content = (
-                    <div className={`flex items-center p-4 bg-surface rounded-lg border-l-4 ${task.completedToday > 0 ? 'border-secondary' : 'border-outline/20'}`}>
+                    <div className={`flex items-center p-4 bg-surface rounded-lg border-l-4 ${completed ? 'border-secondary' : 'border-outline/20'}`}>
                       <div className="mr-4">
-                        <span className={`material-symbols-outlined ${task.completedToday > 0 ? 'text-secondary' : 'text-outline'}`}
-                          style={task.completedToday > 0 ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-                          {task.completedToday > 0 ? 'check_circle' : 'radio_button_unchecked'}
+                        <span className={`material-symbols-outlined ${completed ? 'text-secondary' : 'text-outline'}`}
+                          style={completed ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+                          {completed ? 'check_circle' : 'radio_button_unchecked'}
                         </span>
                       </div>
                       <div className="flex-1">
@@ -211,11 +212,9 @@ export default function StreakPage() {
                       <span className="font-data-md text-data-md text-[#B8860B]">🪙 {task.coinReward}</span>
                     </div>
                   );
-                  return isArticle ? (
-                    <Link key={task.id} href={`/articles/${isArticle}`}>{content}</Link>
-                  ) : (
-                    <div key={task.id}>{content}</div>
-                  );
+                  if (completed) return <div key={task.id}>{content}</div>;
+                  if (isArticle) return <Link key={task.id} href={`/articles/${isArticle}`}>{content}</Link>;
+                  return <Link key={task.id} href="/tasks">{content}</Link>;
                 })
               )}
             </div>
