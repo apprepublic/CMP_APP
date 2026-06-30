@@ -3,7 +3,7 @@ export const dynamicParams = true;
 import ArtistProfileClient from './ArtistProfileClient';
 
 export async function generateStaticParams() {
-  return [{ artist: 'aisha-m' }];
+  return [];
 }
 
 export default async function ArtistPage({ params }: { params: Promise<{ artist: string }> }) {

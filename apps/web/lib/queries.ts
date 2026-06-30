@@ -351,35 +351,6 @@ export async function getFeaturedSongs(): Promise<Song[]> {
 }
 
 export async function getArtists(limit = 20): Promise<Artist[]> {
-  const seen = new Set<string>();
-  const artists: Artist[] = [];
-
-  // Artists from the artists table
-  const { data: catalogArtists, error: catalogError } = await db
-    .from('artists')
-    .select('*')
-    .order('follower_count', { ascending: false })
-    .limit(limit);
-
-  if (!catalogError && catalogArtists) {
-    for (const a of catalogArtists) {
-      seen.add(a.id);
-      artists.push({
-        id: a.id,
-        stage_name: a.stage_name,
-        slug: a.slug,
-        bio: a.bio || null,
-        avatar_url: a.avatar_url || null,
-        cover_url: a.cover_url || null,
-        genre: a.genre || null,
-        is_verified: a.is_verified || false,
-        follower_count: a.follower_count || 0,
-        monthly_listeners: a.monthly_listeners || 0,
-      } as Artist);
-    }
-  }
-
-  // Artists derived from user_posted_tasks
   const { data: tasks, error } = await db
     .from('user_posted_tasks')
     .select('creator_id, creator:users!creator_id(id, full_name, avatar_url, bio)')
@@ -387,12 +358,19 @@ export async function getArtists(limit = 20): Promise<Artist[]> {
     .eq('is_active', true)
     .eq('status', 'ACTIVE');
 
-  if (!error && tasks) {
-    for (const t of tasks) {
-      if (seen.has(t.creator_id)) continue;
+  if (error || !tasks) return [];
+
+  const seen = new Set<string>();
+  return tasks
+    .filter((t: any) => {
+      if (seen.has(t.creator_id)) return false;
       seen.add(t.creator_id);
+      return true;
+    })
+    .slice(0, limit)
+    .map((t: any) => {
       const c = t.creator || {};
-      artists.push({
+      return {
         id: t.creator_id,
         stage_name: c.full_name || 'Artist',
         slug: `user-${t.creator_id}`,
@@ -403,69 +381,11 @@ export async function getArtists(limit = 20): Promise<Artist[]> {
         is_verified: false,
         follower_count: 0,
         monthly_listeners: 0,
-      } as Artist);
-      if (artists.length >= limit) break;
-    }
-  }
-
-  return artists;
+      } as Artist;
+    });
 }
 
 export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; songs: Song[] } | null> {
-  // 1. Try looking up in the artists table by slug
-  const { data: artistRow } = await db
-    .from('artists')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-
-  if (artistRow) {
-    const artist: Artist = {
-      id: artistRow.id,
-      stage_name: artistRow.stage_name,
-      slug: artistRow.slug,
-      bio: artistRow.bio || null,
-      avatar_url: artistRow.avatar_url || null,
-      cover_url: artistRow.cover_url || null,
-      genre: artistRow.genre || null,
-      is_verified: artistRow.is_verified || false,
-      follower_count: artistRow.follower_count || 0,
-      monthly_listeners: artistRow.monthly_listeners || 0,
-    };
-
-    const { data: songRows } = await db
-      .from('songs')
-      .select('*')
-      .eq('artist_id', artistRow.id)
-      .eq('is_published', true)
-      .order('play_count', { ascending: false });
-
-    const songs: Song[] = (songRows || []).map((s: any) => ({
-      id: s.id,
-      artist_id: s.artist_id,
-      title: s.title,
-      slug: s.slug,
-      description: s.description || null,
-      audio_url: s.audio_url,
-      cover_url: s.cover_url || null,
-      duration_seconds: s.duration_seconds || 0,
-      genre: s.genre || null,
-      coin_reward: s.coin_reward || 0,
-      play_count: s.play_count || 0,
-      is_featured: s.is_featured || false,
-      artist: {
-        id: artist.id,
-        stage_name: artist.stage_name,
-        slug: artist.slug,
-        avatar_url: artist.avatar_url,
-        is_verified: artist.is_verified,
-      },
-    }));
-
-    return { artist, songs };
-  }
-
-  // 2. Fallback: try looking up by user-{id} slug format
   const userId = slug.startsWith('user-') ? slug.replace('user-', '') : slug;
   if (!userId) return null;
 
