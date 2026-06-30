@@ -44,7 +44,7 @@ function SuccessContent() {
   };
 
   return (
-    <main className="flex-grow flex items-center justify-center px-margin-mobile pt-16 pb-12 relative z-10 lg:ml-64 bg-surface min-h-screen">
+    <main className="flex-grow flex items-center justify-center px-margin-mobile pt-16 pb-12 relative z-10 bg-surface min-h-screen">
       {/* Transaction Canvas Overlay */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">

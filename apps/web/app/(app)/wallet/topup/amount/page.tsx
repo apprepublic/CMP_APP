@@ -60,7 +60,7 @@ function TopUpAmountContent() {
   }, [currency]);
 
   return (
-    <main className="flex-1 lg:ml-64 flex-grow flex items-center justify-center pt-8 pb-24 md:pb-12 px-margin-mobile md:px-margin-desktop relative min-h-[calc(100vh-80px)]">
+    <main className="flex-1 flex-grow flex items-center justify-center pt-8 pb-24 md:pb-12 px-margin-mobile md:px-margin-desktop relative min-h-[calc(100vh-80px)]">
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-secondary-container/10 rounded-full blur-3xl"></div>
         <div className="absolute top-1/2 -left-24 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl"></div>

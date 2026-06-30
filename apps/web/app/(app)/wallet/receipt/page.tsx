@@ -27,7 +27,7 @@ export default function TransactionReceiptPage() {
   const finalAmount = fiatAmount - processingFee;
 
   return (
-    <div className="flex-1 lg:ml-64 bg-surface-container-low min-h-[calc(100vh-64px)] flex flex-col items-center justify-center p-gutter md:p-margin-desktop">
+    <div className="flex-1 bg-surface-container-low min-h-[calc(100vh-64px)] flex flex-col items-center justify-center p-gutter md:p-margin-desktop">
       <div className="absolute top-0 left-0 w-full h-1/4 bg-primary-container/5 pointer-events-none -z-10"></div>
       <div className="absolute right-[-10%] top-1/4 w-[40vw] h-[40vw] rounded-full bg-secondary-container/10 blur-[100px] pointer-events-none -z-10"></div>
 

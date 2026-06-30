@@ -44,7 +44,7 @@ export default function WithdrawAmountPage() {
   };
 
   return (
-    <main className="flex-1 lg:ml-64 flex items-center justify-center min-h-[calc(100vh-80px)] pb-24 md:pb-12 px-margin-mobile relative">
+    <main className="flex-1 flex items-center justify-center min-h-[calc(100vh-80px)] pb-24 md:pb-12 px-margin-mobile relative">
       <div className="bg-surface-container-lowest rounded-xl w-full max-w-lg p-6 md:p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] mt-4">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/wallet" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-outline-variant transition-colors">

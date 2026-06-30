@@ -15,7 +15,7 @@ export default function TopUpSelectMethodPage() {
   };
 
   return (
-    <main className="flex-1 lg:ml-64 pb-24 md:pb-12 min-h-screen">
+    <main className="flex-1 pb-24 md:pb-12 min-h-screen">
       {/* Hero Branding Section */}
       <section className="relative bg-primary-container h-64 flex flex-col justify-center items-center text-center overflow-hidden">
         <div className="relative z-10 px-margin-mobile">

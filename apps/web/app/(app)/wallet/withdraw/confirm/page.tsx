@@ -70,7 +70,7 @@ export default function WithdrawConfirmPage() {
   };
 
   return (
-    <main className="flex-1 lg:ml-64 flex items-center justify-center pb-24 md:pb-12 px-margin-mobile min-h-[calc(100vh-80px)]">
+    <main className="flex-1 flex items-center justify-center pb-24 md:pb-12 px-margin-mobile min-h-[calc(100vh-80px)]">
       <div className="bg-surface-container-lowest rounded-xl p-6 md:p-8 w-full max-w-lg shadow-sm border border-outline-variant/30 mt-4">
         <div className="w-full flex justify-between items-center mb-8 text-on-surface-variant">
           <Link href="/wallet/withdraw/bank" className="material-symbols-outlined hover:text-primary-container transition-colors">arrow_back</Link>

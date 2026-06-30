@@ -50,7 +50,7 @@ function CheckoutContent() {
   };
 
   return (
-    <main className="flex-1 lg:ml-64 min-h-screen flex items-center justify-center relative overflow-hidden bg-surface">
+    <main className="flex-1 min-h-screen flex items-center justify-center relative overflow-hidden bg-surface">
       <div className="max-w-2xl w-full mx-margin-mobile z-10 my-12">
         <div className="bg-primary-container rounded-xl shadow-xl overflow-hidden border border-white/10">
           <div className="bg-white/5 p-8 border-b border-white/5">
