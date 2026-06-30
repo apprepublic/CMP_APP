@@ -811,12 +811,13 @@ class ApiService {
 
           await supabase.from('coin_transactions').insert({
             id: crypto.randomUUID(),
+            wallet_id: wallet.id,
             user_id: session.user.id,
             type: 'earn',
             amount: task.coin_per_participant,
             balance_after: newBalance,
             description: `Auto-approved streaming task`,
-            reference_id: id,
+            metadata: { posted_task_id: id },
           });
 
           // Send Notification
