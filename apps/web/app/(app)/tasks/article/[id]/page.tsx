@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import ArticleReaderClient from './ArticleReaderClient';
+import ArticleReader from '@/components/tasks/ArticleReader';
 
 export async function generateStaticParams() {
   const { data: articles } = await (supabase as any)
@@ -11,5 +11,5 @@ export async function generateStaticParams() {
 
 export default async function ArticleReaderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <ArticleReaderClient slug={id} />;
+  return <ArticleReader slug={id} />;
 }

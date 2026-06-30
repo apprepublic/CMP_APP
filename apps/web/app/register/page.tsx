@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -9,6 +9,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [referredBy, setReferredBy] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -16,6 +17,15 @@ export default function RegisterPage() {
     phone: '',
     referralCode: '',
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferredBy(ref);
+      setFormData(prev => ({ ...prev, referralCode: ref }));
+    }
+  }, []);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -179,7 +189,7 @@ export default function RegisterPage() {
             {/* Referral Code */}
             <div>
               <label className="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase" htmlFor="referralCode">
-                Referral Code (Optional)
+                Referral Code {referredBy && <span className="text-[#B8860B] font-semibold">(from invite link)</span>}
               </label>
               <div className="relative">
                 <Coins className="absolute left-3 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
@@ -190,10 +200,19 @@ export default function RegisterPage() {
                   placeholder="Enter code"
                   type="text"
                   value={formData.referralCode}
-                  onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                  onChange={(e) => {
+                    if (!referredBy) setFormData({ ...formData, referralCode: e.target.value });
+                  }}
                   disabled={isLoading}
+                  readOnly={!!referredBy}
                 />
               </div>
+              {referredBy && (
+                <p className="font-body-sm text-body-sm text-[#B8860B] mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">info</span>
+                  Invited by a friend — code locked. Sign up to earn them a reward!
+                </p>
+              )}
             </div>
 
             {/* TOS Checkbox */}

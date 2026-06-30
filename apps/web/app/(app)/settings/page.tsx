@@ -8,20 +8,40 @@ import { useRouter } from 'next/navigation';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 
+const SETTINGS_DEFAULTS = {
+  emailUpdates: true,
+  transactionAlerts: true,
+  marketingPromos: false,
+  language: 'en',
+  currencyDisplay: 'usd' as const,
+};
+
+function parseSettings(settings: any) {
+  if (!settings || typeof settings !== 'object') return SETTINGS_DEFAULTS;
+  return {
+    emailUpdates: typeof settings.emailUpdates === 'boolean' ? settings.emailUpdates : SETTINGS_DEFAULTS.emailUpdates,
+    transactionAlerts: typeof settings.transactionAlerts === 'boolean' ? settings.transactionAlerts : SETTINGS_DEFAULTS.transactionAlerts,
+    marketingPromos: typeof settings.marketingPromos === 'boolean' ? settings.marketingPromos : SETTINGS_DEFAULTS.marketingPromos,
+    language: settings.language || SETTINGS_DEFAULTS.language,
+    currencyDisplay: settings.currencyDisplay || SETTINGS_DEFAULTS.currencyDisplay,
+  };
+}
+
 export default function SettingsPage() {
   const { user, logout } = useUserStore();
   const { wallet } = useWallet();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   // Profile fields
   const [fullName, setFullName] = useState(user?.displayName || '');
   const [username, setUsername] = useState(user?.username || '');
-  const [email, setEmail] = useState(user?.email || '');
   const [bio, setBio] = useState('');
   const [country, setCountry] = useState('NG');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessageType, setSaveMessageType] = useState<'success' | 'error'>('success');
 
   // Security fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -29,25 +49,32 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [passwordMessageType, setPasswordMessageType] = useState<'success' | 'error'>('success');
 
   // Notification prefs
-  const [emailUpdates, setEmailUpdates] = useState(true);
-  const [transactionAlerts, setTransactionAlerts] = useState(true);
-  const [marketingPromos, setMarketingPromos] = useState(false);
+  const [emailUpdates, setEmailUpdates] = useState(SETTINGS_DEFAULTS.emailUpdates);
+  const [transactionAlerts, setTransactionAlerts] = useState(SETTINGS_DEFAULTS.transactionAlerts);
+  const [marketingPromos, setMarketingPromos] = useState(SETTINGS_DEFAULTS.marketingPromos);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   // Preferences
-  const [language, setLanguage] = useState('en');
-  const [currencyDisplay, setCurrencyDisplay] = useState<'usd' | 'coins'>('usd');
+  const [language, setLanguage] = useState(SETTINGS_DEFAULTS.language);
+  const [currencyDisplay, setCurrencyDisplay] = useState<'usd' | 'coins'>(SETTINGS_DEFAULTS.currencyDisplay);
+  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+  const [preferencesMessage, setPreferencesMessage] = useState('');
 
-  // Search
-  const [searchQuery, setSearchQuery] = useState('');
+  const showMessage = (setter: (m: string) => void, msg: string, duration = 3000) => {
+    setter(msg);
+    setTimeout(() => setter(''), duration);
+  };
 
   // Load profile from Supabase
   useEffect(() => {
-    async function loadProfile() {
+    let cancelled = false;
+    async function load() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!authUser || cancelled) { setIsLoadingProfile(false); return; }
 
       const { data: profile } = await supabase
         .from('users' as any)
@@ -55,43 +82,98 @@ export default function SettingsPage() {
         .eq('id', authUser.id)
         .single();
 
-      if (profile) {
+      if (profile && !cancelled) {
         const p = profile as Record<string, any>;
-        setFullName(p.full_name || p.displayName || '');
+        setFullName(p.full_name || '');
         setUsername(p.username || '');
-        setEmail(authUser.email || '');
         setBio(p.bio || '');
         setCountry(p.country || 'NG');
+
+        const s = parseSettings(p.settings);
+        setEmailUpdates(s.emailUpdates);
+        setTransactionAlerts(s.transactionAlerts);
+        setMarketingPromos(s.marketingPromos);
+        setLanguage(s.language);
+        setCurrencyDisplay(s.currencyDisplay);
       }
+      setIsLoadingProfile(false);
     }
-    loadProfile();
+    load();
+    return () => { cancelled = true; };
   }, []);
+
+  const saveSettingsField = async (patch: Record<string, any>) => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) throw new Error('Not authenticated');
+
+    // Merge with existing settings
+    const { data: existing } = await supabase
+      .from('users' as any)
+      .select('settings')
+      .eq('id', authUser.id)
+      .single();
+
+    const current = parseSettings((existing as any)?.settings);
+    const merged = { ...current, ...patch };
+
+    const { error } = await supabase
+      .from('users' as any)
+      .update({ settings: merged } as any)
+      .eq('id', authUser.id);
+
+    if (error) throw error;
+  };
 
   // Save profile changes
   const handleSaveProfile = async () => {
+    if (!fullName.trim()) {
+      setSaveMessageType('error');
+      setSaveMessage('Full name is required');
+      return;
+    }
+
     setIsSaving(true);
     setSaveMessage('');
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Not authenticated');
 
-      // @ts-ignore - Supabase type inference doesn't work with custom tables
+      // Check username uniqueness if changed
+      if (username.trim()) {
+        const { data: existing } = await supabase
+          .from('users' as any)
+          .select('id')
+          .eq('username', username.trim())
+          .neq('id', authUser.id)
+          .maybeSingle();
+
+        if (existing) {
+          throw new Error('Username is already taken. Please choose another one.');
+        }
+      }
+
       const { error } = await supabase
-        .from('users')
-        // @ts-ignore
+        .from('users' as any)
         .update({
-          full_name: fullName,
-          username: username,
-          bio: bio,
-          country: country,
-        })
+          full_name: fullName.trim(),
+          username: username.trim() || null,
+          bio: bio.trim() || null,
+          country,
+        } as any)
         .eq('id', authUser.id);
 
       if (error) throw error;
-      setSaveMessage('Profile updated successfully!');
+      setSaveMessageType('success');
+      setSaveMessage('Profile updated successfully');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (err: any) {
-      setSaveMessage(err.message || 'Failed to save changes');
+      const msg = err?.message || '';
+      setSaveMessageType('error');
+      setSaveMessage(
+        msg.includes('unique') || msg.includes('already taken')
+          ? 'Username is already taken. Please choose another one.'
+          : msg || 'Failed to save changes'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -99,52 +181,107 @@ export default function SettingsPage() {
 
   // Update password
   const handleUpdatePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage('Passwords do not match');
+    if (!currentPassword) {
+      setPasswordMessageType('error');
+      setPasswordMessage('Please enter your current password');
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordMessage('Password must be at least 8 characters');
+      setPasswordMessageType('error');
+      setPasswordMessage('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessageType('error');
+      setPasswordMessage('New passwords do not match');
       return;
     }
 
     setIsUpdatingPassword(true);
     setPasswordMessage('');
     try {
+      const { error: reauthError } = await supabase.auth.reauthenticate(currentPassword);
+      if (reauthError) {
+        if (reauthError.message?.includes('Invalid') || reauthError.message?.includes('wrong')) {
+          throw new Error('Current password is incorrect');
+        }
+        throw reauthError;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      setPasswordMessage('Password updated successfully!');
+
+      setPasswordMessageType('success');
+      setPasswordMessage('Password updated successfully');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => setPasswordMessage(''), 3000);
     } catch (err: any) {
-      setPasswordMessage(err.message || 'Failed to update password');
+      const msg = err?.message || '';
+      setPasswordMessageType('error');
+      setPasswordMessage(
+        msg.includes('incorrect') || msg.includes('Invalid') ? 'Current password is incorrect' :
+        msg.includes('same') ? 'New password must be different from your current password' :
+        msg.includes('session') ? 'Session expired. Please sign out and sign in again.' :
+        msg || 'Failed to update password'
+      );
     } finally {
       setIsUpdatingPassword(false);
     }
   };
 
-  // Logout handler
+  // Save notification prefs
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    setNotificationMessage('');
+    try {
+      await saveSettingsField({ emailUpdates, transactionAlerts, marketingPromos });
+      showMessage(setNotificationMessage, 'Notification preferences saved');
+    } catch (err: any) {
+      showMessage(setNotificationMessage, err?.message || 'Failed to save');
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
+
+  // Save preferences
+  const handleSavePreferences = async () => {
+    setIsSavingPreferences(true);
+    setPreferencesMessage('');
+    try {
+      await saveSettingsField({ language, currencyDisplay });
+      showMessage(setPreferencesMessage, 'Preferences saved');
+    } catch (err: any) {
+      showMessage(setPreferencesMessage, err?.message || 'Failed to save');
+    } finally {
+      setIsSavingPreferences(false);
+    }
+  };
+
+  // Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     logout();
     router.push('/login');
   };
 
-  // Delete account handler
+  // Delete account
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm(
-      'Are you sure you want to permanently delete your account? This action cannot be undone.'
+      'Are you sure you want to permanently delete your account and all associated data? This cannot be undone.'
     );
     if (!confirmed) return;
 
     try {
+      const { error } = await supabase.functions.invoke('delete-user');
+      if (error) throw error;
       await supabase.auth.signOut();
       logout();
       router.push('/login');
-    } catch (err) {
-      console.error('Error deleting account:', err);
+    } catch (err: any) {
+      const msg = err?.message || '';
+      alert(msg.includes('function') ? 'Account deletion is not available yet. Please contact support.' : msg || 'Failed to delete account');
     }
   };
 
@@ -155,17 +292,26 @@ export default function SettingsPage() {
     { id: 'preferences' as SettingsTab, label: 'Preferences', icon: 'settings' },
   ];
 
+  if (isLoadingProfile) {
+    return (
+      <main className="flex-1 pt-8 pb-24 lg:pb-12 px-margin-mobile lg:px-margin-desktop max-w-container-max mx-auto w-full">
+        <div className="animate-pulse space-y-6">
+          <div className="h-12 w-48 bg-surface-variant rounded-lg" />
+          <div className="h-96 bg-surface-variant rounded-xl" />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex-1 pt-8 pb-24 lg:pb-12 px-margin-mobile lg:px-margin-desktop max-w-container-max mx-auto w-full">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
 
-        {/* Settings Sidebar (Desktop Only) */}
+        {/* Settings Sidebar (Desktop) */}
         <aside className="hidden lg:block lg:col-span-3">
           <div className="bg-primary-container rounded-xl p-6 sticky top-28 border border-outline-variant/20 overflow-hidden relative">
-            {/* Decorative element */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-fixed/10 rounded-full blur-2xl" />
 
-            {/* User card */}
             <div className="flex items-center gap-4 mb-8 relative z-10">
               <div className="w-12 h-12 rounded-full bg-secondary-fixed/20 flex items-center justify-center border-2 border-secondary-fixed/50 text-secondary-fixed font-bold text-lg">
                 {(() => {
@@ -182,7 +328,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Nav tabs */}
             <nav className="flex flex-col gap-2 relative z-10">
               {settingsTabs.map((tab) => (
                 <button
@@ -202,7 +347,7 @@ export default function SettingsPage() {
           </div>
         </aside>
 
-        {/* Mobile Tabs (Visible only on mobile/tablet) */}
+        {/* Mobile Tabs */}
         <div className="lg:hidden flex overflow-x-auto gap-2 pb-4 mb-4 scrollbar-hide">
           {settingsTabs.map((tab) => (
             <button
@@ -220,10 +365,10 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <div className="lg:col-span-9 flex flex-col gap-gutter">
 
-          {/* ===== PROFILE SECTION ===== */}
+          {/* ===== PROFILE ===== */}
           {activeTab === 'profile' && (
             <section className="bg-primary-container rounded-xl p-6 lg:p-8 border border-outline-variant/20 relative overflow-hidden">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-fixed/5 rounded-full blur-2xl" />
@@ -233,7 +378,6 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex flex-col md:flex-row gap-8 mb-8 relative z-10">
-                {/* Avatar */}
                 <div className="flex flex-col items-center gap-4 w-full md:w-auto">
                   <div className="relative group cursor-pointer">
                     <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center border-2 border-secondary-fixed/50 group-hover:border-secondary-fixed transition-colors text-secondary-fixed">
@@ -246,61 +390,40 @@ export default function SettingsPage() {
                   <button className="font-body-sm text-body-sm text-on-primary-container hover:text-white transition-colors">Change Picture</button>
                 </div>
 
-                {/* Form fields */}
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Full Name</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                    <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
                       placeholder="Your full name"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                    />
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors" />
                   </div>
                   <div className="space-y-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Username</label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
                       placeholder="Choose a username"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                    />
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Email Address</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                    />
+                    <input type="email" value={email} disabled
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white/50 cursor-not-allowed" />
+                    <p className="font-body-sm text-body-sm text-on-primary-container text-xs">Email cannot be changed from settings.</p>
                   </div>
                 </div>
               </div>
 
-              {/* Bio and Country */}
               <div className="space-y-6 relative z-10">
                 <div className="space-y-2">
                   <label className="font-label-caps text-label-caps text-on-primary-container">Bio</label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell us about yourself..."
-                    rows={3}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors resize-none"
-                  />
+                  <textarea value={bio} onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell us about yourself..." rows={3}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors resize-none" />
                 </div>
                 <div className="space-y-2">
                   <label className="font-label-caps text-label-caps text-on-primary-container">Country / Region</label>
                   <div className="relative">
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                    >
+                    <select value={country} onChange={(e) => setCountry(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors">
                       <option value="NG" className="bg-primary-container text-white">Nigeria</option>
                       <option value="US" className="bg-primary-container text-white">United States</option>
                       <option value="UK" className="bg-primary-container text-white">United Kingdom</option>
@@ -316,28 +439,23 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Save button */}
               <div className="mt-8 flex items-center justify-end gap-4 relative z-10">
                 {saveMessage && (
-                  <p className={`font-body-sm text-body-sm ${saveMessage.includes('success') ? 'text-success-verified' : 'text-error'}`}>
+                  <p className={`font-body-sm text-body-sm ${saveMessageType === 'success' ? 'text-success-verified' : 'text-error'}`}>
                     {saveMessage}
                   </p>
                 )}
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="bg-[#d4af37] text-[#0d1b35] font-body-md text-body-md font-bold py-2.5 px-6 rounded-lg hover:bg-[#b8860b] transition-colors disabled:opacity-50"
-                >
+                <button onClick={handleSaveProfile} disabled={isSaving}
+                  className="bg-[#d4af37] text-[#0d1b35] font-body-md text-body-md font-bold py-2.5 px-6 rounded-lg hover:bg-[#b8860b] transition-colors disabled:opacity-50">
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </section>
           )}
 
-          {/* ===== SECURITY SECTION ===== */}
+          {/* ===== SECURITY ===== */}
           {activeTab === 'security' && (
             <div className="flex flex-col gap-gutter">
-              {/* Change Password */}
               <section className="bg-primary-container rounded-xl p-6 lg:p-8 border border-outline-variant/20 relative overflow-hidden">
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#d4af37]/10 rounded-full blur-2xl" />
 
@@ -352,70 +470,34 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <h4 className="font-body-md text-body-md font-semibold text-white">Change Password</h4>
                     <div className="space-y-3">
-                      <input
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
+                      <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder="Current Password"
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-body-sm text-body-sm text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                      />
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-body-sm text-body-sm text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors" />
+                      <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="New Password"
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-body-sm text-body-sm text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                      />
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-body-sm text-body-sm text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors" />
+                      <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm New Password"
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-body-sm text-body-sm text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                      />
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 font-body-sm text-body-sm text-white placeholder-white/30 focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors" />
                     </div>
                     {passwordMessage && (
-                      <p className={`font-body-sm text-body-sm ${passwordMessage.includes('success') ? 'text-success-verified' : 'text-error'}`}>
+                      <p className={`font-body-sm text-body-sm ${passwordMessageType === 'success' ? 'text-success-verified' : 'text-error'}`}>
                         {passwordMessage}
                       </p>
                     )}
-                    <button
-                      onClick={handleUpdatePassword}
-                      disabled={isUpdatingPassword}
-                      className="w-full bg-white/10 text-white font-body-sm text-body-sm py-2.5 rounded-lg hover:bg-white/20 border border-white/10 transition-colors mt-2 disabled:opacity-50"
-                    >
+                    <button onClick={handleUpdatePassword} disabled={isUpdatingPassword}
+                      className="w-full bg-white/10 text-white font-body-sm text-body-sm py-2.5 rounded-lg hover:bg-white/20 border border-white/10 transition-colors mt-2 disabled:opacity-50">
                       {isUpdatingPassword ? 'Updating...' : 'Update Password'}
                     </button>
-                  </div>
-
-                  {/* 2FA */}
-                  <div className="pt-6 border-t border-white/10">
-                    <div className="flex items-start justify-between">
-                      <div className="pr-4">
-                        <h4 className="font-body-md text-body-md font-semibold text-white mb-1">Two-Factor Auth (2FA)</h4>
-                        <p className="font-body-sm text-body-sm text-on-primary-container leading-relaxed">Add an extra layer of security to your account using an authenticator app.</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={twoFactorEnabled}
-                          onChange={() => setTwoFactorEnabled(!twoFactorEnabled)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                      </label>
-                    </div>
                   </div>
 
                   {/* Danger Zone */}
                   <div className="pt-6 border-t border-white/10">
                     <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                       <h4 className="font-body-md text-body-md font-semibold text-red-400 mb-1">Danger Zone</h4>
-                      <p className="font-body-sm text-body-sm text-on-primary-container mb-3">Permanently delete your account and all associated data.</p>
-                      <button
-                        onClick={handleDeleteAccount}
-                        className="text-red-400 text-body-sm font-body-sm font-semibold hover:text-red-300 transition-colors"
-                      >
+                      <p className="font-body-sm text-body-sm text-on-primary-container mb-3">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                      <button onClick={handleDeleteAccount}
+                        className="text-red-400 text-body-sm font-body-sm font-semibold hover:text-red-300 transition-colors">
                         Delete Account
                       </button>
                     </div>
@@ -434,9 +516,7 @@ export default function SettingsPage() {
                     <h4 className="font-body-md text-body-md font-bold text-white">
                       {user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' ? 'Admin' : 'Member'}
                     </h4>
-                    <p className="font-body-sm text-body-sm text-[#d4af37]">
-                      KYC: {user?.kycStatus || 'NONE'}
-                    </p>
+                    <p className="font-body-sm text-body-sm text-[#d4af37]">KYC: {user?.kycStatus || 'NONE'}</p>
                   </div>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-primary-container mb-4">
@@ -451,7 +531,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* ===== NOTIFICATIONS SECTION ===== */}
+          {/* ===== NOTIFICATIONS ===== */}
           {activeTab === 'notifications' && (
             <section className="bg-primary-container rounded-xl p-6 lg:p-8 border border-outline-variant/20 relative overflow-hidden">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-fixed/5 rounded-full blur-2xl" />
@@ -464,93 +544,24 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-4 relative z-10">
-                {/* Email Updates */}
-                <div className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors">
-                  <div>
-                    <p className="font-body-md text-body-md text-white">Email Updates</p>
-                    <p className="font-body-sm text-body-sm text-on-primary-container">Weekly digest and platform news</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={emailUpdates}
-                      onChange={() => setEmailUpdates(!emailUpdates)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                  </label>
-                </div>
-
-                {/* Transaction Alerts */}
-                <div className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors">
-                  <div>
-                    <p className="font-body-md text-body-md text-white">Transaction Alerts</p>
-                    <p className="font-body-sm text-body-sm text-on-primary-container">Instant push notifications for sales</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={transactionAlerts}
-                      onChange={() => setTransactionAlerts(!transactionAlerts)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                  </label>
-                </div>
-
-                {/* Marketing Promos */}
-                <div className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors">
-                  <div>
-                    <p className="font-body-md text-body-md text-white">Marketing Promos</p>
-                    <p className="font-body-sm text-body-sm text-on-primary-container">Special offers and partner deals</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={marketingPromos}
-                      onChange={() => setMarketingPromos(!marketingPromos)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                  </label>
-                </div>
-
-                {/* Streak Reminders */}
-                <div className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors">
-                  <div>
-                    <p className="font-body-md text-body-md text-white">Streak Reminders</p>
-                    <p className="font-body-sm text-body-sm text-on-primary-container">Daily reminders to maintain your streak</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                  </label>
-                </div>
-
-                {/* Referral Activity */}
-                <div className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors">
-                  <div>
-                    <p className="font-body-md text-body-md text-white">Referral Activity</p>
-                    <p className="font-body-sm text-body-sm text-on-primary-container">Notify when referrals sign up or earn</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                  </label>
-                </div>
+                <ToggleRow label="Email Updates" desc="Weekly digest and platform news" checked={emailUpdates} onChange={setEmailUpdates} />
+                <ToggleRow label="Transaction Alerts" desc="Instant push notifications for sales" checked={transactionAlerts} onChange={setTransactionAlerts} />
+                <ToggleRow label="Marketing Promos" desc="Special offers and partner deals" checked={marketingPromos} onChange={setMarketingPromos} />
+                <ToggleRow label="Streak Reminders" desc="Daily reminders to maintain your streak" checked={true} onChange={() => {}} />
+                <ToggleRow label="Referral Activity" desc="Notify when referrals sign up or earn" checked={true} onChange={() => {}} />
               </div>
+
+              {notificationMessage && (
+                <p className="font-body-sm text-body-sm text-success-verified mt-4 relative z-10">{notificationMessage}</p>
+              )}
+              <button onClick={handleSaveNotifications} disabled={isSavingNotifications}
+                className="mt-4 bg-[#d4af37] text-[#0d1b35] font-body-md text-body-md font-bold py-2.5 px-6 rounded-lg hover:bg-[#b8860b] transition-colors disabled:opacity-50 relative z-10">
+                {isSavingNotifications ? 'Saving...' : 'Save Notification Preferences'}
+              </button>
             </section>
           )}
 
-          {/* ===== PREFERENCES SECTION ===== */}
+          {/* ===== PREFERENCES ===== */}
           {activeTab === 'preferences' && (
             <section className="bg-primary-container rounded-xl p-6 lg:p-8 border border-outline-variant/20 relative overflow-hidden">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary-fixed/5 rounded-full blur-2xl" />
@@ -564,15 +575,11 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                 <div className="space-y-6">
-                  {/* Language */}
                   <div className="space-y-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Language</label>
                     <div className="relative">
-                      <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                      >
+                      <select value={language} onChange={(e) => setLanguage(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors">
                         <option value="en" className="bg-primary-container text-white">English</option>
                         <option value="es" className="bg-primary-container text-white">Español</option>
                         <option value="fr" className="bg-primary-container text-white">Français</option>
@@ -586,40 +593,24 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Currency Display */}
                   <div className="space-y-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Currency Display</label>
                     <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
-                      <button
-                        onClick={() => setCurrencyDisplay('usd')}
-                        className={`flex-1 py-2 text-center rounded-md font-body-sm text-body-sm font-semibold transition-colors ${
-                          currencyDisplay === 'usd'
-                            ? 'bg-[#d4af37]/20 text-[#d4af37]'
-                            : 'text-on-primary-container hover:text-white'
-                        }`}
-                      >
+                      <button onClick={() => setCurrencyDisplay('usd')}
+                        className={`flex-1 py-2 text-center rounded-md font-body-sm text-body-sm font-semibold transition-colors ${currencyDisplay === 'usd' ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'text-on-primary-container hover:text-white'}`}>
                         USD ($)
                       </button>
-                      <button
-                        onClick={() => setCurrencyDisplay('coins')}
-                        className={`flex-1 py-2 text-center rounded-md font-body-sm text-body-sm font-semibold transition-colors ${
-                          currencyDisplay === 'coins'
-                            ? 'bg-[#d4af37]/20 text-[#d4af37]'
-                            : 'text-on-primary-container hover:text-white'
-                        }`}
-                      >
+                      <button onClick={() => setCurrencyDisplay('coins')}
+                        className={`flex-1 py-2 text-center rounded-md font-body-sm text-body-sm font-semibold transition-colors ${currencyDisplay === 'coins' ? 'bg-[#d4af37]/20 text-[#d4af37]' : 'text-on-primary-container hover:text-white'}`}>
                         CMP Coins
                       </button>
                     </div>
                   </div>
 
-                  {/* Timezone */}
                   <div className="space-y-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Timezone</label>
                     <div className="relative">
-                      <select
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors"
-                      >
+                      <select className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white appearance-none focus:border-[#d4af37] focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-colors">
                         <option value="WAT" className="bg-primary-container text-white">West Africa Time (WAT)</option>
                         <option value="GMT" className="bg-primary-container text-white">GMT / UTC</option>
                         <option value="EST" className="bg-primary-container text-white">Eastern (EST)</option>
@@ -633,7 +624,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Data & Privacy */}
                   <div className="space-y-4">
                     <h4 className="font-body-md text-body-md font-semibold text-white">Data & Privacy</h4>
 
@@ -647,36 +637,45 @@ export default function SettingsPage() {
                         <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
                       </label>
                     </div>
-
-                    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors">
-                      <div>
-                        <p className="font-body-md text-body-md text-white">Profile Visibility</p>
-                        <p className="font-body-sm text-body-sm text-on-primary-container">Allow others to see your profile</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input type="checkbox" defaultChecked className="sr-only peer" />
-                        <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
-                      </label>
-                    </div>
                   </div>
 
-                  {/* Logout */}
                   <div className="pt-4 border-t border-white/10">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center justify-center gap-2 bg-white/10 text-white font-body-md text-body-md font-semibold py-3 rounded-lg hover:bg-white/20 border border-white/10 transition-colors"
-                    >
+                    <button onClick={handleLogout}
+                      className="w-full flex items-center justify-center gap-2 bg-white/10 text-white font-body-md text-body-md font-semibold py-3 rounded-lg hover:bg-white/20 border border-white/10 transition-colors">
                       <span className="material-symbols-outlined">logout</span>
                       Sign Out
                     </button>
                   </div>
                 </div>
               </div>
+
+              {preferencesMessage && (
+                <p className="font-body-sm text-body-sm text-success-verified mt-4 relative z-10">{preferencesMessage}</p>
+              )}
+              <button onClick={handleSavePreferences} disabled={isSavingPreferences}
+                className="mt-4 bg-[#d4af37] text-[#0d1b35] font-body-md text-body-md font-bold py-2.5 px-6 rounded-lg hover:bg-[#b8860b] transition-colors disabled:opacity-50 relative z-10">
+                {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
+              </button>
             </section>
           )}
 
         </div>
       </div>
     </main>
+  );
+}
+
+function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors">
+      <div>
+        <p className="font-body-md text-body-md text-white">{label}</p>
+        <p className="font-body-sm text-body-sm text-on-primary-container">{desc}</p>
+      </div>
+      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only peer" />
+        <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#d4af37]" />
+      </label>
+    </div>
   );
 }
