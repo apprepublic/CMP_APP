@@ -61,10 +61,25 @@ export default function ArticleReader({ slug }: { slug: string }) {
   const [adGateDone, setAdGateDone] = useState(false);
   const [adTimer, setAdTimer] = useState(5);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const unlocked = readingProgress >= 95;
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setIsAuthenticated(!!user));
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsAuthenticated(!!user);
+      setUserId(user?.id || null);
+    });
   }, []);
+
+  useEffect(() => {
+    if (!userId || !article?.id) return;
+    supabase
+      .from('task_completions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('proof_data->>articleId', article.id)
+      .maybeSingle()
+      .then(({ data }) => { if (data) setClaimed(true); });
+  }, [userId, article?.id]);
 
   useEffect(() => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';

@@ -525,13 +525,14 @@ class ApiService {
     if (wallet && task.coin_reward) {
       const newBalance = Number(wallet.coin_balance) + Number(task.coin_reward);
       const newLifetime = Number(wallet.lifetime_earned) + Number(task.coin_reward);
-      await supabase
+      const { error: walletError } = await supabase
         .from('wallets')
         .update({ coin_balance: newBalance, lifetime_earned: newLifetime, updated_at: new Date().toISOString() })
         .eq('id', wallet.id);
 
-      // Log transaction
-      await supabase.from('coin_transactions').insert({
+      if (walletError) throw new Error(walletError.message);
+
+      const { error: txError } = await supabase.from('coin_transactions').insert({
         id: crypto.randomUUID(),
         wallet_id: wallet.id,
         user_id: session.user.id,
@@ -542,7 +543,8 @@ class ApiService {
         metadata: { task_id: taskId },
       });
 
-      // Send Notification
+      if (txError) throw new Error(txError.message);
+
       await supabase.from('notifications').insert({
         user_id: session.user.id,
         type: 'REWARD',
@@ -590,12 +592,7 @@ class ApiService {
     const newBalance = Number((wallet as any).coin_balance) + article.coin_reward;
     const newLifetimeEarned = Number(wallet.lifetime_earned) + article.coin_reward;
 
-    await supabase
-      .from('wallets')
-      .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
-      .eq('id', wallet.id);
-
-    await supabase
+    const { error: completionError } = await supabase
       .from('task_completions')
       .insert({
         user_id: session.user.id,
@@ -606,8 +603,17 @@ class ApiService {
         proof_data: { articleId: articleId, type: 'READ_ARTICLE' },
       });
 
+    if (completionError) throw new Error(completionError.message);
+
+    const { error: walletError } = await supabase
+      .from('wallets')
+      .update({ coin_balance: newBalance, lifetime_earned: newLifetimeEarned, updated_at: new Date().toISOString() })
+      .eq('id', wallet.id);
+
+    if (walletError) throw new Error(walletError.message);
+
     const txId = crypto.randomUUID();
-    await supabase
+    const { error: txError } = await supabase
       .from('coin_transactions')
       .insert({
         id: txId,
@@ -620,7 +626,8 @@ class ApiService {
         metadata: { article_id: articleId },
       });
 
-    // Send Notification
+    if (txError) throw new Error(txError.message);
+
     await supabase.from('notifications').insert({
       user_id: session.user.id,
       type: 'REWARD',
