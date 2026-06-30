@@ -3,25 +3,21 @@
 import Link from 'next/link';
 import { useStreak, useDailyTasks, useBuyStreakFreeze } from '@/lib/hooks';
 
-function buildWeekDays(currentStreak: number) {
+function buildWeekDays(dailyHistory: { date: string; completed: boolean }[]) {
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const today = new Date();
   const jsDay = today.getDay();
   const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
 
-  const totalDaysThisWeek = mondayBasedToday + 1;
-  const daysCompletedThisWeek = Math.min(currentStreak, totalDaysThisWeek);
-  const firstCompletedDay = totalDaysThisWeek - daysCompletedThisWeek;
-
   return dayLabels.map((label, index) => {
     const isMilestoneDay = index === 6;
     const isToday = index === mondayBasedToday;
-    const isCompleted = index >= firstCompletedDay && index < mondayBasedToday;
+    const isCompleted = dailyHistory[index]?.completed ?? false;
 
     return {
       day: label,
-      completed: isCompleted,
-      current: isToday && !isCompleted,
+      completed: isCompleted && !isToday,
+      current: isToday,
       milestone: isMilestoneDay && !isCompleted && !isToday,
       reward: isMilestoneDay ? null : 50,
     };
@@ -47,7 +43,7 @@ export default function StreakPage() {
   const freezesOwned = streak?.freezesOwned ?? 0;
   const tasksCompletedToday = streak?.tasksCompletedToday ?? 0;
 
-  const weekDays = buildWeekDays(currentStreak);
+  const weekDays = buildWeekDays(streak?.dailyHistory ?? []);
   const daysCompletedThisWeek = weekDays.filter(d => d.completed).length;
   const jsDay = new Date().getDay();
   const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;

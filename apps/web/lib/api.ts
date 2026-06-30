@@ -363,7 +363,7 @@ class ApiService {
 
   async getStreak() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return { streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, freezesOwned: 0, tasksCompletedToday: 0 } };
+    if (!session?.user) return { streak: { currentStreak: 0, longestStreak: 0, lastActiveDate: null, freezesOwned: 0, tasksCompletedToday: 0, dailyHistory: [] } };
 
     const { data: streakData } = await supabase
       .from('streaks')
@@ -392,6 +392,41 @@ class ApiService {
       .gte('completed_at', today.toISOString())
       .lt('completed_at', tomorrow.toISOString());
 
+    const jsDay = today.getDay();
+    const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - mondayBasedToday);
+    monday.setHours(0, 0, 0, 0);
+
+    const nextMonday = new Date(monday);
+    nextMonday.setDate(monday.getDate() + 7);
+
+    const { data: weekCompletions } = await supabase
+      .from('task_completions')
+      .select('last_completed_at')
+      .eq('user_id', session.user.id)
+      .gte('last_completed_at', monday.toISOString())
+      .lt('last_completed_at', nextMonday.toISOString());
+
+    const { data: weekPosted } = await supabase
+      .from('user_task_completions')
+      .select('completed_at')
+      .eq('user_id', session.user.id)
+      .eq('status', 'APPROVED')
+      .gte('completed_at', monday.toISOString())
+      .lt('completed_at', nextMonday.toISOString());
+
+    const completedDates = new Set<string>();
+    (weekCompletions || []).forEach((c: any) => completedDates.add(new Date(c.last_completed_at).toISOString().slice(0, 10)));
+    (weekPosted || []).forEach((c: any) => completedDates.add(new Date(c.completed_at).toISOString().slice(0, 10)));
+
+    const dailyHistory = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      dailyHistory.push({ date: date.toISOString().slice(0, 10), completed: completedDates.has(date.toISOString().slice(0, 10)) });
+    }
+
     return {
       streak: {
         currentStreak: streakData?.current_streak || 0,
@@ -399,6 +434,7 @@ class ApiService {
         lastActiveDate: streakData?.last_activity_date || null,
         freezesOwned: streakData?.freezes_owned || 0,
         tasksCompletedToday: (completionsToday || 0) + (postedCompletionsToday || 0),
+        dailyHistory,
       },
     };
   }
