@@ -172,6 +172,8 @@ class ApiService {
 
   // Tasks - fetch from Supabase instead of dead API
   async getTasks(type?: string, category?: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+
     const [postedRes, systemRes, articlesRes] = await Promise.all([
       supabase
         .from('user_posted_tasks')
@@ -191,11 +193,23 @@ class ApiService {
         .order('created_at', { ascending: false }),
     ]);
 
+    let approvedPosted = new Map<string, boolean>();
+    if (session?.user) {
+      const { data: completions } = await supabase
+        .from('user_task_completions')
+        .select('posted_task_id')
+        .eq('user_id', session.user.id)
+        .eq('status', 'APPROVED');
+      (completions || []).forEach((c: any) => approvedPosted.set(c.posted_task_id, true));
+    }
+
     const postedTasks = (postedRes.data || []).map((t: any) => ({
       ...t,
       isPostedTask: true,
       coinReward: t.coin_per_participant,
       category: t.category || 'USER_CREATED',
+      userCompleted: approvedPosted.has(t.id),
+      completedToday: approvedPosted.has(t.id) ? 1 : 0,
     }));
 
     const systemTasks = systemRes.data || [];

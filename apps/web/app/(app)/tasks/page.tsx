@@ -500,9 +500,9 @@ export default function EarnMarketplacePage() {
             const dailyInfo = dailyStatusMap.get(task.id);
             const isPending = isPostedTask && task.status === 'PENDING';
             const isLocked = isPostedTask 
-              ? (task.current_participants >= task.participant_threshold) || isPending
+              ? (task.completedToday > 0) || (task.current_participants >= task.participant_threshold) || isPending
               : (dailyInfo?.isLocked ?? false);
-            const completedToday = dailyInfo?.completedToday ?? 0;
+            const completedToday = isPostedTask ? (task.completedToday ?? 0) : (dailyInfo?.completedToday ?? 0);
             const dailyLimit = task.dailyLimit ?? dailyInfo?.dailyLimit ?? 1;
             const isCompleting = (isPostedTask ? completePostedTask : completeTask).isPending;
             const hasLinkedArticle = task.linkedArticle || dailyInfo?.linkedArticle;

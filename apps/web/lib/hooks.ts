@@ -158,6 +158,7 @@ export const useApproveCompletion = () => {
     mutationFn: ({ completionId, postedTaskId }: { completionId: string; postedTaskId: string }) =>
       api.approveCompletion(completionId, postedTaskId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['taskCompletions'] });
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
