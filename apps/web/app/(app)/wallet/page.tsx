@@ -5,6 +5,44 @@ import { useWallet } from '@/lib/useWallet';
 import { useTransactions } from '@/lib/hooks';
 import { useCurrency } from '@/lib/useCurrency';
 
+const TX_LABELS: Record<string, string> = {
+  earn: 'Task Earn',
+  spend: 'Spend',
+  TOPUP: 'Top Up',
+  WITHDRAWAL: 'Withdrawal',
+  TASK_EARN: 'Task Earn',
+  READ_ARTICLE: 'Read Article',
+  WATCH_AD: 'Watch Ad',
+  REFERRAL_REWARD: 'Referral Reward',
+  REFERRAL_SIGNUP: 'Referral Signup',
+  STREAK_BONUS: 'Streak Bonus',
+  AIRTIME_PURCHASE: 'Airtime',
+  DATA_PURCHASE: 'Data',
+  ELECTRICITY_PURCHASE: 'Electricity',
+  VOTE: 'Vote',
+  MUSIC_STREAM: 'Music Stream',
+  bonus: 'Bonus',
+};
+
+const TX_ICONS: Record<string, string> = {
+  earn: 'play_circle',
+  spend: 'remove_circle',
+  TOPUP: 'add_circle',
+  WITHDRAWAL: 'account_balance',
+  TASK_EARN: 'play_circle',
+  READ_ARTICLE: 'menu_book',
+  WATCH_AD: 'tv',
+  REFERRAL_REWARD: 'groups',
+  REFERRAL_SIGNUP: 'group_add',
+  STREAK_BONUS: 'local_fire_department',
+  AIRTIME_PURCHASE: 'call',
+  DATA_PURCHASE: 'wifi',
+  ELECTRICITY_PURCHASE: 'bolt',
+  VOTE: 'how_to_vote',
+  MUSIC_STREAM: 'headphones',
+  bonus: 'card_giftcard',
+};
+
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -12,7 +50,7 @@ function formatDate(dateStr: string) {
 
 export default function WalletPage() {
   const { wallet, loading: walletLoading } = useWallet();
-  const { data: transactions = [], isLoading: txLoading } = useTransactions(wallet?.id || '');
+  const { data: transactions = [], isLoading: txLoading, isError: txError } = useTransactions(wallet?.id || '');
   const { formatFiat, loadingLocation } = useCurrency();
 
   const coinBalance = wallet?.balance ?? 0;
@@ -67,6 +105,10 @@ export default function WalletPage() {
              <div className="p-8 flex justify-center text-on-surface-variant">
                <span className="material-symbols-outlined animate-spin mr-2">refresh</span> Loading...
              </div>
+          ) : txError ? (
+             <div className="p-8 text-center text-error">
+               Failed to load transactions. Please try again.
+             </div>
           ) : transactions.length === 0 ? (
              <div className="p-8 text-center text-on-surface-variant">
                No recent transactions found.
@@ -79,11 +121,11 @@ export default function WalletPage() {
                   <div className="flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isPositive ? 'bg-secondary-fixed/20 text-secondary-container' : 'bg-error-container/50 text-error'}`}>
                       <span className="material-symbols-outlined">
-                        {tx.type === 'TASK_EARN' ? 'play_circle' : tx.type === 'WITHDRAWAL' ? 'account_balance' : tx.type === 'REFERRAL_REWARD' ? 'groups' : 'toll'}
+                        {TX_ICONS[tx.type] || 'toll'}
                       </span>
                     </div>
                     <div>
-                      <h4 className="font-body-md text-body-md font-medium text-on-surface">{tx.type}</h4>
+                      <h4 className="font-body-md text-body-md font-medium text-on-surface">{TX_LABELS[tx.type] || tx.type}</h4>
                       <p className="font-body-sm text-body-sm text-on-surface-variant">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>

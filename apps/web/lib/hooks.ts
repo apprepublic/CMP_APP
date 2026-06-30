@@ -59,6 +59,7 @@ export const useCompleteTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'daily'] });
       queryClient.invalidateQueries({ queryKey: ['streak'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 };
@@ -72,6 +73,7 @@ export const useClaimArticle = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', 'daily'] });
       queryClient.invalidateQueries({ queryKey: ['streak'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 };
@@ -117,6 +119,7 @@ export const usePostTask = () => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
       queryClient.invalidateQueries({ queryKey: ['streak'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 };
@@ -145,6 +148,7 @@ export const useCompletePostedTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['streak'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 };
@@ -162,6 +166,7 @@ export const useApproveCompletion = () => {
       queryClient.invalidateQueries({ queryKey: ['taskCompletions'] });
       queryClient.invalidateQueries({ queryKey: ['postedTasks'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 };

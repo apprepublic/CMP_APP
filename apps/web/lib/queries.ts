@@ -148,7 +148,7 @@ function unwrap<T>(res: { data: T | null; error: any }): T {
 
 export async function getTransactions(walletId: string): Promise<CoinTransaction[]> {
   return unwrap<CoinTransaction[]>(
-    await db.from('coin_transactions').select('*').eq('user_id', walletId).order('created_at', { ascending: false })
+    await db.from('coin_transactions').select('*').eq('wallet_id', walletId).order('created_at', { ascending: false }).limit(20)
   );
 }
 
