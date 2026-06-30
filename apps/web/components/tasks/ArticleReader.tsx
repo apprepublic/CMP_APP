@@ -73,10 +73,11 @@ export default function ArticleReader({ slug }: { slug: string }) {
   useEffect(() => {
     if (!userId || !article?.id) return;
     supabase
-      .from('task_completions')
+      .from('coin_transactions')
       .select('id')
       .eq('user_id', userId)
-      .eq('proof_data->>articleId', article.id)
+      .eq('type', 'earn')
+      .eq('metadata->>article_id', article.id)
       .maybeSingle()
       .then(({ data }) => { if (data) setClaimed(true); });
   }, [userId, article?.id]);

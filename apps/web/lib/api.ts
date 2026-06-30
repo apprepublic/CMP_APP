@@ -251,6 +251,13 @@ class ApiService {
       .select('task_id, status, completion_count, last_completed_at, proof_data')
       .eq('user_id', session.user.id);
 
+    const { data: articleClaims } = await supabase
+      .from('coin_transactions')
+      .select('metadata')
+      .eq('user_id', session.user.id)
+      .eq('type', 'earn')
+      .ilike('description', 'Read article:%');
+
     const completionMap = new Map(
       (completions || []).map((c: any) => [c.task_id, c])
     );
@@ -287,9 +294,9 @@ class ApiService {
     });
 
     const articleCompletionsMap = new Map(
-      (completions || [])
-        .filter((c: any) => !c.task_id && c.proof_data?.articleId)
-        .map((c: any) => [c.proof_data.articleId, c.completion_count || 1])
+      (articleClaims || [])
+        .filter((t: any) => t.metadata?.article_id)
+        .map((t: any) => [t.metadata.article_id, 1])
     );
 
     const articleTasks = articles.map((a: any) => {
@@ -573,10 +580,11 @@ class ApiService {
     if (!article) throw new Error('Article not found or not published');
 
     const { data: existingClaim } = await supabase
-      .from('task_completions')
+      .from('coin_transactions')
       .select('id')
       .eq('user_id', session.user.id)
-      .eq('proof_data->>articleId', articleId)
+      .eq('type', 'earn')
+      .eq('metadata->>article_id', articleId)
       .maybeSingle();
 
     if (existingClaim) throw new Error('You have already earned coins for this article.');
@@ -591,19 +599,6 @@ class ApiService {
 
     const newBalance = Number((wallet as any).coin_balance) + article.coin_reward;
     const newLifetimeEarned = Number(wallet.lifetime_earned) + article.coin_reward;
-
-    const { error: completionError } = await supabase
-      .from('task_completions')
-      .insert({
-        user_id: session.user.id,
-        task_id: null,
-        status: 'COMPLETED',
-        completion_count: 1,
-        last_completed_at: new Date().toISOString(),
-        proof_data: { articleId: articleId, type: 'READ_ARTICLE' },
-      });
-
-    if (completionError) throw new Error(completionError.message);
 
     const { error: walletError } = await supabase
       .from('wallets')
