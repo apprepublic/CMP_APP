@@ -29,14 +29,19 @@ export default function DashboardPage() {
     const today = new Date();
     const jsDay = today.getDay();
     const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
-    const daysCompletedThisWeek = Math.min(currentStreak, mondayBasedToday);
-    return dayLabels.map((label, index) => ({
-      day: label,
-      completed: index < daysCompletedThisWeek,
-      current: index === mondayBasedToday && index >= daysCompletedThisWeek,
-      milestone: index === 6 && index >= daysCompletedThisWeek && index !== mondayBasedToday,
-    }));
-  }, [currentStreak]);
+    const history = streakResp?.streak?.dailyHistory ?? [];
+    return dayLabels.map((label, index) => {
+      const isMilestoneDay = index === 6;
+      const isToday = index === mondayBasedToday;
+      const isCompleted = history[index]?.completed ?? false;
+      return {
+        day: label,
+        completed: isCompleted && !isToday,
+        current: isToday,
+        milestone: isMilestoneDay && !isCompleted && !isToday,
+      };
+    });
+  }, [streakResp?.streak?.dailyHistory]);
 
   const daysCompletedThisWeek = weekDays.filter(d => d.completed).length;
   const progressPercent = Math.round((daysCompletedThisWeek / 7) * 100);
