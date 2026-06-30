@@ -58,7 +58,7 @@ export default function VerifyPage() {
         setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err: any) {
-      setError(parseError(err) || 'Verification failed. Please try entering the code manually.');
+      setError(err?.message || 'Verification failed. Please try entering the code manually.');
       setMode('code');
     } finally {
       setIsLoading(false);
