@@ -54,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Find all PENDING completions older than 24 hours
       const result = await client.queryObject`
-        SELECT id, user_id, posted_task_id, coins_earned, completed_at
+        SELECT id, user_id, posted_task_id, coins_earned, completed_at, proof_data
         FROM user_task_completions
         WHERE status = 'PENDING'
           AND completed_at < NOW() - INTERVAL '24 hours'
@@ -101,7 +101,26 @@ const handler = async (req: Request): Promise<Response> => {
             `;
           }
 
-          approved++;
+            approved++;
+
+            // Delete screenshot proof if present
+            const proofData = completion.proof_data as any;
+            if (proofData?.screenshot && typeof proofData.screenshot === 'string') {
+              try {
+                const screenshotUrl = proofData.screenshot;
+                const parsedUrl = new URL(screenshotUrl);
+                const pathParts = parsedUrl.pathname.split('/');
+                const bucketIdx = pathParts.indexOf('task-attachments');
+                if (bucketIdx !== -1) {
+                  const storagePath = pathParts.slice(bucketIdx + 1).join('/');
+                  if (storagePath) {
+                    await authClient.storage.from('task-attachments').remove([storagePath]);
+                  }
+                }
+              } catch {
+                // Non-storage URL — skip silently
+              }
+            }
         } catch (err) {
           console.error(`Failed to auto-approve ${completion.id}:`, err);
           errors++;

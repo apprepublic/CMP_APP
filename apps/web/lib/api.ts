@@ -1013,12 +1013,16 @@ class ApiService {
 
     if (error) throw new Error(error.message);
 
-    // Fetch completer's info to send them a notification
+    // Fetch completer's info to send them a notification and delete screenshot
     const { data: comp } = await supabase
       .from('user_task_completions')
-      .select('user_id, coins_earned')
+      .select('user_id, coins_earned, proof_data')
       .eq('id', completionId)
       .maybeSingle() as any;
+
+    if (comp?.proof_data) {
+      await this.deleteScreenshotFromProof(comp.proof_data);
+    }
 
     if (comp) {
       await supabase.from('notifications').insert({
@@ -1043,6 +1047,13 @@ class ApiService {
       .eq('id', postedTaskId)
       .single();
     if (!task || task.creator_id !== session.user.id) throw new Error('Only the task creator can reject');
+
+    // Fetch proof_data before updating so we can delete screenshot
+    const { data: completionData } = await supabase
+      .from('user_task_completions')
+      .select('proof_data')
+      .eq('id', completionId)
+      .maybeSingle() as any;
 
     const { error: updateError } = await supabase
       .from('user_task_completions')
@@ -1072,6 +1083,10 @@ class ApiService {
     }
 
     if (updateError) throw new Error(updateError.message);
+
+    if (completionData?.proof_data) {
+      await this.deleteScreenshotFromProof(completionData.proof_data);
+    }
 
     return { message: 'Completion rejected' };
   }
@@ -1177,6 +1192,23 @@ class ApiService {
 
   async getArticleBySlug(slug: string) {
     return this.request<{ article: any }>(`/api/articles/slug/${slug}`);
+  }
+
+  private async deleteScreenshotFromProof(proofData: any) {
+    if (!proofData?.screenshot) return;
+    try {
+      const url = proofData.screenshot;
+      const parsed = new URL(url);
+      const parts = parsed.pathname.split('/');
+      const bucketIndex = parts.indexOf('task-attachments');
+      if (bucketIndex === -1) return;
+      const path = parts.slice(bucketIndex + 1).join('/');
+      if (path) {
+        await supabase.storage.from('task-attachments').remove([path]);
+      }
+    } catch {
+      // Not a storage URL or parse error — skip silently
+    }
   }
 }
 
