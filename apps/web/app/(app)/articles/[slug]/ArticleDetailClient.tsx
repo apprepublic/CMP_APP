@@ -1,11 +1,61 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useArticle, useClaimArticle } from '@/lib/hooks';
 import { useWallet } from '@/lib/useWallet';
 import { supabase } from '@/lib/supabase';
+
+function renderArticleContent(content: string) {
+  // Split content by paragraphs but also handle markdown images
+  const paragraphs = content.split('\n\n');
+  
+  return paragraphs.map((paragraph: string, index: number) => {
+    // Check if paragraph is a markdown image: ![alt](url)
+    const imgMatch = paragraph.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (index
+    if (imgMatch) {
+      const [, alt, src] = imgMatch;
+      return (
+        <div key={`img-${index}`} className="my-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={src} 
+            alt={alt || 'Article image'} 
+            className="w-full max-w-3xl mx-auto rounded-xl object-cover shadow-md"
+          />
+          {alt && <p className="text-center text-on-surface-variant text-sm mt-2 font-body-sm">{alt}</p>}
+        </div>
+      );
+    }
+    
+    // Check for HTML img tags
+    const htmlImgMatch = paragraph.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+    if (htmlImgMatch) {
+      const src = htmlImgMatch[1];
+      const altMatch = paragraph.match(/alt=["']([^"']+)["']/i);
+      const alt = altMatch ? altMatch[1] : 'Article image';
+      return (
+        <div key={`img-${index}`} className="my-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={src} 
+            alt={alt} 
+            className="w-full max-w-3xl mx-auto rounded-xl object-cover shadow-md"
+          />
+        </div>
+      );
+    }
+    
+    // Regular paragraph
+    return (
+      <p key={index} className="font-body-lg text-body-lg text-on-surface mb-6 leading-relaxed">
+        {paragraph}
+      </p>
+    );
+  });
+}
 
 export default function ArticleDetailClient({ slug }: { slug: string }) {
   const router = useRouter();
@@ -126,11 +176,7 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
         )}
 
         <div className="prose prose-lg max-w-none prose-headings:text-on-background prose-p:text-on-surface prose-a:text-secondary prose-strong:text-on-background">
-          {article.content.split('\n\n').map((paragraph: string, index: number) => (
-            <p key={index} className="font-body-lg text-body-lg text-on-surface mb-6 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
+          {renderArticleContent(article.content)}
         </div>
 
         {article.tags && article.tags.length > 0 && (

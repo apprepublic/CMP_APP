@@ -49,10 +49,10 @@ export default function ArticlesPage() {
         {/* Category Pills */}
         {categories.length > 0 && (
           <section>
-            <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-2 snap-x">
+            <div className="flex flex-wrap items-center gap-3 pb-2">
               <button 
                 onClick={() => setSelectedCategory(null)}
-                className={`snap-start whitespace-nowrap px-6 py-2.5 rounded-full font-label-caps text-label-caps border-2 border-transparent shadow-sm transition-colors ${
+                className={`whitespace-nowrap px-6 py-2.5 rounded-full font-label-caps text-label-caps border-2 border-transparent shadow-sm transition-colors ${
                   selectedCategory === null
                     ? 'bg-secondary-container text-on-secondary-container'
                     : 'bg-surface-alt text-on-surface-variant border-outline-variant/50 hover:bg-surface-container-high'
@@ -64,7 +64,7 @@ export default function ArticlesPage() {
                 <button 
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`snap-start whitespace-nowrap px-6 py-2.5 rounded-full font-label-caps text-label-caps transition-colors ${
+                  className={`whitespace-nowrap px-6 py-2.5 rounded-full font-label-caps text-label-caps transition-colors ${
                     selectedCategory === category
                       ? 'bg-secondary-container text-on-secondary-container'
                       : 'bg-surface-alt text-on-surface-variant border-outline-variant/50 hover:bg-surface-container-high'
