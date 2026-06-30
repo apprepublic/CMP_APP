@@ -464,13 +464,7 @@ export default function EarnMarketplacePage() {
             <span className="material-symbols-outlined">list_alt</span>
             My Tasks
           </Link>
-          <Link 
-            href="/tasks/streak"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary rounded-xl font-body-md text-body-md font-semibold transition-colors shadow-sm whitespace-nowrap"
-          >
-            <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-            Daily Streak & Rewards
-          </Link>
+
         </div>
       </div>
 

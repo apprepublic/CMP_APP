@@ -172,7 +172,7 @@ class ApiService {
 
   // Tasks - fetch from Supabase instead of dead API
   async getTasks(type?: string, category?: string) {
-    const [postedRes, systemRes] = await Promise.all([
+    const [postedRes, systemRes, articlesRes] = await Promise.all([
       supabase
         .from('user_posted_tasks')
         .select('*')
@@ -184,6 +184,11 @@ class ApiService {
         .select('*')
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
+      supabase
+        .from('articles')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false }),
     ]);
 
     const postedTasks = (postedRes.data || []).map((t: any) => ({
@@ -195,20 +200,51 @@ class ApiService {
 
     const systemTasks = systemRes.data || [];
 
-    return { tasks: [...systemTasks, ...postedTasks] };
+    const articleTasks = (articlesRes.data || []).map((a: any) => ({
+      id: `article-${a.id}`,
+      title: `Read: ${a.title}`,
+      description: a.excerpt || `Read "${a.title}" and earn coins`,
+      type: 'CONTENT',
+      category: 'Article',
+      coin_reward: a.coin_reward || 50,
+      coinReward: a.coin_reward || 50,
+      requiresAdGate: true,
+      linkedArticle: { slug: a.slug, title: a.title },
+      cover_image_url: a.cover_image_url,
+      read_time_minutes: a.read_time_minutes || 5,
+      dailyLimit: 1,
+      frequency: 'DAILY',
+      is_active: true,
+      isLocked: false,
+      completedToday: 0,
+      canComplete: true,
+      sort_order: 0,
+    }));
+
+    return { tasks: [...articleTasks, ...systemTasks, ...postedTasks] };
   }
 
   async getDailyTasks() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return { tasks: [] };
 
-    const { data: tasks, error: tasksError } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
+    const [tasksRes, articlesRes] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('articles')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false }),
+    ]);
 
-    if (tasksError || !tasks) return { tasks: [] };
+    const tasks = tasksRes.data || [];
+    const articles = articlesRes.data || [];
+
+    if (tasksRes.error && articlesRes.error) return { tasks: [] };
 
     const { data: completions } = await supabase
       .from('task_completions')
@@ -250,7 +286,26 @@ class ApiService {
       };
     });
 
-    return { tasks: tasksWithStatus };
+    const articleTasks = articles.map((a: any) => ({
+      id: `article-${a.id}`,
+      title: `Read: ${a.title}`,
+      description: a.excerpt || `Read "${a.title}" and earn coins`,
+      type: 'CONTENT',
+      category: 'Article',
+      coin_reward: a.coin_reward || 50,
+      coinReward: a.coin_reward || 50,
+      requiresAdGate: true,
+      linkedArticle: { slug: a.slug, title: a.title },
+      cover_image_url: a.cover_image_url,
+      read_time_minutes: a.read_time_minutes || 5,
+      dailyLimit: 1,
+      completedToday: 0,
+      isLocked: false,
+      canComplete: true,
+      frequency: 'DAILY',
+    }));
+
+    return { tasks: [...articleTasks, ...tasksWithStatus] };
   }
 
   async getStreak() {

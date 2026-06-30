@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useFeaturedSongs, useTasks, useStreak } from '@/lib/hooks';
+import { useFeaturedSongs, useTasks, useStreak, useBuyStreakFreeze } from '@/lib/hooks';
 import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
@@ -18,6 +18,30 @@ export default function DashboardPage() {
   const { data: streakResp, isLoading: streakLoading } = useStreak();
   const currentStreak = streakResp?.streak?.currentStreak ?? 0;
   const coinBalance = wallet?.balance ?? 0;
+
+  const buyFreeze = useBuyStreakFreeze();
+  const longestStreak = streakResp?.streak?.longestStreak ?? 0;
+  const freezesOwned = streakResp?.streak?.freezesOwned ?? 0;
+  const tasksCompletedToday = streakResp?.streak?.tasksCompletedToday ?? 0;
+
+  const weekDays = useMemo(() => {
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date();
+    const jsDay = today.getDay();
+    const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
+    const daysCompletedThisWeek = Math.min(currentStreak, mondayBasedToday);
+    return dayLabels.map((label, index) => ({
+      day: label,
+      completed: index < daysCompletedThisWeek,
+      current: index === mondayBasedToday && index >= daysCompletedThisWeek,
+      milestone: index === 6 && index >= daysCompletedThisWeek && index !== mondayBasedToday,
+    }));
+  }, [currentStreak]);
+
+  const daysCompletedThisWeek = weekDays.filter(d => d.completed).length;
+  const progressPercent = Math.round((daysCompletedThisWeek / 7) * 100);
+  const nextMilestone = currentStreak < 7 ? 7 : currentStreak < 30 ? 30 : currentStreak < 60 ? 60 : null;
+  const daysToMilestone = nextMilestone ? nextMilestone - currentStreak : 0;
 
   const [firstName, setFirstName] = useState(
     user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'User'
@@ -117,6 +141,89 @@ export default function DashboardPage() {
               Complete now <span className="material-symbols-outlined text-sm">arrow_forward</span>
             </Link>
           </div>
+        </section>
+
+        {/* Daily Streak & Rewards */}
+        <section className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+              <h3 className="font-h3 text-h3 text-on-background">Daily Streak & Rewards</h3>
+            </div>
+            <Link href="/tasks/streak" className="text-sm text-secondary hover:underline font-body-md">View Details</Link>
+          </div>
+
+          {streakLoading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-10 bg-surface-dim rounded-lg" />
+              <div className="h-6 bg-surface-dim rounded-lg w-1/3" />
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 px-4 py-2 bg-[#B8860B]/10 rounded-lg border border-[#B8860B]/20">
+                    <span className="material-symbols-outlined text-[#B8860B] text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                    <span>
+                      <span className="font-h2 text-h2 text-[#B8860B]">{currentStreak}</span>
+                      <span className="font-body-sm text-body-sm text-on-surface-variant ml-1">{currentStreak === 1 ? 'Day' : 'Days'}</span>
+                    </span>
+                  </div>
+                  <div className="text-sm text-on-surface-variant">
+                    <span className="font-body-sm">Best: {longestStreak} days</span>
+                    {freezesOwned > 0 && <span className="ml-3">❄️ {freezesOwned} freeze{freezesOwned > 1 ? 's' : ''}</span>}
+                  </div>
+                </div>
+                <span className="font-body-sm text-body-sm text-on-surface-variant">{tasksCompletedToday} today</span>
+              </div>
+
+              <div className="flex justify-between items-center relative mb-6">
+                <div className="absolute top-1/2 left-0 w-full h-1 bg-surface-container-high -z-10 -translate-y-1/2 rounded-full" />
+                <div className="absolute top-1/2 left-0 h-1 bg-[#B8860B] -z-10 -translate-y-1/2 rounded-full" style={{ width: `${progressPercent}%` }} />
+                {weekDays.map((day) => (
+                  <div key={day.day} className="flex flex-col items-center gap-2 z-10">
+                    {day.completed ? (
+                      <div className="w-10 h-10 rounded-full bg-[#B8860B] flex items-center justify-center border-2 border-surface-container-lowest shadow-sm">
+                        <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                      </div>
+                    ) : day.current ? (
+                      <div className="w-12 h-12 rounded-full bg-surface-container-lowest border-2 border-[#B8860B] flex items-center justify-center shadow-md relative">
+                        <span className="material-symbols-outlined text-[#B8860B] text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-error-alert rounded-full border border-surface-container-lowest" />
+                      </div>
+                    ) : day.milestone ? (
+                      <div className="w-10 h-10 rounded-full bg-surface-container-high border-2 border-surface-container-lowest flex items-center justify-center border-dashed border-[#B8860B]/50">
+                        <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain opacity-50" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border-2 border-surface-container-lowest">
+                        <span className="font-data-md text-data-md text-on-surface-variant text-xs">50</span>
+                      </div>
+                    )}
+                    <span className={`font-label-caps text-label-caps ${day.current ? 'text-on-surface font-bold' : day.completed ? 'text-on-surface-variant' : 'text-outline'}`}>{day.day}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-outline-variant/20">
+                <div className="text-sm text-on-surface-variant">
+                  {nextMilestone ? (
+                    <span><strong className="text-on-surface">{daysToMilestone} day{daysToMilestone > 1 ? 's' : ''}</strong> to {nextMilestone}-day milestone 🪙</span>
+                  ) : (
+                    <span className="text-success-verified">All milestones completed! 🎉</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => { try { buyFreeze.mutateAsync(); } catch {} }}
+                  disabled={buyFreeze.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm text-body-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-sm">ac_unit</span>
+                  Buy Freeze 🪙 500
+                </button>
+              </div>
+            </>
+          )}
         </section>
 
         {/* Main Layout Grid */}
