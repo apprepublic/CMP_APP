@@ -277,13 +277,20 @@ class ApiService {
       .gte('last_completed_at', today.toISOString())
       .lt('last_completed_at', tomorrow.toISOString());
 
+    const { count: postedCompletionsToday } = await supabase
+      .from('user_task_completions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gte('completed_at', today.toISOString())
+      .lt('completed_at', tomorrow.toISOString());
+
     return {
       streak: {
         currentStreak: streakData?.current_streak || 0,
         longestStreak: streakData?.longest_streak || 0,
         lastActiveDate: streakData?.last_activity_date || null,
         freezesOwned: streakData?.freezes_owned || 0,
-        tasksCompletedToday: completionsToday || 0,
+        tasksCompletedToday: (completionsToday || 0) + (postedCompletionsToday || 0),
       },
     };
   }
@@ -462,12 +469,13 @@ class ApiService {
       // Log transaction
       await supabase.from('coin_transactions').insert({
         id: crypto.randomUUID(),
+        wallet_id: wallet.id,
         user_id: session.user.id,
         type: 'earn',
         amount: task.coin_reward,
         balance_after: newBalance,
         description: `Completed task: ${task.title}`,
-        reference_id: taskId,
+        metadata: { task_id: taskId },
       });
 
       // Send Notification
@@ -546,12 +554,13 @@ class ApiService {
       .from('coin_transactions')
       .insert({
         id: txId,
+        wallet_id: wallet.id,
         user_id: session.user.id,
         type: 'earn',
         amount: article.coin_reward,
         balance_after: newBalance,
         description: `Read article: ${article.title}`,
-        reference_id: articleId,
+        metadata: { article_id: articleId },
       });
 
     // Send Notification

@@ -117,16 +117,6 @@ export interface AppNotification {
   created_at: string;
 }
 
-export interface Streak {
-  id: string;
-  user_id: string;
-  streak_type: string;
-  current_streak: number;
-  longest_streak: number;
-  last_activity_date: string;
-  next_reset_at: string;
-}
-
 export interface Referral {
   id: string;
   referrer_id: string;
@@ -207,14 +197,6 @@ export async function processWithdrawal(
   });
 
   return txn.id;
-}
-
-/* ----------------------------- STREAKS --------------------------- */
-
-export async function getStreak(userId: string): Promise<Streak | null> {
-  const res = await db.from('streaks').select('*').eq('user_id', userId).eq('streak_type', 'DAILY_LOGIN').single();
-  if (res.error) return null;
-  return res.data as Streak;
 }
 
 /* ---------------------------- REFERRALS -------------------------- */
