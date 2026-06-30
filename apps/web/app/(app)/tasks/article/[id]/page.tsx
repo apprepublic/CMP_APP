@@ -1,9 +1,12 @@
-export const dynamicParams = true;
-
+import { supabase } from '@/lib/supabase';
 import ArticleReaderClient from './ArticleReaderClient';
 
 export async function generateStaticParams() {
-  return [{ id: 'beginners-guide-earning-coins-online' }];
+  const { data: articles } = await (supabase as any)
+    .from('articles')
+    .select('slug')
+    .eq('is_published', true);
+  return (articles || []).map((a: { slug: string }) => ({ id: a.slug }));
 }
 
 export default async function ArticleReaderPage({ params }: { params: Promise<{ id: string }> }) {
