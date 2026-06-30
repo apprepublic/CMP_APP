@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useArticle, useClaimArticle } from '@/lib/hooks';
@@ -28,6 +28,9 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showAdGate, setShowAdGate] = useState(false);
+  const [adGateDone, setAdGateDone] = useState(false);
+  const [adTimer, setAdTimer] = useState(5);
   const unlocked = readingProgress >= 95;
 
   useEffect(() => {
@@ -40,6 +43,22 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Show ad-gate when article is fully read
+  useEffect(() => {
+    if (unlocked && !adGateDone && !claimed) {
+      setShowAdGate(true);
+    }
+  }, [unlocked, adGateDone, claimed]);
+
+  // Ad countdown timer
+  useEffect(() => {
+    if (!showAdGate || adGateDone) return;
+    if (adTimer > 0) {
+      const t = setTimeout(() => setAdTimer(p => p - 1), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [showAdGate, adGateDone, adTimer]);
 
   const handleClaim = useCallback(async () => {
     if (!article || claimed || claiming) return;
@@ -243,33 +262,35 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
                 </div>
               )}
 
-              <button
-                onClick={handleClaim}
-                disabled={!unlocked || claimed || claiming}
-                className={`group relative px-10 py-5 rounded-xl font-h3 text-h3 transition-all duration-300 active:scale-95 shadow-xl overflow-hidden ${
-                  claimed
-                    ? 'bg-[#2E7D32] text-white cursor-default'
-                    : unlocked && !claiming
-                      ? 'bg-secondary hover:bg-on-secondary-fixed-variant text-on-primary cursor-pointer'
-                      : 'bg-surface-container text-on-surface-variant cursor-not-allowed opacity-60'
-                }`}
-              >
-                <span className="relative z-10">
-                  {claimed
-                    ? `✓ Claimed ${coinReward} CMP Coins`
-                    : claiming
-                      ? 'Claiming...'
-                      : unlocked
-                        ? `Claim Your ${coinReward} CMP Coins`
-                        : `Read ${Math.round(100 - readingProgress)}% more to unlock`}
-                </span>
-                {unlocked && !claimed && !claiming && (
-                  <>
-                    <div className="absolute inset-0 bg-secondary-container scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-xl opacity-20" />
-                    <span className="absolute right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all material-symbols-outlined">celebration</span>
-                  </>
-                )}
-              </button>
+                <button
+                    onClick={handleClaim}
+                    disabled={!unlocked || !adGateDone || claimed || claiming}
+                    className={`group relative px-10 py-5 rounded-xl font-h3 text-h3 transition-all duration-300 active:scale-95 shadow-xl overflow-hidden ${
+                      claimed
+                        ? 'bg-[#2E7D32] text-white cursor-default'
+                        : unlocked && adGateDone && !claiming
+                          ? 'bg-secondary hover:bg-on-secondary-fixed-variant text-on-primary cursor-pointer'
+                          : 'bg-surface-container text-on-surface-variant cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    <span className="relative z-10">
+                      {claimed
+                        ? `✓ Claimed ${coinReward} CMP Coins`
+                        : claiming
+                          ? 'Claiming...'
+                          : unlocked && adGateDone
+                            ? `Claim Your ${coinReward} CMP Coins`
+                            : unlocked && !adGateDone
+                              ? 'Ad loading...'
+                              : `Read ${Math.round(100 - readingProgress)}% more to unlock`}
+                    </span>
+                    {unlocked && adGateDone && !claimed && !claiming && (
+                      <>
+                        <div className="absolute inset-0 bg-secondary-container scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-xl opacity-20" />
+                        <span className="absolute right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all material-symbols-outlined">celebration</span>
+                      </>
+                    )}
+                  </button>
             </div>
           </div>
         </article>
@@ -280,8 +301,8 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
         <div
           className="bg-primary-container text-on-primary p-4 rounded-xl shadow-xl flex items-center gap-4 cursor-pointer transition-all hover:scale-105"
           style={{ border: `1.5px solid rgba(123,88,0,${unlocked ? '1' : '0.3'})` }}
-          onClick={unlocked && !claimed ? handleClaim : undefined}
-          title={unlocked ? 'Click to claim your reward' : 'Keep reading to unlock'}
+          onClick={unlocked && adGateDone && !claimed ? handleClaim : undefined}
+          title={claimed ? 'Reward claimed' : unlocked && adGateDone ? 'Click to claim your reward' : unlocked ? 'Ad loading...' : 'Keep reading to unlock'}
         >
           <div className="relative w-12 h-12 flex items-center justify-center">
             <svg className="absolute inset-0 w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
@@ -296,10 +317,10 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
               />
             </svg>
             <span
-              className={`material-symbols-outlined text-[18px] transition-colors ${unlocked ? 'text-[#2E7D32]' : 'text-[#ffdea6]'}`}
-              style={{ fontVariationSettings: unlocked ? "'FILL' 1" : "'FILL' 0" }}
+              className={`material-symbols-outlined text-[18px] transition-colors ${unlocked && adGateDone ? 'text-[#2E7D32]' : 'text-[#ffdea6]'}`}
+              style={{ fontVariationSettings: unlocked && adGateDone ? "'FILL' 1" : "'FILL' 0" }}
             >
-              {unlocked ? 'lock_open' : 'lock'}
+              {claimed ? 'check_circle' : unlocked && adGateDone ? 'lock_open' : unlocked && !adGateDone ? 'hourglass_top' : 'lock'}
             </span>
           </div>
           <div>
@@ -313,35 +334,106 @@ export default function ArticleReaderClient({ slug }: { slug: string }) {
         </div>
       </div>
 
+      {/* ── AD-GATE OVERLAY ─────────────────────────────── */}
+      {showAdGate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          <div className="absolute inset-0" style={{ background: 'rgba(13,27,53,0.85)', backdropFilter: 'blur(20px)' }} />
+          <div className="relative bg-[#0D1B35] border border-[#fdc34d]/20 rounded-3xl p-10 max-w-md w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="material-symbols-outlined text-[#fdc34d] text-2xl">ads_click</span>
+              <span className="text-[#fdc34d] font-bold uppercase text-sm tracking-widest">Ad Supported Content</span>
+            </div>
+
+            {adGateDone ? (
+              <>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#2E7D32]/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-5xl text-[#2E7D32]" style={{ fontVariationSettings: "'FILL' 1" }}>lock_open</span>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Content Unlocked!</h3>
+                <p className="text-white/60 text-sm mb-8">Your reward is ready. Click below to claim your coins.</p>
+                <button
+                  onClick={() => setShowAdGate(false)}
+                  className="w-full bg-[#fdc34d] text-[#0D1B35] py-4 rounded-xl font-bold text-lg hover:bg-[#e6b138] transition-colors active:scale-[0.98]"
+                >
+                  Continue to Claim
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#fdc34d]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-5xl text-[#fdc34d]" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+                </div>
+                <div className="relative w-24 h-24 mx-auto mb-6">
+                  <svg className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="48" cy="48" r="42" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+                    <circle
+                      cx="48" cy="48" r="42" fill="transparent"
+                      stroke="#fdc34d" strokeWidth="6" strokeLinecap="round"
+                      strokeDasharray="264"
+                      strokeDashoffset={264 - (264 * (5 - adTimer) / 5)}
+                      style={{ transition: 'stroke-dashoffset 1s linear' }}
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-[#fdc34d]">{adTimer}</span>
+                </div>
+                <p className="text-white/60 text-sm mb-6">Please wait while we prepare your reward...</p>
+                <div className="p-4 rounded-xl mb-6" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#fdc34d]/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[#fdc34d] text-lg">spa</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-white/80 text-sm font-semibold">Supported by CMP Community</p>
+                      <p className="text-white/40 text-xs">Empowering creative minds</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-[#fdc34d]">
+                  <span className="material-symbols-outlined text-base">lock</span>
+                  <span>Unlocking in {adTimer}s...</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── SUCCESS MODAL ───────────────────────────────── */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0"
-            style={{ background: 'rgba(13,27,53,0.85)', backdropFilter: 'blur(12px)' }}
-            onClick={() => setShowSuccessModal(false)}
-          />
+          <div className="absolute inset-0" style={{ background: 'rgba(13,27,53,0.85)', backdropFilter: 'blur(12px)' }} />
           <div className="relative bg-white rounded-3xl p-10 max-w-md w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: '#2E7D32' }}>
-              <span className="text-white material-symbols-outlined text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'linear-gradient(135deg, #B8860B, #FDC34D)' }}>
+              <span className="text-white material-symbols-outlined text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
             </div>
-            <h2 className="font-h1 text-h2 text-primary mb-4">Claimed!</h2>
-            <div className="inline-flex items-center gap-2 border-[1.5px] border-secondary px-6 py-3 rounded-full mb-8">
-              <span
-                className="material-symbols-outlined text-secondary text-3xl"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >monetization_on</span>
-              <span className="font-data-lg text-data-lg text-secondary">{coinReward}.00</span>
-            </div>
-            <p className="font-body-md text-on-surface-variant mb-8">
-              Your CMP Coins have been added to your creative wallet. Keep learning to earn more!
+            <h2 className="font-h1 text-h2 text-primary mb-2">{coinReward} CMP Coins Added!</h2>
+            <p className="font-body-md text-on-surface-variant mb-6">
+              Coins credited to your creative wallet. Keep learning to earn more!
             </p>
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-primary text-on-primary py-4 rounded-xl font-h3 text-h3 hover:opacity-90 transition-opacity"
-            >
-              Continue Reading
-            </button>
+            <div className="bg-secondary-container/20 rounded-xl p-5 mb-8 text-left">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Streak Progress</span>
+                <span className="font-data-md text-data-md text-secondary">Day 4/7</span>
+              </div>
+              <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'rgba(184,134,11,0.15)' }}>
+                <div className="h-full rounded-full" style={{ width: '57%', background: 'linear-gradient(90deg, #B8860B, #FDC34D)' }} />
+              </div>
+              <p className="font-body-sm text-body-sm text-on-surface-variant mt-3">Level up your creative journey</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => router.push('/tasks')}
+                className="w-full bg-primary text-on-primary py-4 rounded-xl font-h3 text-h3 hover:opacity-90 transition-opacity active:scale-[0.98]"
+              >
+                Next Task
+              </button>
+              <button
+                onClick={() => router.push('/tasks')}
+                className="w-full border-2 border-secondary text-secondary py-4 rounded-xl font-h3 text-h3 hover:bg-secondary/5 transition-colors active:scale-[0.98]"
+              >
+                Back to Earn Hub
+              </button>
+            </div>
           </div>
         </div>
       )}

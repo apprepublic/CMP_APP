@@ -571,6 +571,9 @@ class ApiService {
       message: `You earned ${article.coin_reward} coins for reading: ${article.title}`,
     });
 
+    // Update streak
+    await this.updateTaskCompletionStreak(session.user.id);
+
     return { coinsEarned: article.coin_reward, message: 'Coins claimed' };
   }
 
