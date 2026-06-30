@@ -51,7 +51,18 @@ export default function RegisterPage() {
       router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to register');
+      const msg = err?.message || '';
+      if (msg.includes('duplicate key') && msg.includes('users_email_key')) {
+        setError('An account with this email already exists. Please sign in instead.');
+      } else if (msg.includes('already registered') || msg.includes('already exists')) {
+        setError('An account with this email already exists. Please sign in instead.');
+      } else if (msg.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please try again.');
+      } else if (msg.includes('Email not confirmed')) {
+        setError('Please check your inbox and confirm your email address before signing in.');
+      } else {
+        setError(msg || 'Registration failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

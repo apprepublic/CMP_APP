@@ -58,7 +58,7 @@ export default function VerifyPage() {
         setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed. Please try entering the code manually.');
+      setError(parseError(err) || 'Verification failed. Please try entering the code manually.');
       setMode('code');
     } finally {
       setIsLoading(false);
@@ -98,7 +98,8 @@ export default function VerifyPage() {
         setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed');
+      const msg = err?.message || '';
+      setError(msg.includes('Invalid code') ? 'The verification code is invalid or has expired. Please try registering again.' : msg || 'Verification failed');
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +147,13 @@ export default function VerifyPage() {
       });
 
       if (funcError) throw new Error(funcError.message || 'Failed to create account');
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) {
+        const errMsg = data.error;
+        if (errMsg.includes('duplicate key') || errMsg.includes('already exists')) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        throw new Error(errMsg);
+      }
 
       if (data?.success) {
         setSuccess(true);
@@ -155,7 +162,12 @@ export default function VerifyPage() {
         throw new Error('Account creation failed. Please try again.');
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      const msg = err?.message || '';
+      setError(
+        msg.includes('duplicate key') || msg.includes('already exists')
+          ? 'An account with this email already exists. Please sign in instead.'
+          : msg || 'Failed to create account'
+      );
     } finally {
       setIsLoading(false);
     }
