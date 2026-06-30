@@ -9,12 +9,14 @@ function buildWeekDays(currentStreak: number) {
   const jsDay = today.getDay();
   const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
 
-  const daysCompletedThisWeek = Math.min(currentStreak, mondayBasedToday);
+  const totalDaysThisWeek = mondayBasedToday + 1;
+  const daysCompletedThisWeek = Math.min(currentStreak, totalDaysThisWeek);
+  const firstCompletedDay = totalDaysThisWeek - daysCompletedThisWeek;
 
   return dayLabels.map((label, index) => {
     const isMilestoneDay = index === 6;
     const isToday = index === mondayBasedToday;
-    const isCompleted = index < daysCompletedThisWeek;
+    const isCompleted = index >= firstCompletedDay && index < mondayBasedToday;
 
     return {
       day: label,
@@ -64,6 +66,7 @@ export default function StreakPage() {
   }
 
   const dailyTasksForDisplay = dailyTasks.slice(0, 3);
+  const completedCount = dailyTasksForDisplay.filter((t: any) => t.completedToday > 0).length;
 
   const handleBuyFreeze = async () => {
     try {
@@ -181,7 +184,7 @@ export default function StreakPage() {
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-h3 text-h3 text-on-surface">Today's Tasks</h3>
               <span className="bg-[#B8860B] text-primary font-label-caps text-label-caps px-2 py-1 rounded">
-                {tasksCompletedToday}/{dailyTasksForDisplay.length} Completed
+                {completedCount}/{dailyTasksForDisplay.length} Completed
               </span>
             </div>
             <div className="space-y-3">
@@ -192,19 +195,28 @@ export default function StreakPage() {
               ) : dailyTasksForDisplay.length === 0 ? (
                 <div className="py-8 text-center text-on-surface-variant">No tasks available today.</div>
               ) : (
-                dailyTasksForDisplay.map((task: any) => (
-                  <div key={task.id} className="flex items-center p-4 bg-surface rounded-lg border-l-4 border-outline/20">
-                    <div className="mr-4">
-                      <span className="material-symbols-outlined text-outline">
-                        {task.isLocked ? 'check_circle' : 'radio_button_unchecked'}
-                      </span>
+                dailyTasksForDisplay.map((task: any) => {
+                  const isArticle = task.linkedArticle?.slug;
+                  const content = (
+                    <div className={`flex items-center p-4 bg-surface rounded-lg border-l-4 ${task.completedToday > 0 ? 'border-secondary' : 'border-outline/20'}`}>
+                      <div className="mr-4">
+                        <span className={`material-symbols-outlined ${task.completedToday > 0 ? 'text-secondary' : 'text-outline'}`}
+                          style={task.completedToday > 0 ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+                          {task.completedToday > 0 ? 'check_circle' : 'radio_button_unchecked'}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-body-md text-body-md font-semibold text-on-surface">{task.title}</p>
+                      </div>
+                      <span className="font-data-md text-data-md text-[#B8860B]">🪙 {task.coinReward}</span>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-body-md text-body-md font-semibold text-on-surface">{task.title}</p>
-                    </div>
-                    <span className="font-data-md text-data-md text-[#B8860B]">🪙 {task.coinReward}</span>
-                  </div>
-                ))
+                  );
+                  return isArticle ? (
+                    <Link key={task.id} href={`/articles/${isArticle}`}>{content}</Link>
+                  ) : (
+                    <div key={task.id}>{content}</div>
+                  );
+                })
               )}
             </div>
           </div>

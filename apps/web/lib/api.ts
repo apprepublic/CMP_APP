@@ -248,7 +248,7 @@ class ApiService {
 
     const { data: completions } = await supabase
       .from('task_completions')
-      .select('task_id, status, completion_count, last_completed_at')
+      .select('task_id, status, completion_count, last_completed_at, proof_data')
       .eq('user_id', session.user.id);
 
     const completionMap = new Map(
@@ -286,24 +286,37 @@ class ApiService {
       };
     });
 
-    const articleTasks = articles.map((a: any) => ({
-      id: `article-${a.id}`,
-      title: `Read: ${a.title}`,
-      description: a.excerpt || `Read "${a.title}" and earn coins`,
-      type: 'CONTENT',
-      category: 'Article',
-      coin_reward: a.coin_reward || 50,
-      coinReward: a.coin_reward || 50,
-      requiresAdGate: true,
-      linkedArticle: { slug: a.slug, title: a.title },
-      cover_image_url: a.cover_image_url,
-      read_time_minutes: a.read_time_minutes || 5,
-      dailyLimit: 1,
-      completedToday: 0,
-      isLocked: false,
-      canComplete: true,
-      frequency: 'DAILY',
-    }));
+    const articleCompletionsMap = new Map(
+      (completions || [])
+        .filter((c: any) => !c.task_id && c.proof_data?.articleId)
+        .map((c: any) => {
+          const lastCompleted = c.last_completed_at ? new Date(c.last_completed_at) : null;
+          const completedToday = lastCompleted && lastCompleted >= today ? (c.completion_count || 1) : 0;
+          return [c.proof_data.articleId, completedToday];
+        })
+    );
+
+    const articleTasks = articles.map((a: any) => {
+      const completedToday = articleCompletionsMap.get(a.id) || 0;
+      return {
+        id: `article-${a.id}`,
+        title: `Read: ${a.title}`,
+        description: a.excerpt || `Read "${a.title}" and earn coins`,
+        type: 'CONTENT',
+        category: 'Article',
+        coin_reward: a.coin_reward || 50,
+        coinReward: a.coin_reward || 50,
+        requiresAdGate: true,
+        linkedArticle: { slug: a.slug, title: a.title },
+        cover_image_url: a.cover_image_url,
+        read_time_minutes: a.read_time_minutes || 5,
+        dailyLimit: 1,
+        completedToday,
+        isLocked: completedToday >= 1,
+        canComplete: completedToday < 1,
+        frequency: 'DAILY',
+      };
+    });
 
     return { tasks: [...articleTasks, ...tasksWithStatus] };
   }
