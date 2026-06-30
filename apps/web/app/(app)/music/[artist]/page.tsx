@@ -1,14 +1,17 @@
+import { supabase } from '@/lib/supabase';
 import ArtistProfileClient from './ArtistProfileClient';
 
 export async function generateStaticParams() {
-  // With output: 'export', dynamicParams is ignored.
-  // All artist pages must be pre-built at export time.
-  // Return an empty array - artist pages are expected to be built
-  // via their static paths when known.
-  return [];
+  const { data: tasks } = await (supabase as any)
+    .from('user_posted_tasks')
+    .select('creator_id')
+    .eq('type', 'STREAM_MUSIC')
+    .eq('is_active', true);
+  const ids = [...new Set((tasks || []).map((t: any) => t.creator_id))];
+  return ids.map((id: string) => ({ artist: `user-${id}` }));
 }
 
-export default async function ArtistPage({ params }: { params: Promise<{ artist: string }> }) {
-  const { artist } = await params;
+export default function ArtistPage({ params }: { params: { artist: string } }) {
+  const { artist } = params;
   return <ArtistProfileClient slug={artist} />;
 }
