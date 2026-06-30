@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useArticle, useClaimArticle } from '@/lib/hooks';
+import { useArticle, useClaimArticle, useArticles, useStreak } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 
 function createConfetti() {
@@ -114,6 +114,17 @@ export default function ArticleReader({ slug }: { slug: string }) {
   const coinReward: number = (article as any)?.coin_reward ?? 50;
   const circumference = 126;
   const strokeOffset = circumference - (readingProgress / 100) * circumference;
+  const { data: allArticles } = useArticles({ limit: 50 });
+  const nextArticleSlug = useMemo(() => {
+    if (!allArticles || !slug) return null;
+    const idx = allArticles.findIndex((a: any) => a.slug === slug);
+    if (idx < 0 || idx >= allArticles.length - 1) return null;
+    return allArticles[idx + 1].slug;
+  }, [allArticles, slug]);
+  const { data: streakData } = useStreak();
+  const streak = streakData?.streak;
+  const currentDay = Math.min(streak?.currentStreak ?? 0, 7);
+  const streakPct = Math.min((currentDay / 7) * 100, 100);
 
   if (isLoading) {
     return (
@@ -446,19 +457,19 @@ export default function ArticleReader({ slug }: { slug: string }) {
             <div className="bg-secondary-container/20 rounded-xl p-5 mb-8 text-left">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Streak Progress</span>
-                <span className="font-data-md text-data-md text-secondary">Day 4/7</span>
+                <span className="font-data-md text-data-md text-secondary">Day {currentDay}/7</span>
               </div>
               <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'rgba(184,134,11,0.15)' }}>
-                <div className="h-full rounded-full" style={{ width: '57%', background: 'linear-gradient(90deg, #B8860B, #FDC34D)' }} />
+                <div className="h-full rounded-full" style={{ width: `${streakPct}%`, background: 'linear-gradient(90deg, #B8860B, #FDC34D)' }} />
               </div>
               <p className="font-body-sm text-body-sm text-on-surface-variant mt-3">Level up your creative journey</p>
             </div>
             <div className="flex flex-col gap-3">
               <button
-                onClick={() => router.push('/tasks')}
+                onClick={() => router.push(nextArticleSlug ? `/articles/${nextArticleSlug}` : '/articles')}
                 className="w-full bg-primary text-on-primary py-4 rounded-xl font-h3 text-h3 hover:opacity-90 transition-opacity active:scale-[0.98]"
               >
-                Next Task
+                Next Article
               </button>
               <button
                 onClick={() => router.push('/tasks')}
