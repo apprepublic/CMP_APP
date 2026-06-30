@@ -3,172 +3,188 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { useWithdrawStore } from '@/stores/withdrawStore';
 import { useWallet } from '@/lib/useWallet';
-import { processWithdrawal } from '@/lib/queries';
+import { useCurrency } from '@/lib/useCurrency';
 
 export default function WithdrawConfirmPage() {
   const router = useRouter();
-  const { amountCoins, selectedBank, setTransactionId } = useWithdrawStore();
+  const { amountCoins, selectedAccount, setTransactionId, reset } = useWithdrawStore();
   const { wallet } = useWallet();
-  
-  const [pin, setPin] = useState<string>('');
+  const { activeRate, formatFiat, loadingLocation } = useCurrency();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  
-  const maxPinLength = 4;
 
   useEffect(() => {
-    if (amountCoins <= 0 || !selectedBank) {
+    if (amountCoins <= 0 || !selectedAccount) {
       router.replace('/wallet/withdraw');
     }
-  }, [amountCoins, selectedBank, router]);
+  }, [amountCoins, selectedAccount, router]);
 
-  const convertedAmount = amountCoins * 10.50;
-  const processingFee = convertedAmount * 0.015; // 1.5% fee
-  const finalAmount = convertedAmount - processingFee;
+  const fiatAmount = amountCoins * 10.50;
+  const processingFee = fiatAmount * 0.015;
+  const finalAmount = fiatAmount - processingFee;
 
-  const handleNumClick = (num: string) => {
-    if (pin.length < maxPinLength && !isLoading && !isSuccess) {
-      setPin(prev => prev + num);
-      setErrorMsg(null);
-    }
-  };
+  const handleConfirm = async () => {
+    if (!wallet || !selectedAccount) return;
+    setIsLoading(true);
+    setErrorMsg(null);
 
-  const handleDelClick = () => {
-    if (pin.length > 0 && !isLoading && !isSuccess) {
-      setPin(prev => prev.slice(0, -1));
-      setErrorMsg(null);
-    }
-  };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-  const handleSubmit = async () => {
-    if (pin.length === maxPinLength && wallet) {
-      setIsLoading(true);
-      setErrorMsg(null);
-      
-      try {
-        const bankName = selectedBank === 'gtbank' ? 'GTBank' : 'Access Bank';
-        
-        // Wait, for prototype we don't verify PIN against auth yet.
-        // But we do the transaction.
-        const txId = await processWithdrawal(wallet.id, amountCoins, {
-          name: bankName,
-          selected_bank_id: selectedBank,
-          final_naira: finalAmount,
-          fee_naira: processingFee
-        });
-        
-        setIsSuccess(true);
-        setTransactionId(txId);
-        
-        setTimeout(() => {
-          router.push('/wallet/receipt');
-        }, 1500);
-        
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Withdrawal failed. Please try again.');
-        setPin(''); // Reset PIN on error
-      } finally {
-        setIsLoading(false);
-      }
+      const accountDetails = {
+        account_id: selectedAccount.id,
+        type: selectedAccount.type,
+        account_name: selectedAccount.account_name,
+        account_number: selectedAccount.account_number,
+        bank_name: selectedAccount.bank_name,
+        network: selectedAccount.network,
+      };
+
+      const { data: requestId, error } = await supabase.rpc('request_withdrawal', {
+        p_user_id: user.id,
+        p_wallet_id: wallet.id,
+        p_coin_amount: amountCoins,
+        p_fiat_amount: finalAmount.toFixed(2),
+        p_account_details: accountDetails,
+      });
+
+      if (error) throw new Error(error.message);
+
+      setTransactionId(requestId as string);
+      setIsSuccess(true);
+
+      setTimeout(() => {
+        reset();
+        router.push('/wallet/receipt');
+      }, 1500);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Withdrawal failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop flex justify-center items-center pb-24 md:pb-margin-desktop min-h-[calc(100vh-80px)]">
-      {/* Withdrawal Card */}
-      <div className="bg-surface-alt rounded-xl p-6 md:p-8 w-full max-w-md shadow-sm border border-outline-variant/30 flex flex-col items-center text-center mt-4">
-        
-        {/* Header / Progress */}
+    <main className="flex-1 lg:ml-64 flex items-center justify-center pb-24 md:pb-12 px-margin-mobile min-h-[calc(100vh-80px)]">
+      <div className="bg-surface-container-lowest rounded-xl p-6 md:p-8 w-full max-w-lg shadow-sm border border-outline-variant/30 mt-4">
         <div className="w-full flex justify-between items-center mb-8 text-on-surface-variant">
-          <Link href="/wallet/withdraw/bank" className="material-symbols-outlined hover:text-primary-container transition-colors">
-            arrow_back
-          </Link>
+          <Link href="/wallet/withdraw/bank" className="material-symbols-outlined hover:text-primary-container transition-colors">arrow_back</Link>
           <div className="font-label-caps text-label-caps text-on-primary-container tracking-wider">STEP 3 OF 3</div>
-          <div className="w-6"></div> {/* Spacer for centering */}
+          <div className="w-6"></div>
         </div>
 
-        <div className="bg-primary-container text-secondary-fixed rounded-full p-4 mb-6 shadow-inner flex items-center justify-center">
-          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+        <div className="w-full flex items-center justify-between mb-8 px-2 relative">
+          <div className="absolute left-[15%] right-[15%] top-1/2 h-[2px] bg-surface-variant -z-10 -translate-y-1/2"></div>
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-success-verified text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm">
+              <span className="material-symbols-outlined text-sm">check</span>
+            </div>
+            <span className="font-label-caps text-label-caps text-success-verified">Amount</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-success-verified text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm">
+              <span className="material-symbols-outlined text-sm">check</span>
+            </div>
+            <span className="font-label-caps text-label-caps text-success-verified">Account</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm border-[1.5px] border-[#B8860B]">3</div>
+            <span className="font-label-caps text-label-caps text-on-surface">Confirm</span>
+          </div>
         </div>
-        
-        <h1 className="font-h3 text-h3 text-on-surface mb-2">Enter Security PIN</h1>
-        <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 px-4">
-          Please enter your 4-digit security PIN to authorize this withdrawal of <strong className="text-on-surface">₦{finalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</strong> to {selectedBank === 'gtbank' ? 'GTBank' : 'Access Bank'}.
+
+        <div className="bg-primary-container/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+          <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
+        </div>
+
+        <h1 className="font-h3 text-h3 text-on-surface text-center mb-2">Confirm Withdrawal</h1>
+        <p className="font-body-sm text-body-sm text-on-surface-variant text-center mb-8">
+          Review the details before submitting your request.
         </p>
 
         {errorMsg && (
-          <p className="font-body-sm text-error-alert mb-4">{errorMsg}</p>
+          <p className="font-body-sm text-error-alert text-center mb-4 bg-error/10 py-2 px-4 rounded-lg">{errorMsg}</p>
         )}
 
-        {/* PIN Dots */}
-        <div className="flex gap-4 mb-10">
-          {[0, 1, 2, 3].map((index) => (
-            <div 
-              key={index} 
-              className={`w-4 h-4 rounded-full border-2 transition-colors ${
-                index < pin.length 
-                  ? 'bg-on-primary-fixed border-on-primary-fixed' 
-                  : 'bg-surface-container-lowest border-primary-container'
-              }`}
-            ></div>
-          ))}
+        <div className="space-y-4 mb-8">
+          <div className="bg-surface-alt rounded-lg p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="font-body-sm text-body-sm text-on-surface-variant">Amount</span>
+              <div className="flex items-center gap-2">
+                <img src="/coin.png" alt="" className="w-4 h-4 object-contain" />
+                <span className="font-data-md text-data-md text-on-surface font-semibold">{amountCoins.toLocaleString()} CMP</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-body-sm text-body-sm text-on-surface-variant">Exchange Rate</span>
+              <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-body-sm text-body-sm text-on-surface-variant">Fee (1.5%)</span>
+              <span className="font-data-md text-data-md text-error-alert">- ₦{processingFee.toFixed(2)}</span>
+            </div>
+            <div className="border-t border-dashed border-outline-variant/50 pt-3 mt-3">
+              <div className="flex justify-between items-center">
+                <span className="font-body-md text-body-md font-semibold text-on-surface">You will receive</span>
+                <span className="font-data-lg text-data-lg text-success-verified font-bold">₦{finalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface-alt rounded-lg p-4">
+            <div className="font-body-sm text-body-sm text-on-surface-variant mb-2">Destination Account</div>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${selectedAccount?.type === 'NGN_BANK' ? 'bg-[#E5F3FF] text-primary' : 'bg-[#FFF3E0] text-secondary'}`}>
+                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  {selectedAccount?.type === 'NGN_BANK' ? 'account_balance' : 'currency_bitcoin'}
+                </span>
+              </div>
+              <div>
+                <div className="font-body-md text-body-md font-semibold text-on-surface">{selectedAccount?.account_name}</div>
+                <div className="font-data-md text-data-md text-on-surface-variant">
+                  {selectedAccount?.type === 'NGN_BANK'
+                    ? `${selectedAccount.bank_name} • ${selectedAccount.account_number}`
+                    : `${selectedAccount?.network} • ${selectedAccount?.account_number?.slice(0, 8)}...`}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Number Pad */}
-        <div className="grid grid-cols-3 gap-4 w-full max-w-[280px] mb-8">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <button 
-              key={num}
-              onClick={() => handleNumClick(num.toString())}
-              className="h-14 rounded-lg bg-surface-container-lowest border border-outline-variant/50 font-data-lg text-data-lg text-on-surface hover:bg-surface-variant active:bg-surface-dim transition-colors flex items-center justify-center"
-            >
-              {num}
-            </button>
-          ))}
-          <div className="h-14"></div> {/* Empty cell */}
-          <button 
-            onClick={() => handleNumClick('0')}
-            className="h-14 rounded-lg bg-surface-container-lowest border border-outline-variant/50 font-data-lg text-data-lg text-on-surface hover:bg-surface-variant active:bg-surface-dim transition-colors flex items-center justify-center"
-          >
-            0
-          </button>
-          <button 
-            onClick={handleDelClick}
-            className="h-14 rounded-lg bg-transparent text-on-surface-variant hover:text-error-alert transition-colors flex items-center justify-center"
-          >
-            <span className="material-symbols-outlined">backspace</span>
-          </button>
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 mb-8 flex items-start gap-3">
+          <span className="material-symbols-outlined text-warning text-lg">info</span>
+          <p className="font-body-sm text-body-sm text-on-surface-variant">
+            {amountCoins.toLocaleString()} CMP will be withheld from your wallet immediately. If rejected, the full amount will be returned.
+          </p>
         </div>
 
-        {/* Action Button */}
-        <button 
-          onClick={handleSubmit}
-          disabled={pin.length !== maxPinLength || isLoading || isSuccess}
+        <button
+          onClick={handleConfirm}
+          disabled={isLoading || isSuccess}
           className={`w-full font-body-md text-body-md font-bold py-4 rounded-lg transition-colors flex justify-center items-center gap-2 ${
-            isSuccess 
-              ? 'bg-success-verified text-on-primary' 
-              : pin.length === maxPinLength 
-                ? 'bg-primary-container text-on-primary hover:bg-on-primary-fixed-variant' 
-                : 'bg-primary-container text-on-primary opacity-50 cursor-not-allowed'
-          } ${isLoading ? 'opacity-80' : ''}`}
+            isSuccess
+              ? 'bg-success-verified text-white'
+              : 'bg-primary text-on-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed'
+          }`}
         >
           {isSuccess ? (
-            <>Success <span className="material-symbols-outlined">check_circle</span></>
+            <>Request Submitted <span className="material-symbols-outlined">check_circle</span></>
+          ) : isLoading ? (
+            <><span className="material-symbols-outlined animate-spin">progress_activity</span> Processing...</>
           ) : (
-            <>
-              Submit Request
-              {isLoading && <span className="material-symbols-outlined animate-spin">sync</span>}
-            </>
+            <>Submit Withdrawal Request</>
           )}
         </button>
-        
+
         {!isSuccess && (
-          <button className="mt-4 font-body-sm text-body-sm text-primary-container hover:underline decoration-secondary-fixed underline-offset-4">
-            Forgot PIN?
-          </button>
+          <Link href="/wallet/withdraw/bank" className="block text-center mt-4 font-body-sm text-body-sm text-primary hover:underline underline-offset-4">
+            Change account
+          </Link>
         )}
       </div>
     </main>

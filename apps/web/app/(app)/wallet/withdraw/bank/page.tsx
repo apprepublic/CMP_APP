@@ -2,183 +2,305 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useWithdrawStore } from '@/stores/withdrawStore';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useWithdrawStore, SettlementAccount } from '@/stores/withdrawStore';
+import { useUserStore } from '@/stores/userStore';
 
 export default function WithdrawBankPage() {
   const router = useRouter();
-  const { amountCoins, selectedBank, setSelectedBank } = useWithdrawStore();
-  
-  // Set default if null
-  const [localBank, setLocalBank] = useState<string>(selectedBank || 'gtbank');
+  const searchParams = useSearchParams();
+  const { amountCoins, selectedAccount, setSelectedAccount } = useWithdrawStore();
+  const { user } = useUserStore();
+  const [accounts, setAccounts] = useState<SettlementAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(searchParams?.get('add') === 'true');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [type, setType] = useState<'NGN_BANK' | 'CRYPTO'>('NGN_BANK');
+  const [accountName, setAccountName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [network, setNetwork] = useState('');
 
   useEffect(() => {
-    if (amountCoins <= 0) {
+    if (amountCoins <= 0 && !showForm) {
       router.replace('/wallet/withdraw');
     }
+    loadAccounts();
   }, [amountCoins, router]);
 
-  const convertedAmount = amountCoins * 10.50;
-  const processingFee = convertedAmount * 0.015; // 1.5% fee
-  const finalAmount = convertedAmount - processingFee;
-
-  const handleContinue = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setSelectedBank(localBank);
-    router.push('/wallet/withdraw/confirm');
+  const loadAccounts = async () => {
+    const { data } = await supabase
+      .from('settlement_accounts')
+      .select('*')
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+    setAccounts((data as SettlementAccount[]) || []);
+    setLoading(false);
   };
 
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setType('NGN_BANK');
+    setAccountName('');
+    setAccountNumber('');
+    setBankName('');
+    setNetwork('');
+  };
+
+  const handleEdit = (acc: SettlementAccount) => {
+    setEditingId(acc.id);
+    setShowForm(true);
+    setType(acc.type as 'NGN_BANK' | 'CRYPTO');
+    setAccountName(acc.account_name);
+    setAccountNumber(acc.account_number);
+    setBankName(acc.bank_name || '');
+    setNetwork(acc.network || '');
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accountName.trim() || !accountNumber.trim()) return;
+    if (!user) return;
+
+    const payload = {
+      user_id: user.id,
+      type,
+      account_name: accountName.trim(),
+      account_number: accountNumber.trim(),
+      bank_name: type === 'NGN_BANK' ? bankName.trim() || null : null,
+      network: type === 'CRYPTO' ? network.trim() || null : null,
+    };
+
+    if (editingId) {
+      await supabase.from('settlement_accounts').update(payload).eq('id', editingId);
+    } else {
+      await supabase.from('settlement_accounts').insert(payload);
+    }
+
+    resetForm();
+    loadAccounts();
+  };
+
+  const handleDelete = async (id: string) => {
+    const acc = accounts.find(a => a.id === id);
+    if (selectedAccount?.id === id) setSelectedAccount(null);
+    await supabase.from('settlement_accounts').delete().eq('id', id);
+    loadAccounts();
+  };
+
+  const handleSetDefault = async (id: string) => {
+    await supabase.from('settlement_accounts').update({ is_default: true }).eq('id', id);
+    await supabase.from('settlement_accounts').update({ is_default: false }).neq('id', id).eq('user_id', user?.id);
+    loadAccounts();
+  };
+
+  const handleContinue = () => {
+    if (selectedAccount) {
+      router.push('/wallet/withdraw/confirm');
+    }
+  };
+
+  const fiatAmount = amountCoins * 10.50;
+  const processingFee = fiatAmount * 0.015;
+  const finalAmount = fiatAmount - processingFee;
+
   return (
-    <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop flex justify-center items-center pb-24 md:pb-margin-desktop min-h-[calc(100vh-80px)]">
-      {/* Withdrawal Card */}
-      <div className="bg-surface-alt rounded-xl p-6 md:p-8 w-full max-w-md shadow-sm border border-outline-variant/30 flex flex-col items-center text-center mt-4">
-        
-        {/* Header / Progress */}
+    <main className="flex-1 lg:ml-64 flex items-center justify-center pb-24 md:pb-12 px-margin-mobile min-h-[calc(100vh-80px)]">
+      <div className="bg-surface-container-lowest rounded-xl p-6 md:p-8 w-full max-w-lg shadow-sm border border-outline-variant/30 mt-4">
         <div className="w-full flex justify-between items-center mb-8 text-on-surface-variant">
-          <Link href="/wallet/withdraw" className="material-symbols-outlined hover:text-primary-container transition-colors">
-            arrow_back
-          </Link>
-          <div className="font-label-caps text-label-caps text-on-primary-container tracking-wider">STEP 2 OF 3</div>
-          <div className="w-6"></div> {/* Spacer for centering */}
+          <Link href="/wallet/withdraw" className="material-symbols-outlined hover:text-primary-container transition-colors">arrow_back</Link>
+          <div className="font-label-caps text-label-caps text-on-primary-container tracking-wider">
+            {showForm ? (editingId ? 'EDIT ACCOUNT' : 'ADD ACCOUNT') : 'STEP 2 OF 3'}
+          </div>
+          <button onClick={resetForm} className="material-symbols-outlined hover:text-primary transition-colors text-transparent pointer-events-none">close</button>
         </div>
 
-        {/* Stepper */}
         <div className="w-full flex items-center justify-between mb-8 px-2 relative">
           <div className="absolute left-[15%] right-[15%] top-1/2 h-[2px] bg-surface-variant -z-10 -translate-y-1/2"></div>
-          
-          <div className="flex flex-col items-center gap-2 bg-surface-alt px-2">
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
             <div className="w-8 h-8 rounded-full bg-success-verified text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm">
               <span className="material-symbols-outlined text-sm">check</span>
             </div>
             <span className="font-label-caps text-label-caps text-success-verified">Amount</span>
           </div>
-          
-          <div className="flex flex-col items-center gap-2 bg-surface-alt px-2">
-            <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm border-[1.5px] border-[#B8860B]">
-              2
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-data-md text-data-md shadow-sm ${showForm ? 'bg-surface-variant text-outline' : 'bg-primary text-on-primary border-[1.5px] border-[#B8860B]'}`}>
+              {showForm ? <span className="material-symbols-outlined text-sm">add</span> : '2'}
             </div>
-            <span className="font-label-caps text-label-caps text-on-surface">Bank</span>
+            <span className="font-label-caps text-label-caps text-on-surface">Account</span>
           </div>
-          
-          <div className="flex flex-col items-center gap-2 bg-surface-alt px-2">
-            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">
-              3
-            </div>
+          <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
+            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">3</div>
             <span className="font-label-caps text-label-caps text-outline">Confirm</span>
           </div>
         </div>
 
-        <h2 className="font-h3 text-h3 text-on-surface mb-6 w-full text-left">Select Bank Account</h2>
-
-        {/* Bank Selection */}
-        <div className="space-y-4 mb-8 w-full">
-          {/* Saved Bank Option 1 */}
-          <label className="block cursor-pointer">
-            <input 
-              checked={localBank === 'gtbank'} 
-              onChange={() => setLocalBank('gtbank')}
-              className="peer sr-only" 
-              name="bank" 
-              type="radio"
-            />
-            <div className={`flex items-center p-4 bg-surface-container-lowest rounded-lg transition-all ${localBank === 'gtbank' ? 'border-[2px] border-[#B8860B]' : 'border border-outline-variant/50 hover:border-outline'}`}>
-              <div className="w-10 h-10 rounded-full bg-[#E5F3FF] flex items-center justify-center text-primary-container mr-4 flex-shrink-0">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance</span>
-              </div>
-              <div className="flex-1 text-left">
-                <div className="font-body-md text-body-md font-semibold text-on-surface">GTBank</div>
-                <div className="font-data-md text-data-md text-on-surface-variant mt-0.5">0123456789 • Alex O.</div>
-              </div>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ml-4 flex-shrink-0 ${localBank === 'gtbank' ? 'border-2 border-[#B8860B]' : 'border border-outline-variant'}`}>
-                <div className={`w-3 h-3 rounded-full ${localBank === 'gtbank' ? 'bg-[#B8860B]' : 'bg-transparent'}`}></div>
+        {showForm ? (
+          <form onSubmit={handleSave} className="space-y-5">
+            <div>
+              <label className="block font-label-caps text-label-caps text-on-surface mb-2">Account Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setType('NGN_BANK')}
+                  className={`py-3 rounded-lg border-2 text-center transition-all ${type === 'NGN_BANK' ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-outline-variant text-on-surface-variant'}`}
+                >
+                  <span className="material-symbols-outlined text-lg block mx-auto">account_balance</span>
+                  NGN Bank
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('CRYPTO')}
+                  className={`py-3 rounded-lg border-2 text-center transition-all ${type === 'CRYPTO' ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-outline-variant text-on-surface-variant'}`}
+                >
+                  <span className="material-symbols-outlined text-lg block mx-auto">currency_bitcoin</span>
+                  Crypto Wallet
+                </button>
               </div>
             </div>
-          </label>
 
-          {/* Saved Bank Option 2 */}
-          <label className="block cursor-pointer">
-            <input 
-              checked={localBank === 'access'} 
-              onChange={() => setLocalBank('access')}
-              className="peer sr-only" 
-              name="bank" 
-              type="radio"
-            />
-            <div className={`flex items-center p-4 bg-surface-container-lowest rounded-lg transition-all ${localBank === 'access' ? 'border-[2px] border-[#B8860B]' : 'border border-outline-variant/50 hover:border-outline'}`}>
-              <div className="w-10 h-10 rounded-full bg-[#F3E5FF] flex items-center justify-center text-[#4A148C] mr-4 flex-shrink-0">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance</span>
+            <div>
+              <label className="block font-label-caps text-label-caps text-on-surface mb-2">Account Name</label>
+              <input type="text" value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="e.g. John Doe" className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg text-on-surface focus:outline-none focus:border-primary" />
+            </div>
+
+            <div>
+              <label className="block font-label-caps text-label-caps text-on-surface mb-2">
+                {type === 'NGN_BANK' ? 'Account Number' : 'Wallet Address'}
+              </label>
+              <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder={type === 'NGN_BANK' ? '0123456789' : '0x... or bc1...'} className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg text-on-surface focus:outline-none focus:border-primary" />
+            </div>
+
+            {type === 'NGN_BANK' && (
+              <div>
+                <label className="block font-label-caps text-label-caps text-on-surface mb-2">Bank Name</label>
+                <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. GTBank" className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg text-on-surface focus:outline-none focus:border-primary" />
               </div>
-              <div className="flex-1 text-left">
-                <div className="font-body-md text-body-md font-semibold text-on-surface">Access Bank</div>
-                <div className="font-data-md text-data-md text-on-surface-variant mt-0.5">0987654321 • Alexander O.</div>
+            )}
+
+            {type === 'CRYPTO' && (
+              <div>
+                <label className="block font-label-caps text-label-caps text-on-surface mb-2">Network</label>
+                <input type="text" value={network} onChange={(e) => setNetwork(e.target.value)} placeholder="e.g. ERC20, TRC20, BEP20" className="w-full px-4 py-3 bg-surface border border-outline-variant rounded-lg text-on-surface focus:outline-none focus:border-primary" />
               </div>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ml-4 flex-shrink-0 ${localBank === 'access' ? 'border-2 border-[#B8860B]' : 'border border-outline-variant'}`}>
-                <div className={`w-3 h-3 rounded-full ${localBank === 'access' ? 'bg-[#B8860B]' : 'bg-transparent'}`}></div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={resetForm} className="flex-1 py-3 rounded-lg border border-outline-variant text-on-surface font-semibold hover:bg-surface-variant/50 transition-colors">Cancel</button>
+              <button type="submit" className="flex-[2] py-3 rounded-lg bg-primary text-on-primary font-semibold hover:bg-primary/90 transition-colors">
+                {editingId ? 'Update Account' : 'Save Account'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <h2 className="font-h3 text-h3 text-on-surface mb-6">Settlement Account</h2>
+
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <span className="material-symbols-outlined animate-spin text-primary">progress_activity</span>
               </div>
-            </div>
-          </label>
-
-          {/* Add New Bank */}
-          <button className="w-full flex items-center justify-center gap-2 p-4 bg-surface-container-lowest border border-dashed border-outline-variant rounded-lg hover:bg-surface-variant/30 hover:border-outline transition-all text-on-primary-fixed-variant">
-            <span className="material-symbols-outlined text-lg">add</span>
-            <span className="font-body-md text-body-md font-semibold">Add New Bank Account</span>
-          </button>
-        </div>
-
-        {/* Withdrawal Summary */}
-        <div className="border-t border-outline-variant/30 pt-6 w-full text-left">
-          <h3 className="font-body-sm text-body-sm font-semibold text-on-surface-variant mb-4 uppercase tracking-wider">Withdrawal Summary</h3>
-          <div className="space-y-3 bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/20">
-            <div className="flex justify-between items-center">
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Amount to withdraw</span>
-              <div className="flex items-center gap-2">
-                <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain" />
-                <span className="font-data-md text-data-md text-on-surface">{amountCoins.toLocaleString()}</span>
+            ) : accounts.length === 0 ? (
+              <div className="text-center py-8 space-y-4">
+                <span className="material-symbols-outlined text-4xl text-outline block">account_balance_wallet</span>
+                <p className="text-on-surface-variant font-body-sm">No settlement accounts yet. Add one to withdraw.</p>
               </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Exchange Rate</span>
-              <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Converted Amount</span>
-              <span className="font-data-md text-data-md text-on-surface">
-                ₦{convertedAmount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Processing Fee (1.5%)</span>
-              <span className="font-data-md text-data-md text-error-alert">
-                - ₦{processingFee.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div className="border-t border-dashed border-outline-variant/50 pt-3 mt-3">
-              <div className="flex justify-between items-center">
-                <span className="font-body-md text-body-md font-semibold text-on-surface">You will receive</span>
-                <span className="font-data-lg text-data-lg text-success-verified">
-                  ₦{finalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+            ) : (
+              <div className="space-y-3 mb-8">
+                {accounts.map((acc) => (
+                  <div
+                    key={acc.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedAccount?.id === acc.id ? 'border-[#B8860B] bg-primary/5' : 'border-outline-variant/50 hover:border-outline'}`}
+                    onClick={() => setSelectedAccount(acc)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${acc.type === 'NGN_BANK' ? 'bg-[#E5F3FF] text-primary' : 'bg-[#FFF3E0] text-secondary'}`}>
+                        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          {acc.type === 'NGN_BANK' ? 'account_balance' : 'currency_bitcoin'}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-body-md text-body-md font-semibold text-on-surface truncate">{acc.account_name}</div>
+                        <div className="font-data-md text-data-md text-on-surface-variant">
+                          {acc.type === 'NGN_BANK' ? `${acc.bank_name || 'Bank'} • ${acc.account_number}` : `${acc.network || 'Crypto'} • ${acc.account_number.slice(0, 8)}...`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {acc.is_default && <span className="text-label-caps text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full">DEFAULT</span>}
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(acc); }} className="text-outline hover:text-primary p-1">
+                          <span className="material-symbols-outlined text-lg">edit</span>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(acc.id); }} className="text-outline hover:text-error-alert p-1">
+                          <span className="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                    {!acc.is_default && (
+                      <button onClick={(e) => { e.stopPropagation(); handleSetDefault(acc.id); }} className="text-label-caps text-[11px] text-outline hover:text-primary mt-2 underline underline-offset-2">
+                        Set as default
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
+
+            <button
+              onClick={() => setShowForm(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all font-semibold mb-8"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              Add Settlement Account
+            </button>
+
+            {selectedAccount && (
+              <div className="border-t border-outline-variant/30 pt-6 w-full">
+                <h3 className="font-body-sm text-body-sm font-semibold text-on-surface-variant mb-4 uppercase tracking-wider">Withdrawal Summary</h3>
+                <div className="space-y-3 bg-surface-container-low p-4 rounded-lg border border-outline-variant/20">
+                  <div className="flex justify-between items-center">
+                    <span className="font-body-sm text-body-sm text-on-surface-variant">Amount</span>
+                    <div className="flex items-center gap-2">
+                      <img src="/coin.png" alt="" className="w-4 h-4 object-contain" />
+                      <span className="font-data-md text-data-md text-on-surface">{amountCoins.toLocaleString()} CMP</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-body-sm text-body-sm text-on-surface-variant">Exchange Rate</span>
+                    <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-body-sm text-body-sm text-on-surface-variant">Processing Fee (1.5%)</span>
+                    <span className="font-data-md text-data-md text-error-alert">- ₦{processingFee.toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-dashed border-outline-variant/50 pt-3 mt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-body-md text-body-md font-semibold text-on-surface">You will receive</span>
+                      <span className="font-data-lg text-data-lg text-success-verified">₦{finalAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 flex gap-4">
+              <Link href="/wallet/withdraw" className="flex-1 py-3 px-4 rounded-lg border border-outline-variant text-on-surface font-body-md text-body-md font-semibold hover:bg-surface-variant/50 transition-colors text-center">Back</Link>
+              <button
+                onClick={handleContinue}
+                disabled={!selectedAccount}
+                className="flex-[2] py-3 px-4 rounded-lg bg-primary text-on-primary font-body-md text-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
             </div>
-          </div>
-        </div>
 
-        {/* Actions */}
-        <div className="mt-8 flex gap-4 w-full">
-          <Link href="/wallet/withdraw" className="flex-1 py-3 px-4 rounded-lg border border-outline-variant text-on-surface font-body-md text-body-md font-semibold hover:bg-surface-variant/50 transition-colors">
-            Back
-          </Link>
-          <button onClick={handleContinue} className="flex-[2] py-3 px-4 rounded-lg bg-primary text-on-primary font-body-md text-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center">
-            Continue
-          </button>
-        </div>
-
-        {/* Security Note */}
-        <div className="flex items-start gap-3 text-on-surface-variant opacity-80 px-4 mt-8 w-full text-left">
-          <span className="material-symbols-outlined text-lg mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
-          <p className="font-body-sm text-body-sm">Your transaction is secured with bank-grade encryption. Withdrawals to new bank accounts may require additional verification.</p>
-        </div>
-
+            <div className="flex items-start gap-3 text-on-surface-variant opacity-80 px-4 mt-8 w-full">
+              <span className="material-symbols-outlined text-lg mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+              <p className="font-body-sm text-body-sm">Funds are withheld immediately upon request and held until the withdrawal is processed or rejected.</p>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

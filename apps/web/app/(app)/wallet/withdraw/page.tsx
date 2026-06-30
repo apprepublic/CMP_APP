@@ -1,25 +1,39 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { useWallet } from '@/lib/useWallet';
-import { useWithdrawStore } from '@/stores/withdrawStore';
+import { useWithdrawStore, SettlementAccount } from '@/stores/withdrawStore';
 import { useCurrency } from '@/lib/useCurrency';
 
 export default function WithdrawAmountPage() {
   const router = useRouter();
   const { wallet, loading: isLoading } = useWallet();
   const availableBalance = wallet ? wallet.balance : 0;
-  
-  const { amountCoins, setAmountCoins } = useWithdrawStore();
-  const [coins, setCoins] = useState<string>(amountCoins > 0 ? amountCoins.toString() : '');
+  const { setAmountCoins } = useWithdrawStore();
+  const [coins, setCoins] = useState<string>('');
   const { activeRate, formatFiat, loadingLocation } = useCurrency();
+  const [accounts, setAccounts] = useState<SettlementAccount[]>([]);
+  const [accountsLoaded, setAccountsLoaded] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from('settlement_accounts')
+      .select('*')
+      .order('is_default', { ascending: false })
+      .then(({ data }) => {
+        setAccounts((data as SettlementAccount[]) || []);
+        setAccountsLoaded(true);
+      });
+  }, []);
 
   const parsedCoins = parseInt(coins) || 0;
   const isOverBalance = parsedCoins > availableBalance;
   const isUnderMin = parsedCoins < 100 && parsedCoins > 0;
-  const isValid = parsedCoins >= 100 && parsedCoins <= availableBalance;
+  const hasAccounts = accounts.length > 0;
+  const isValid = hasAccounts && parsedCoins >= 100 && parsedCoins <= availableBalance;
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +44,8 @@ export default function WithdrawAmountPage() {
   };
 
   return (
-    <main className="flex-1 lg:ml-64 p-margin-mobile md:p-margin-desktop flex items-center justify-center min-h-[calc(100vh-80px)] md:min-h-screen pb-24 md:pb-margin-desktop bg-surface relative z-10">
-      {/* Withdrawal Card */}
+    <main className="flex-1 lg:ml-64 flex items-center justify-center min-h-[calc(100vh-80px)] pb-24 md:pb-12 px-margin-mobile relative">
       <div className="bg-surface-container-lowest rounded-xl w-full max-w-lg p-6 md:p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.04)] mt-4">
-        
         <div className="flex items-center gap-4 mb-8">
           <Link href="/wallet" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-outline-variant transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
@@ -44,33 +56,22 @@ export default function WithdrawAmountPage() {
           </div>
         </div>
 
-        {/* Stepper */}
         <div className="w-full flex items-center justify-between mb-8 px-2 relative">
           <div className="absolute left-[15%] right-[15%] top-1/2 h-[2px] bg-surface-variant -z-10 -translate-y-1/2"></div>
-          
           <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
-            <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm border-[1.5px] border-[#B8860B]">
-              1
-            </div>
+            <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-data-md text-data-md shadow-sm border-[1.5px] border-[#B8860B]">1</div>
             <span className="font-label-caps text-label-caps text-on-surface">Amount</span>
           </div>
-          
           <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
-            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">
-              2
-            </div>
-            <span className="font-label-caps text-label-caps text-outline">Bank</span>
+            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">2</div>
+            <span className="font-label-caps text-label-caps text-outline">Account</span>
           </div>
-          
           <div className="flex flex-col items-center gap-2 bg-surface-container-lowest px-2">
-            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">
-              3
-            </div>
+            <div className="w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center font-data-md text-data-md">3</div>
             <span className="font-label-caps text-label-caps text-outline">Confirm</span>
           </div>
         </div>
 
-        {/* Balance Indicator */}
         <div className="bg-surface border border-outline-variant/30 rounded-lg p-4 mb-8 flex justify-between items-center">
           <span className="font-body-md text-on-surface-variant">Available Balance</span>
           <div className="flex items-center gap-2">
@@ -81,7 +82,6 @@ export default function WithdrawAmountPage() {
           </div>
         </div>
 
-        {/* Input Form */}
         <form onSubmit={handleContinue} className="space-y-6">
           <div className="space-y-2">
             <label className="block font-label-caps text-label-caps text-on-surface" htmlFor="withdrawAmount">Amount to Withdraw (Coins)</label>
@@ -89,8 +89,8 @@ export default function WithdrawAmountPage() {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <img src="/coin.png" alt="Coin" className="w-5 h-5 object-contain" />
               </div>
-              <input 
-                id="withdrawAmount" 
+              <input
+                id="withdrawAmount"
                 type="number"
                 min="100"
                 max={availableBalance}
@@ -100,15 +100,10 @@ export default function WithdrawAmountPage() {
                 className={`block w-full pl-12 pr-4 py-4 bg-surface border rounded-lg text-on-surface font-data-lg text-data-lg focus:ring-primary focus:border-primary transition-colors focus:outline-none ${isOverBalance ? 'border-error-alert focus:border-error-alert' : 'border-outline-variant focus:border-primary'}`}
               />
             </div>
-            {isOverBalance && (
-              <p className="text-error-alert font-body-sm mt-1">Amount exceeds available balance.</p>
-            )}
-            {isUnderMin && (
-              <p className="text-error-alert font-body-sm mt-1">Minimum withdrawal amount is 100 coins.</p>
-            )}
+            {isOverBalance && <p className="text-error-alert font-body-sm mt-1">Amount exceeds available balance.</p>}
+            {isUnderMin && <p className="text-error-alert font-body-sm mt-1">Minimum withdrawal amount is 100 coins.</p>}
           </div>
 
-          {/* Real-time Conversion Display */}
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
             <div className="flex justify-between items-center mb-2">
               <span className="font-body-sm text-on-surface-variant">Conversion Rate</span>
@@ -127,25 +122,34 @@ export default function WithdrawAmountPage() {
             </div>
           </div>
 
-          {/* Action Button */}
+          {accountsLoaded && !hasAccounts && (
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 text-center">
+              <p className="font-body-sm text-on-surface-variant mb-2">No settlement account set up.</p>
+              <button
+                type="button"
+                onClick={() => router.push('/wallet/withdraw/bank?add=true')}
+                className="text-primary font-semibold underline underline-offset-4"
+              >
+                Add a settlement account to withdraw
+              </button>
+            </div>
+          )}
+
           <div className="pt-4">
-            <button 
+            <button
               type="submit"
-              disabled={!isValid}
+              disabled={!isValid || !accountsLoaded}
               className="w-full bg-primary text-on-primary font-body-lg text-body-lg font-semibold py-4 rounded-lg hover:bg-primary/90 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>Continue</span>
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
           </div>
-          
+
           <div className="text-center mt-4">
-            <Link href="/wallet" className="text-primary hover:text-on-primary-fixed-variant font-body-sm underline transition-colors">
-              Cancel
-            </Link>
+            <Link href="/wallet" className="text-primary hover:text-on-primary-fixed-variant font-body-sm underline transition-colors">Cancel</Link>
           </div>
         </form>
-
       </div>
     </main>
   );

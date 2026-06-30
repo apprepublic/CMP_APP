@@ -365,6 +365,44 @@ export interface Database {
           updated_at?: string
         }
       }
+      settlement_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          account_name: string
+          account_number: string
+          bank_name: string | null
+          network: string | null
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          account_name: string
+          account_number: string
+          bank_name?: string | null
+          network?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          account_name?: string
+          account_number?: string
+          bank_name?: string | null
+          network?: string | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       withdrawal_requests: {
         Row: {
           id: string
