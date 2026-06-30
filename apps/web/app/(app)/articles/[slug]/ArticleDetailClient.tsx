@@ -88,6 +88,9 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
     if (adTimer > 0) {
       const t = setTimeout(() => setAdTimer(p => p - 1), 1000);
       return () => clearTimeout(t);
+    } else {
+      setAdGateDone(true);
+      setShowAdGate(false);
     }
   }, [showAdGate, adGateDone, adTimer]);
 
