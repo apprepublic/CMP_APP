@@ -7,7 +7,7 @@ export async function generateStaticParams() {
     .select('creator_id')
     .eq('type', 'STREAM_MUSIC')
     .eq('is_active', true);
-  const ids = [...new Set((tasks || []).map((t: any) => t.creator_id))];
+  const ids = [...new Set((tasks || []).map((t: any) => t.creator_id))] as string[];
   return ids.map((id: string) => ({ artist: `user-${id}` }));
 }
 
