@@ -14,7 +14,6 @@ function renderArticleContent(content: string) {
   return paragraphs.map((paragraph: string, index: number) => {
     // Check if paragraph is a markdown image: ![alt](url)
     const imgMatch = paragraph.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-    if (index
     if (imgMatch) {
       const [, alt, src] = imgMatch;
       return (
