@@ -200,13 +200,14 @@ export default function SettingsPage() {
     setIsUpdatingPassword(true);
     setPasswordMessage('');
     try {
-      const { error: reauthError } = await supabase.auth.reauthenticate(currentPassword);
-      if (reauthError) {
-        if (reauthError.message?.includes('Invalid') || reauthError.message?.includes('wrong')) {
-          throw new Error('Current password is incorrect');
-        }
-        throw reauthError;
-      }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser?.email) throw new Error('Not authenticated');
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: authUser.email,
+        password: currentPassword,
+      });
+      if (signInError) throw new Error('Current password is incorrect');
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
@@ -405,7 +406,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="font-label-caps text-label-caps text-on-primary-container">Email Address</label>
-                    <input type="email" value={email} disabled
+                    <input type="email" value={user?.email || ''} disabled
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-body-md text-body-md text-white/50 cursor-not-allowed" />
                     <p className="font-body-sm text-body-sm text-on-primary-container text-xs">Email cannot be changed from settings.</p>
                   </div>
