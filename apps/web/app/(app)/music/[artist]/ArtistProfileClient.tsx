@@ -204,5 +204,9 @@ export default function ArtistProfileClient({ slug }: { slug: string }) {
                 </button>
               )}
             </div>
-
-            
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
