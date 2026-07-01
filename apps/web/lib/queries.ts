@@ -353,34 +353,52 @@ export async function getFeaturedSongs(): Promise<Song[]> {
 export async function getArtists(limit = 20): Promise<Artist[]> {
   const { data: tasks, error } = await db
     .from('user_posted_tasks')
-    .select('creator_id, creator:users!creator_id(id, full_name, avatar_url, bio)')
+    .select('creator_id, genre, current_participants, cover_image_url, creator:users!creator_id(id, full_name, avatar_url, bio)')
     .eq('type', 'STREAM_MUSIC')
     .eq('is_active', true)
-    .eq('status', 'ACTIVE');
+    .eq('status', 'ACTIVE')
+    .order('created_at', { ascending: false });
 
   if (error || !tasks) return [];
 
-  const seen = new Set<string>();
-  return tasks
-    .filter((t: any) => {
-      if (seen.has(t.creator_id)) return false;
-      seen.add(t.creator_id);
-      return true;
-    })
+  const artistMap = new Map<string, { creator: any; genres: Map<string, number>; totalStreams: number; coverUrl: string | null }>();
+  for (const t of tasks) {
+    if (!artistMap.has(t.creator_id)) {
+      artistMap.set(t.creator_id, {
+        creator: t.creator || {},
+        genres: new Map(),
+        totalStreams: 0,
+        coverUrl: null,
+      });
+    }
+    const entry = artistMap.get(t.creator_id)!;
+    if (t.genre) {
+      entry.genres.set(t.genre, (entry.genres.get(t.genre) || 0) + 1);
+    }
+    entry.totalStreams += t.current_participants || 0;
+    if (!entry.coverUrl && t.cover_image_url) {
+      entry.coverUrl = t.cover_image_url;
+    }
+  }
+
+  return [...artistMap.entries()]
     .slice(0, limit)
-    .map((t: any) => {
-      const c = t.creator || {};
+    .map(([creatorId, entry]) => {
+      const c = entry.creator;
+      const topGenre = entry.genres.size > 0
+        ? [...entry.genres.entries()].sort((a, b) => b[1] - a[1])[0][0]
+        : null;
       return {
-        id: t.creator_id,
+        id: creatorId,
         stage_name: c.full_name || 'Artist',
-        slug: `user-${t.creator_id}`,
+        slug: `user-${creatorId}`,
         bio: c.bio || null,
         avatar_url: c.avatar_url || null,
-        cover_url: null,
-        genre: null,
+        cover_url: entry.coverUrl,
+        genre: topGenre,
         is_verified: false,
         follower_count: 0,
-        monthly_listeners: 0,
+        monthly_listeners: entry.totalStreams,
       } as Artist;
     });
 }
@@ -391,24 +409,11 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
 
   const { data: userData } = await db
     .from('users')
-    .select('id, full_name, avatar_url')
+    .select('id, full_name, avatar_url, bio')
     .eq('id', userId)
     .single();
 
   if (!userData) return null;
-
-  const artist: Artist = {
-    id: userData.id,
-    stage_name: userData.full_name || 'Artist',
-    slug: `user-${userData.id}`,
-    bio: null,
-    avatar_url: userData.avatar_url || null,
-    cover_url: null,
-    genre: null,
-    is_verified: false,
-    follower_count: 0,
-    monthly_listeners: 0,
-  };
 
   const { data: tasks } = await db
     .from('user_posted_tasks')
@@ -419,7 +424,35 @@ export async function getArtistBySlug(slug: string): Promise<{ artist: Artist; s
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: false });
 
-  const songs: Song[] = (tasks || []).map((t: any) => ({
+  const taskList = tasks || [];
+  const totalStreams = taskList.reduce((sum: number, t: any) => sum + (t.current_participants || 0), 0);
+
+  const genreCounts = new Map<string, number>();
+  taskList.forEach((t: any) => {
+    if (t.genre) {
+      genreCounts.set(t.genre, (genreCounts.get(t.genre) || 0) + 1);
+    }
+  });
+  const topGenre = genreCounts.size > 0
+    ? [...genreCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+    : null;
+
+  const latestCover = taskList.length > 0 ? taskList[0].cover_image_url || null : null;
+
+  const artist: Artist = {
+    id: userData.id,
+    stage_name: userData.full_name || 'Artist',
+    slug: `user-${userData.id}`,
+    bio: userData.bio || null,
+    avatar_url: userData.avatar_url || null,
+    cover_url: latestCover,
+    genre: topGenre,
+    is_verified: false,
+    follower_count: 0,
+    monthly_listeners: totalStreams,
+  };
+
+  const songs: Song[] = taskList.map((t: any) => ({
     id: t.id,
     artist_id: t.creator_id,
     title: t.title,
