@@ -1,5 +1,5 @@
--- Fix "column amount is of type numeric but expression is of type text" error
--- p_fiat_amount was TEXT but amount column is DECIMAL(18,2)
+-- Fix "column coin_amount is of type bigint but expression is of type text"
+-- p_coin_amount::TEXT cast is wrong — p_coin_amount is already BIGINT
 
 CREATE OR REPLACE FUNCTION request_withdrawal(
   p_user_id UUID,
