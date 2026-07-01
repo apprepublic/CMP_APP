@@ -13,7 +13,7 @@ function fmt(t: number) {
 }
 
 export function PlayerBar() {
-  const { current, isPlaying, progress, duration, volume, toggle, next, prev, seek, setVolume } = usePlayer();
+  const { current, isPlaying, progress, duration, volume, isShuffled, repeatMode, toggle, next, prev, seek, setVolume, toggleShuffle, cycleRepeat } = usePlayer();
   const { isCollapsed } = useSidebarStore();
   const isAuthenticated = useUserStore((state: any) => state.isAuthenticated);
 
@@ -64,7 +64,7 @@ export function PlayerBar() {
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-4 w-1/3">
-          <button className="text-on-primary-container hover:text-secondary transition-colors hidden md:block" aria-label="Shuffle">
+          <button onClick={toggleShuffle} className={`transition-colors hidden md:block ${isShuffled ? 'text-secondary-fixed' : 'text-on-primary-container hover:text-secondary'}`} aria-label="Shuffle">
             <Shuffle className="w-5 h-5" />
           </button>
           <button onClick={prev} className="text-on-primary hover:text-secondary transition-colors" aria-label="Previous">
@@ -84,8 +84,15 @@ export function PlayerBar() {
           <button onClick={next} className="text-on-primary hover:text-secondary transition-colors" aria-label="Next">
             <span className="material-symbols-outlined text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>skip_next</span>
           </button>
-          <button className="text-on-primary-container hover:text-secondary transition-colors hidden md:block" aria-label="Repeat">
-            <Repeat className="w-5 h-5" />
+          <button onClick={cycleRepeat} className={`transition-colors hidden md:block ${repeatMode !== 'none' ? 'text-secondary-fixed' : 'text-on-primary-container hover:text-secondary'}`} aria-label="Repeat">
+            {repeatMode === 'one' ? (
+              <span className="relative">
+                <Repeat className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1.5 text-[9px] font-bold">1</span>
+              </span>
+            ) : (
+              <Repeat className="w-5 h-5" />
+            )}
           </button>
         </div>
 

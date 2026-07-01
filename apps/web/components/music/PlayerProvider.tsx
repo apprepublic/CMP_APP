@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 import { useUserStore } from '@/stores/userStore';
 
+type RepeatMode = 'none' | 'all' | 'one';
+
 interface PlayerState {
   current: Song | null;
   queue: Song[];
@@ -17,12 +19,16 @@ interface PlayerState {
   progress: number; // seconds
   duration: number; // seconds
   volume: number; // 0..1
+  isShuffled: boolean;
+  repeatMode: RepeatMode;
   play: (song: Song, queue?: Song[], taskInfo?: { id: string; isPosted: boolean; coinReward: number }) => void;
   toggle: () => void;
   next: () => void;
   prev: () => void;
   seek: (seconds: number) => void;
   setVolume: (v: number) => void;
+  toggleShuffle: () => void;
+  cycleRepeat: () => void;
 }
 
 const PlayerContext = createContext<PlayerState | null>(null);
@@ -46,6 +52,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(0.8);
+  const [isShuffled, setIsShuffled] = useState(false);
+  const [shuffledQueue, setShuffledQueue] = useState<Song[]>([]);
+  const [shuffledIndex, setShuffledIndex] = useState(0);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('none');
 
   const currentRef = useRef<Song | null>(null);
   const activeTaskRef = useRef<{ id: string; isPosted: boolean; coinReward: number } | null>(null);
@@ -138,7 +148,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       }
     };
     const onMeta = () => setDuration(audio.duration || 0);
-    const onEnd = () => nextRef.current();
+    const onEnd = () => {
+      // Repeat one: replay the same song
+      if (repeatModeRef.current === 'one') {
+        audio.currentTime = 0;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        return;
+      }
+      nextRef.current();
+    };
 
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
@@ -188,19 +206,43 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const next = useCallback(() => {
     if (!queue.length) return;
-    playIndex(queue, (index + 1) % queue.length);
-  }, [queue, index, playIndex]);
+    if (isShuffled && shuffledQueue.length) {
+      const nextIdx = shuffledIndex + 1;
+      if (nextIdx >= shuffledQueue.length) {
+        if (repeatMode === 'all' || repeatMode === 'one') {
+          setShuffledIndex(0);
+          playIndex(shuffledQueue, 0);
+        }
+        return;
+      }
+      setShuffledIndex(nextIdx);
+      playIndex(shuffledQueue, nextIdx);
+    } else {
+      if (repeatMode === 'none' && index >= queue.length - 1) return;
+      playIndex(queue, (index + 1) % queue.length);
+    }
+  }, [queue, index, playIndex, isShuffled, shuffledQueue, shuffledIndex, repeatMode]);
 
   const prev = useCallback(() => {
     if (!queue.length) return;
-    playIndex(queue, (index - 1 + queue.length) % queue.length);
-  }, [queue, index, playIndex]);
+    if (isShuffled && shuffledQueue.length) {
+      const prevIdx = (shuffledIndex - 1 + shuffledQueue.length) % shuffledQueue.length;
+      setShuffledIndex(prevIdx);
+      playIndex(shuffledQueue, prevIdx);
+    } else {
+      playIndex(queue, (index - 1 + queue.length) % queue.length);
+    }
+  }, [queue, index, playIndex, isShuffled, shuffledQueue, shuffledIndex]);
 
-  // keep a stable ref to next() for the 'ended' listener
+  // keep stable refs for the 'ended' listener
   const nextRef = useRef(next);
   useEffect(() => {
     nextRef.current = next;
   }, [next]);
+  const repeatModeRef = useRef(repeatMode);
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
 
   const seek = useCallback((seconds: number) => {
     const audio = audioRef.current;
@@ -216,9 +258,28 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setVolumeState(clamped);
   }, []);
 
+  const toggleShuffle = useCallback(() => {
+    if (isShuffled) {
+      setIsShuffled(false);
+    } else if (current && queue.length > 1) {
+      const rest = queue.filter((s) => s.id !== current.id);
+      for (let i = rest.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rest[i], rest[j]] = [rest[j], rest[i]];
+      }
+      setShuffledQueue([current, ...rest]);
+      setShuffledIndex(0);
+      setIsShuffled(true);
+    }
+  }, [isShuffled, current, queue]);
+
+  const cycleRepeat = useCallback(() => {
+    setRepeatMode((prev) => (prev === 'none' ? 'all' : prev === 'all' ? 'one' : 'none'));
+  }, []);
+
   return (
     <PlayerContext.Provider
-      value={{ current, queue, index, isPlaying, progress, duration, volume, play, toggle, next, prev, seek, setVolume }}
+      value={{ current, queue, index, isPlaying, progress, duration, volume, isShuffled, repeatMode, play, toggle, next, prev, seek, setVolume, toggleShuffle, cycleRepeat }}
     >
       {children}
     </PlayerContext.Provider>
