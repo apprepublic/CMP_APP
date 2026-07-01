@@ -64,7 +64,7 @@ function CheckoutContent() {
     document.body.appendChild(script);
   }, [method]);
 
-  const handlePaystackPayment = useCallback(async () => {
+  const handlePaystackPayment = useCallback(() => {
     if (!user?.email || !scriptLoaded) return;
 
     const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
@@ -95,33 +95,31 @@ function CheckoutContent() {
           cmpAmount,
           walletId: wallet?.id,
         },
-        callback: async (response) => {
-          try {
-            const verifyRes = await fetch('/api/payments/paystack/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                reference: response.reference,
-                userId: user.id,
-                cmpAmount,
-              }),
+        callback: function (response) {
+          fetch('/api/payments/paystack/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reference: response.reference,
+              userId: user.id,
+              cmpAmount,
+            }),
+          })
+            .then(function (res) { return res.json(); })
+            .then(function (result) {
+              if (!result.success) {
+                throw new Error(result.error || 'Verification failed');
+              }
+              router.push(
+                '/wallet/topup/success?amount=' + fiatAmount + '&method=paystack&coins=' + result.coinsCredited + '&ref=' + response.reference
+              );
+            })
+            .catch(function (err) {
+              setError(err.message || 'Payment verification failed. Your wallet may not be credited.');
+              setIsProcessing(false);
             });
-
-            const result = await verifyRes.json();
-
-            if (!verifyRes.ok || !result.success) {
-              throw new Error(result.error || 'Verification failed');
-            }
-
-            router.push(
-              `/wallet/topup/success?amount=${fiatAmount}&method=paystack&coins=${result.coinsCredited}&ref=${response.reference}`
-            );
-          } catch (err: any) {
-            setError(err.message || 'Payment verification failed. Your wallet may not be credited.');
-            setIsProcessing(false);
-          }
         },
-        onClose: () => {
+        onClose: function () {
           setIsProcessing(false);
         },
       });
