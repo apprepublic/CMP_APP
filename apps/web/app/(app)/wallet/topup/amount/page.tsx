@@ -50,7 +50,7 @@ function TopUpAmountContent() {
     setIsProcessing(true);
 
     setTimeout(() => {
-      router.push(`/wallet/topup/checkout?amount=${numFiat}&method=${method}&cmp=${numCmp}`);
+      router.push(`/wallet/topup/checkout?amount=${numFiat}&method=${method}&cmp=${numCmp}&currency=${currency}`);
     }, 500);
   };
 
