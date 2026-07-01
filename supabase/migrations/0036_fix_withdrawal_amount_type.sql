@@ -39,7 +39,7 @@ BEGIN
   RETURNING id INTO v_request_id;
 
   INSERT INTO coin_transactions (wallet_id, user_id, type, amount, balance_after, description)
-  VALUES (p_wallet_id, p_user_id, 'WITHDRAWAL', p_coin_amount, v_new_balance::TEXT, 'Withdrawal pending - coins withheld');
+  VALUES (p_wallet_id, p_user_id, 'WITHDRAWAL', p_coin_amount, v_new_balance, 'Withdrawal pending - coins withheld');
 
   RETURN v_request_id;
 END;
