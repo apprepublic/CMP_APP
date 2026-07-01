@@ -96,7 +96,7 @@ function CheckoutContent() {
           walletId: wallet?.id,
         },
         callback: function (response) {
-          fetch('/api/payments/paystack/verify', {
+          fetch('/api/payments/paystack/verify/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
