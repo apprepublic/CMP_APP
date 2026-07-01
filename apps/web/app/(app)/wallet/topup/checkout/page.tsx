@@ -105,7 +105,18 @@ function CheckoutContent() {
               cmpAmount,
             }),
           })
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+              return res.text().then(function (body) {
+                if (!res.ok) {
+                  throw new Error('Server returned ' + res.status + ': ' + (body || '(empty)'));
+                }
+                try {
+                  return JSON.parse(body);
+                } catch (e) {
+                  throw new Error('Invalid response from server: ' + body.slice(0, 200));
+                }
+              });
+            })
             .then(function (result) {
               if (!result.success) {
                 throw new Error(result.error || 'Verification failed');
