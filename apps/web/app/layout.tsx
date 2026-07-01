@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: 'Nigeria\'s premier earning platform. Complete tasks, stream music, sell products, and earn CMP Coins!',
   keywords: ['earn money', 'online earning', 'Nigeria', 'music streaming', 'marketplace', 'CMP Coin'],
   authors: [{ name: 'CMPapp Team' }],
+  icons: {
+    icon: '/coin.png',
+  },
   openGraph: {
 title: 'CMPapp - Complete Tasks, Stream Music, Shop & More',
     description: 'Nigeria\'s premier earning platform',
