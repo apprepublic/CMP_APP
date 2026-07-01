@@ -96,33 +96,21 @@ function CheckoutContent() {
           walletId: wallet?.id,
         },
         callback: function (response) {
-          fetch('/api/payments/paystack/verify/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          supabase.functions.invoke('payments-paystack-verify', {
+            body: {
               reference: response.reference,
-              userId: user.id,
               cmpAmount,
-            }),
+            },
           })
-            .then(function (res) {
-              return res.text().then(function (body) {
-                if (!res.ok) {
-                  throw new Error('Server returned ' + res.status + ': ' + (body || '(empty)'));
-                }
-                try {
-                  return JSON.parse(body);
-                } catch (e) {
-                  throw new Error('Invalid response from server: ' + body.slice(0, 200));
-                }
-              });
-            })
             .then(function (result) {
-              if (!result.success) {
-                throw new Error(result.error || 'Verification failed');
+              if (result.error) {
+                throw new Error(result.error);
+              }
+              if (!result.data?.success) {
+                throw new Error(result.data?.error || 'Verification failed');
               }
               router.push(
-                '/wallet/topup/success?amount=' + fiatAmount + '&method=paystack&coins=' + result.coinsCredited + '&ref=' + response.reference
+                '/wallet/topup/success?amount=' + fiatAmount + '&method=paystack&coins=' + result.data.coinsCredited + '&ref=' + response.reference
               );
             })
             .catch(function (err) {
