@@ -117,7 +117,7 @@ export default function WalletPage() {
              </div>
           ) : (
             transactions.map((tx) => {
-              const isPositive = Number(tx.amount) > 0;
+              const isPositive = !['WITHDRAWAL','spend'].includes(tx.type);
               return (
                 <div key={tx.id} className="p-4 hover:bg-surface-bright transition-colors flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -132,8 +132,8 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-data-md text-data-md ${isPositive ? 'text-success-verified' : 'text-on-surface'}`}>
-                      {isPositive ? '+' : ''} {Number(tx.amount).toLocaleString()}
+                    <p className={`font-data-md text-data-md ${isPositive ? 'text-success-verified' : 'text-error'}`}>
+                      {isPositive ? '+' : '-'} {Number(tx.amount).toLocaleString()}
                     </p>
                     {tx.description && (
                       <p className="font-body-sm text-body-sm text-on-surface-variant">{tx.description}</p>
