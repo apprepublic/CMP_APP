@@ -587,6 +587,9 @@
   .text-on-error-container { color: var(--on-error-container); }
   
   .text-success-verified { color: var(--success-verified); }
+  .text-gold-metallic { color: #B8860B; }
+  .bg-gold-metallic { background-color: #B8860B; }
+  .border-gold-metallic { border-color: #B8860B; }
 
   .border-primary { border-color: var(--primary); }
   .border-primary-container { border-color: var(--primary-container); }

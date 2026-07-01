@@ -99,7 +99,10 @@ export default function DashboardLayout({
         >
           <TopNavBar />
           <AnnouncementsBanner />
-          {children}
+          {/* pt-16 on mobile clears the fixed TopAppBar */}
+          <div className="flex-1 flex flex-col pt-16 lg:pt-0">
+            {children}
+          </div>
         </div>
 
         <BottomNavBar />
