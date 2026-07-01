@@ -1,31 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useUserStore } from '@/stores/userStore';
 import { useWallet } from '@/lib/useWallet';
 import NotificationDropdown from './NotificationDropdown';
 import UserMenuDropdown from './UserMenuDropdown';
 
 export default function TopNavBar() {
-  const { user } = useUserStore();
   const { wallet, loading: walletLoading } = useWallet();
 
   const displayBalance = walletLoading
     ? '...'
     : (wallet?.balance ?? 0).toLocaleString();
 
-  const firstName = (user?.displayName || user?.email || 'U')[0].toUpperCase();
-
   return (
     <>
       {/* Mobile TopAppBar */}
       <div className="lg:hidden fixed top-0 w-full z-50 bg-primary shadow-[0px_4px_20px_rgba(13,27,53,0.15)] flex justify-between items-center px-4 h-16">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#B8860B] flex items-center justify-center text-primary-container font-h3 text-[20px] font-bold">
-            {firstName}
-          </div>
-          <h1 className="font-h3 text-h3 font-bold text-[#B8860B]">CMPapp</h1>
-        </div>
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
+        </Link>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1 bg-[#B8860B]/5 border border-[#B8860B] rounded-full px-3 py-0.5">
             <span className="material-symbols-outlined text-[16px] text-[#B8860B]">monetization_on</span>
