@@ -47,20 +47,21 @@ function CheckoutContent() {
   // Load Paystack inline script
   useEffect(() => {
     if (method !== 'paystack') return;
-    if (document.getElementById('paystack-script')) {
-      setScriptLoaded(true);
+
+    const existing = document.getElementById('paystack-script');
+    if (existing) {
+      if (typeof window.PaystackPop !== 'undefined') {
+        setScriptLoaded(true);
+      }
       return;
     }
+
     const script = document.createElement('script');
     script.id = 'paystack-script';
     script.src = 'https://js.paystack.co/v1/inline.js';
     script.onload = () => setScriptLoaded(true);
     script.onerror = () => setError('Failed to load payment gateway. Please refresh and try again.');
     document.body.appendChild(script);
-    return () => {
-      const el = document.getElementById('paystack-script');
-      if (el) el.remove();
-    };
   }, [method]);
 
   const handlePaystackPayment = useCallback(async () => {
@@ -72,56 +73,64 @@ function CheckoutContent() {
       return;
     }
 
-    const amountInKobo = currency === 'NGN'
-      ? Math.round(fiatAmount * 100)
-      : Math.round(fiatAmount * 100);
+    if (typeof window.PaystackPop === 'undefined') {
+      setError('Payment gateway not loaded. Please refresh and try again.');
+      return;
+    }
 
+    setIsProcessing(true);
+
+    const amountInKobo = Math.round(fiatAmount * 100);
     const reference = generateReference();
 
-    const handler = window.PaystackPop.setup({
-      key: publicKey,
-      email: user.email,
-      amount: amountInKobo,
-      currency,
-      ref: reference,
-      metadata: {
-        userId: user.id,
-        cmpAmount,
-        walletId: wallet?.id,
-      },
-      callback: async (response) => {
-        setIsProcessing(true);
-        try {
-          const verifyRes = await fetch('/api/payments/paystack/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              reference: response.reference,
-              userId: user.id,
-              cmpAmount,
-            }),
-          });
+    try {
+      const handler = window.PaystackPop.setup({
+        key: publicKey,
+        email: user.email,
+        amount: amountInKobo,
+        currency,
+        ref: reference,
+        metadata: {
+          userId: user.id,
+          cmpAmount,
+          walletId: wallet?.id,
+        },
+        callback: async (response) => {
+          try {
+            const verifyRes = await fetch('/api/payments/paystack/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                reference: response.reference,
+                userId: user.id,
+                cmpAmount,
+              }),
+            });
 
-          const result = await verifyRes.json();
+            const result = await verifyRes.json();
 
-          if (!verifyRes.ok || !result.success) {
-            throw new Error(result.error || 'Verification failed');
+            if (!verifyRes.ok || !result.success) {
+              throw new Error(result.error || 'Verification failed');
+            }
+
+            router.push(
+              `/wallet/topup/success?amount=${fiatAmount}&method=paystack&coins=${result.coinsCredited}&ref=${response.reference}`
+            );
+          } catch (err: any) {
+            setError(err.message || 'Payment verification failed. Your wallet may not be credited.');
+            setIsProcessing(false);
           }
-
-          router.push(
-            `/wallet/topup/success?amount=${fiatAmount}&method=paystack&coins=${result.coinsCredited}&ref=${response.reference}`
-          );
-        } catch (err: any) {
-          setError(err.message || 'Payment verification failed. Your wallet may not be credited.');
+        },
+        onClose: () => {
           setIsProcessing(false);
-        }
-      },
-      onClose: () => {
-        setIsProcessing(false);
-      },
-    });
+        },
+      });
 
-    handler.openIframe();
+      handler.openIframe();
+    } catch (err: any) {
+      setError(err.message || 'Failed to open payment popup.');
+      setIsProcessing(false);
+    }
   }, [user, scriptLoaded, fiatAmount, currency, cmpAmount, wallet, router]);
 
   const handleCryptoPayment = useCallback(async () => {
