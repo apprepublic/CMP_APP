@@ -8,6 +8,199 @@ import { useWallet } from '@/lib/useWallet';
 import { uploadAudioFile, uploadCoverImage, STORAGE_BUCKETS } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
+const CREATION_FEE = 500;
+const MIN_COIN_PER_PARTICIPANT = 10;
+
+function MobilePostTask() {
+  const router = useRouter();
+  const postTask = usePostTask();
+  const { wallet } = useWallet();
+  const coinBalance = Number(wallet?.balance ?? 0);
+
+  const [formData, setFormData] = useState({
+    type: 'WATCH_VIDEO',
+    participantThreshold: 100,
+    totalBudget: 5000,
+    videoUrl: '',
+    minWatchTime: 30,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const coinPerParticipant = useMemo(() => {
+    return Math.floor(formData.totalBudget / formData.participantThreshold);
+  }, [formData.totalBudget, formData.participantThreshold]);
+
+  const totalCost = useMemo(() => {
+    return CREATION_FEE + formData.totalBudget;
+  }, [formData.totalBudget]);
+
+  const isValid = useMemo(() => {
+    return coinPerParticipant >= MIN_COIN_PER_PARTICIPANT && totalCost <= coinBalance;
+  }, [coinPerParticipant, totalCost, coinBalance]);
+
+  const TASK_TYPES = useMemo(() => [
+    { value: 'WATCH_VIDEO', label: 'Watch Video', icon: 'play_circle', minBudget: 2000 },
+    { value: 'SHARE_SOCIAL', label: 'Share on Social', icon: 'share', minBudget: 3000 },
+    { value: 'SOCIAL_ENGAGEMENT', label: 'Social Engagement', icon: 'thumb_up', minBudget: 2000 },
+    { value: 'COMPLETE_SURVEY', label: 'Complete Survey', icon: 'poll', minBudget: 5000 },
+    { value: 'APP_DOWNLOAD', label: 'App Download', icon: 'download', minBudget: 10000 },
+    { value: 'VOTE', label: 'Vote/Poll', icon: 'how_to_vote', minBudget: 1000 },
+    { value: 'STREAM_MUSIC', label: 'Stream Music', icon: 'music_note', minBudget: 5000 },
+  ], []);
+
+  const handleSubmit = async () => {
+    const newErrors: Record<string, string> = {};
+    if (coinPerParticipant < MIN_COIN_PER_PARTICIPANT) {
+      newErrors.budget = `Min ${MIN_COIN_PER_PARTICIPANT} coins per participant`;
+    }
+    if (totalCost > coinBalance) {
+      newErrors.balance = 'Insufficient balance';
+    }
+    if (formData.type === 'WATCH_VIDEO' && !formData.videoUrl) {
+      newErrors.videoUrl = 'Video URL is required';
+    }
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
+    try {
+      await postTask.mutateAsync({
+        title: `Watch Video: ${formData.videoUrl ? new URL(formData.videoUrl).hostname : 'Video'}`,
+        description: `Watch the video for at least ${formData.minWatchTime}s to earn ${coinPerParticipant} coins.`,
+        type: formData.type,
+        participantThreshold: formData.participantThreshold,
+        totalBudget: formData.totalBudget,
+      });
+      router.push('/tasks');
+    } catch (err: any) {
+      setErrors({ submit: err?.message || 'Failed to create task' });
+    }
+  };
+
+  return (
+    <div className="lg:hidden min-h-screen bg-surface pb-[160px]">
+      <main className="pt-20 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-on-surface-variant">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 className="font-h2-mobile text-h2-mobile text-on-surface">Post a Task</h1>
+        </div>
+
+        {/* Balance Widget */}
+        <section className="bg-surface-container-lowest rounded-xl p-4 shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.08)] border border-outline-variant/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#B8860B]">account_balance_wallet</span>
+            <div>
+              <p className="font-label-caps text-label-caps text-on-surface-variant">Available Balance</p>
+              <p className="font-body-md text-body-md text-on-surface font-semibold">{coinBalance.toLocaleString()} CMP</p>
+            </div>
+          </div>
+          <Link href="/wallet" className="bg-[#B8860B] text-white text-body-sm font-body-sm px-4 py-2 rounded-lg">Top Up</Link>
+        </section>
+
+        {/* Task Type Grid */}
+        <section>
+          <p className="font-body-md text-body-md text-on-surface font-medium mb-3">Task Type</p>
+          <div className="grid grid-cols-3 gap-2">
+            {TASK_TYPES.map((t) => (
+              <button key={t.value} onClick={() => setFormData(prev => ({ ...prev, type: t.value }))}
+                className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
+                  formData.type === t.value ? 'border-[#B8860B] bg-[#B8860B]/10' : 'border-outline-variant/30 bg-surface-container-lowest'
+                }`}
+              >
+                <span className={`material-symbols-outlined text-xl ${formData.type === t.value ? 'text-[#B8860B]' : 'text-on-surface-variant'}`}>{t.icon}</span>
+                <span className="font-data-xs text-data-xs text-on-surface text-center leading-tight">{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Requirements - Video URL */}
+        {formData.type === 'WATCH_VIDEO' && (
+          <section className="bg-surface-container-lowest rounded-xl p-4 shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.08)] border border-outline-variant/20">
+            <p className="font-body-md text-body-md text-on-surface font-medium mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#B8860B] text-lg">play_circle</span>
+              Video Requirements
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant mb-1 block">Video URL</label>
+                <input type="url" value={formData.videoUrl} onChange={e => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-3 py-2.5 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-[#B8860B]" />
+                {errors.videoUrl && <p className="text-error text-body-xs font-body-xs mt-1">{errors.videoUrl}</p>}
+              </div>
+              <div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant mb-1 block">Min Watch Time (seconds)</label>
+                <input type="number" value={formData.minWatchTime} onChange={e => setFormData(prev => ({ ...prev, minWatchTime: Math.max(10, parseInt(e.target.value) || 10) }))}
+                  min={10} max={3600}
+                  className="w-full bg-surface border border-outline-variant/30 rounded-lg px-3 py-2.5 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-[#B8860B]" />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Participants & Budget */}
+        <section className="bg-surface-container-lowest rounded-xl p-4 shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.08)] border border-outline-variant/20">
+          <p className="font-body-md text-body-md text-on-surface font-medium mb-3">Budget & Participants</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-body-sm text-body-sm text-on-surface-variant mb-1 block">Participants</label>
+              <input type="number" value={formData.participantThreshold}
+                onChange={e => setFormData(prev => ({ ...prev, participantThreshold: Math.max(10, parseInt(e.target.value) || 0) }))}
+                min={10} max={10000}
+                className="w-full bg-surface border border-outline-variant/30 rounded-lg px-3 py-2.5 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-[#B8860B]" />
+            </div>
+            <div>
+              <label className="font-body-sm text-body-sm text-on-surface-variant mb-1 block">Total Budget</label>
+              <input type="number" value={formData.totalBudget}
+                onChange={e => setFormData(prev => ({ ...prev, totalBudget: Math.max(1000, parseInt(e.target.value) || 0) }))}
+                min={1000} max={1000000}
+                className="w-full bg-surface border border-outline-variant/30 rounded-lg px-3 py-2.5 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-[#B8860B]" />
+            </div>
+          </div>
+        </section>
+
+        {/* Cost Summary */}
+        <section className="bg-surface-container-lowest rounded-xl p-4 shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.08)] border-t-2 border-[#B8860B]">
+          <p className="font-body-md text-body-md text-on-surface font-medium mb-3">Cost Summary</p>
+          <div className="space-y-2">
+            <div className="flex justify-between text-body-sm font-body-sm">
+              <span className="text-on-surface-variant">Creation Fee</span>
+              <span className="text-on-surface">{CREATION_FEE.toLocaleString()} CMP</span>
+            </div>
+            <div className="flex justify-between text-body-sm font-body-sm">
+              <span className="text-on-surface-variant">Budget</span>
+              <span className="text-on-surface">{formData.totalBudget.toLocaleString()} CMP</span>
+            </div>
+            <div className="flex justify-between text-body-sm font-body-sm">
+              <span className="text-on-surface-variant">Per Participant</span>
+              <span className="text-[#B8860B] font-semibold">{coinPerParticipant.toLocaleString()} CMP</span>
+            </div>
+            <div className="flex justify-between pt-2 border-t border-outline-variant/20">
+              <span className="font-body-md text-body-md text-on-surface font-semibold">Total</span>
+              <span className="font-body-md text-body-md text-[#B8860B] font-bold">{totalCost.toLocaleString()} CMP</span>
+            </div>
+          </div>
+          {errors.budget && <p className="text-error text-body-xs font-body-xs mt-2">{errors.budget}</p>}
+          {errors.balance && <p className="text-error text-body-xs font-body-xs mt-2">{errors.balance}</p>}
+        </section>
+
+        {errors.submit && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-error text-body-sm font-body-sm">{errors.submit}</p>
+          </div>
+        )}
+
+        <button onClick={handleSubmit} disabled={!isValid || postTask.isPending}
+          className="w-full bg-[#B8860B] text-white font-body-md text-body-md py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.12)]">
+          {postTask.isPending ? 'Posting...' : `Post Task — ${totalCost.toLocaleString()} CMP`}
+        </button>
+      </main>
+    </div>
+  );
+}
+
 const TASK_TYPES = [
   { value: 'WATCH_VIDEO', label: 'Watch Video', icon: 'play_circle', minBudget: 2000 },
   { value: 'SHARE_SOCIAL', label: 'Share on Social', icon: 'share', minBudget: 3000 },
@@ -35,9 +228,6 @@ const SOCIAL_ACTIONS = [
   { value: 'FOLLOW', label: 'Follow', icon: 'person_add' },
   { value: 'SUBSCRIBE', label: 'Subscribe', icon: 'subscriptions' },
 ];
-
-const CREATION_FEE = 500;
-const MIN_COIN_PER_PARTICIPANT = 10;
 
 export default function PostTaskPage() {
   const router = useRouter();
@@ -497,6 +687,9 @@ export default function PostTaskPage() {
   const isSocialEngagement = formData.type === 'SOCIAL_ENGAGEMENT';
 
   return (
+    <>
+      <MobilePostTask />
+      <div className="hidden lg:block">
     <main className="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-8 w-full">
       <div className="mb-8">
         <Link href="/tasks" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary mb-4">
@@ -1659,5 +1852,7 @@ export default function PostTaskPage() {
         </div>
       )}
     </main>
+      </div>
+    </>
   );
-}// Force redeploy - Sat Jun 20 23:39:23 CEST 2026
+}
