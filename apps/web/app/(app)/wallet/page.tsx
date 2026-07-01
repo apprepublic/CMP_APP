@@ -59,7 +59,7 @@ function MobileWalletHub() {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-[160px]">
-      <main className="pt-20 px-4 pb-8 flex flex-col gap-6 max-w-3xl mx-auto w-full">
+      <main className="pt-2 px-4 pb-8 flex flex-col gap-6 max-w-3xl mx-auto w-full">
         {/* Balance Hero */}
         <section className="bg-primary-container rounded-xl p-6 relative overflow-hidden shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.12)] border-t border-primary-fixed-dim/20">
           <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none"></div>

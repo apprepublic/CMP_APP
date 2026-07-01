@@ -21,7 +21,7 @@ function MobileArticlesPage() {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-[160px]">
-      <main className="pt-20 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
+      <main className="pt-2 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
         {/* Search Input */}
         <section className="relative group">
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-[22px]">search</span>

@@ -52,7 +52,7 @@ function MobileDashboard() {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-24">
-      <main className="pt-20 px-4 flex flex-col gap-8 max-w-3xl mx-auto">
+      <main className="pt-2 px-4 flex flex-col gap-8 max-w-3xl mx-auto">
         {/* Announcement Banner */}
         <section className="bg-surface-container-lowest rounded-lg p-4 flex items-start gap-3 relative overflow-hidden shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.12)] border-t border-[#B8860B]">
           <div className="absolute top-0 right-0 w-16 h-16 bg-[#B8860B] opacity-10 rounded-bl-full"></div>

@@ -78,7 +78,7 @@ function MobileMusicPage() {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-[160px]">
-      <main className="pt-20 px-4 pb-8 min-h-screen">
+      <main className="pt-2 px-4 pb-8 min-h-screen">
         {/* Search Hero */}
         <section className="mt-4 mb-8">
           <div className="relative group">

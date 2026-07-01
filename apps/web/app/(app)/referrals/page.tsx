@@ -33,7 +33,7 @@ function MobileReferralsPage() {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-[160px]">
-      <main className="pt-20 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
+      <main className="pt-2 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
         {/* Invite Card */}
         <section className="bg-primary-container rounded-xl p-5 relative overflow-hidden shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.12)] border-t border-primary-fixed-dim/20">
           <div className="absolute -right-12 -top-12 w-36 h-36 bg-secondary-container opacity-10 rounded-full blur-2xl"></div>

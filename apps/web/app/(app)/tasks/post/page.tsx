@@ -77,7 +77,7 @@ function MobilePostTask() {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-[160px]">
-      <main className="pt-20 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
+      <main className="pt-2 px-4 pb-8 flex flex-col gap-5 max-w-3xl mx-auto w-full">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="text-on-surface-variant">

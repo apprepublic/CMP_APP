@@ -293,7 +293,7 @@ function MobileTasksPage(props: {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-24">
-      <main className="pt-20 flex flex-col w-full relative overflow-x-hidden">
+      <main className="pt-2 flex flex-col w-full relative overflow-x-hidden">
         {/* Action Header */}
         <section className="bg-primary-container px-4 py-4 flex justify-between items-center gap-4 shadow-md rounded-b-xl">
           <Link href="/tasks/posted" className="flex-1 bg-surface-container-lowest text-primary font-body-lg text-body-lg font-bold py-3 rounded-lg shadow-sm hover:bg-surface-container-low transition-colors active:scale-95 text-center">
