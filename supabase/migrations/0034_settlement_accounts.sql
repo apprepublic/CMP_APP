@@ -72,7 +72,7 @@ BEGIN
 
   -- Insert withdrawal request
   INSERT INTO withdrawal_requests (user_id, amount, coin_amount, status, account_details)
-  VALUES (p_user_id, p_fiat_amount, p_coin_amount::TEXT, 'PENDING', p_account_details)
+  VALUES (p_user_id, p_fiat_amount::DECIMAL(18,2), p_coin_amount::TEXT, 'PENDING', p_account_details)
   RETURNING id INTO v_request_id;
 
   -- Record coin transaction
