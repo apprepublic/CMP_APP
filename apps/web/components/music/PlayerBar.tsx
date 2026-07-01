@@ -92,9 +92,6 @@ export function PlayerBar() {
         {/* Secondary Controls */}
         <div className="flex items-center justify-end gap-4 w-1/3 text-on-primary-container hidden md:flex">
           <span className="font-data-md text-data-md tabular-nums">{fmt(progress)} / {fmt(duration)}</span>
-          <button className="hover:text-secondary transition-colors" aria-label="Queue">
-            <span className="material-symbols-outlined text-[20px]">queue_music</span>
-          </button>
           {/* Download button — only enabled when song permits download */}
           {current?.is_download_enabled ? (
             <a
