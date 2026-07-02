@@ -19,6 +19,33 @@ function MobileDashboard() {
   const coinBalance = wallet?.balance ?? 0;
   const dailyTasks = dailyResp?.tasks ?? [];
 
+  const [newTask, setNewTask] = useState<any>(null);
+  const [newTaskCompleted, setNewTaskCompleted] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('id, title, description, coin_reward')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (!tasks || tasks.length === 0) { setNewTaskCompleted(true); return; }
+      const latest = tasks[0];
+      setNewTask(latest);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { data: completions } = await supabase
+        .from('task_completions')
+        .select('id')
+        .eq('task_id', latest.id)
+        .eq('user_id', user.id)
+        .gte('last_completed_at', today.toISOString());
+      setNewTaskCompleted((completions?.length ?? 0) > 0);
+    })();
+  }, [user?.id]);
+
   const weekDays = useMemo(() => {
     const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const today = new Date();
@@ -53,16 +80,18 @@ function MobileDashboard() {
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-24">
       <main className="pt-2 px-4 flex flex-col gap-8 max-w-3xl mx-auto">
-        {/* Announcement Banner */}
-        <section className="bg-surface-container-lowest rounded-lg p-4 flex items-start gap-3 relative overflow-hidden shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.12)] border-t border-[#B8860B]">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-[#B8860B] opacity-10 rounded-bl-full"></div>
-          <span className="material-symbols-outlined text-[#B8860B] mt-1">campaign</span>
-          <div>
-            <h2 className="font-body-lg text-body-lg text-on-background mb-1">New Task!</h2>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">Earn 150 coins by completing: Share CMP on Twitter</p>
-            <button className="mt-2 text-[#B8860B] font-label-caps text-label-caps hover:underline">View Details</button>
-          </div>
-        </section>
+        {/* New Task Banner */}
+        {newTask && !newTaskCompleted && (
+          <section className="bg-surface-container-lowest rounded-lg p-4 flex items-start gap-3 relative overflow-hidden shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.12)] border-t border-[#B8860B]">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-[#B8860B] opacity-10 rounded-bl-full"></div>
+            <span className="material-symbols-outlined text-[#B8860B] mt-1">campaign</span>
+            <div>
+              <h2 className="font-body-lg text-body-lg text-on-background mb-1">New Task!</h2>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">Earn {newTask.coin_reward} coins by completing: {newTask.title}</p>
+              <Link href="/tasks" className="mt-2 inline-block text-[#B8860B] font-label-caps text-label-caps hover:underline">View Details</Link>
+            </div>
+          </section>
+        )}
 
         {/* Stats Row */}
         <section className="grid grid-cols-2 gap-4">

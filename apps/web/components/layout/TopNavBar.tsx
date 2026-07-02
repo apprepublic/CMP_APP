@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
 import NotificationDropdown from './NotificationDropdown';
@@ -11,15 +10,10 @@ import UserMenuDropdown from './UserMenuDropdown';
 import clsx from 'clsx';
 
 export default function TopNavBar() {
-  const { wallet, loading: walletLoading } = useWallet();
   const { logout } = useUserStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const displayBalance = walletLoading
-    ? '...'
-    : (wallet?.balance ?? 0).toLocaleString();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -54,10 +48,6 @@ export default function TopNavBar() {
           </Link>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-[#B8860B]/5 border border-[#B8860B] rounded-full px-3 py-0.5">
-            <span className="material-symbols-outlined text-[16px] text-[#B8860B]">monetization_on</span>
-            <span className="font-data-lg text-data-lg text-[#B8860B]">{displayBalance}</span>
-          </div>
           <NotificationDropdown />
         </div>
       </div>
