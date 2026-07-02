@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
+import { useWallet } from '@/lib/useWallet';
 import NotificationDropdown from './NotificationDropdown';
 import UserMenuDropdown from './UserMenuDropdown';
 import clsx from 'clsx';
@@ -14,6 +15,7 @@ export default function TopNavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { wallet } = useWallet();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -136,7 +138,7 @@ export default function TopNavBar() {
           <div className="flex items-center bg-[#1A1A1A] lg:bg-secondary-container lg:text-on-secondary-container rounded-lg lg:px-4 lg:py-2 px-3 py-1.5 border lg:border-none border-secondary/30 transition-colors">
             <img src="/coin.png" alt="CMP" className="w-5 h-5 object-contain mr-1.5" />
             <span className="font-data-md text-data-md text-secondary-fixed lg:text-on-secondary-container">
-              {displayBalance}
+              {(wallet?.balance ?? 0).toLocaleString()}
             </span>
           </div>
 
