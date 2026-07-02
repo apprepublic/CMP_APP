@@ -293,9 +293,9 @@ function MobileTasksPage(props: {
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-24">
-      <main className="pt-2 flex flex-col w-full relative overflow-x-hidden">
+        <main className="flex flex-col w-full relative overflow-x-hidden">
         {/* Action Header */}
-        <section className="bg-primary-container px-4 py-4 flex justify-between items-center gap-4 shadow-md rounded-b-xl">
+        <section className="bg-primary-container px-4 py-3 flex justify-between items-center gap-4 shadow-md rounded-b-xl">
           <Link href="/tasks/posted" className="flex-1 bg-surface-container-lowest text-primary font-body-lg text-body-lg font-bold py-3 rounded-lg shadow-sm hover:bg-surface-container-low transition-colors active:scale-95 text-center">
             My Tasks
           </Link>
@@ -305,7 +305,7 @@ function MobileTasksPage(props: {
         </section>
 
         {/* Category Pills */}
-        <section className="px-4 py-4 border-b border-surface-variant/50 sticky top-[4rem] z-40 bg-surface/90 backdrop-blur-md">
+        <section className="px-4 pt-1 pb-3 border-b border-surface-variant/50 sticky top-[4rem] z-40 bg-surface/90 backdrop-blur-md">
           <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
             {categories.map((category) => (
               <button
@@ -324,7 +324,7 @@ function MobileTasksPage(props: {
         </section>
 
         {/* Task List */}
-        <section className="px-4 py-4 flex flex-col gap-4 pb-8">
+        <section className="px-4 pt-2 pb-8 flex flex-col gap-4">
           {(systemTasksLoading || postedTasksLoading) ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="bg-white rounded-lg p-4 h-[200px] animate-pulse shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_20px_rgba(13,27,53,0.08)]" />
