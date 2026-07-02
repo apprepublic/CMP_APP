@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
