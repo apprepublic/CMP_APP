@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { useWallet } from '@/lib/useWallet';
 import { useUserStore } from '@/stores/userStore';
 
@@ -97,22 +96,9 @@ function CheckoutContent() {
     }
   }, [user, scriptLoaded, fiatAmount, currency, cmpAmount, wallet, router]);
 
-  const handleCryptoPayment = useCallback(async () => {
-    setIsProcessing(true);
-    try {
-      if (wallet && user) {
-        const newBalance = (wallet.balance || 0) + cmpAmount;
-        const { error: walletError } = await supabase.from('wallets').update({ coin_balance: newBalance.toString() } as any).eq('id', wallet.id);
-        if (!walletError) {
-          await supabase.from('coin_transactions').insert({
-            wallet_id: wallet.id, user_id: user.id, type: 'TOPUP', amount: cmpAmount,
-            balance_after: newBalance.toString(), description: 'Top-up ' + cmpAmount + ' CMP via ' + providerName,
-          } as any);
-        }
-      }
-    } catch (error) { console.error('Top-up error:', error); }
-    setTimeout(() => { router.push('/wallet/topup/success?amount=' + fiatAmount + '&method=' + method + '&coins=' + cmpAmount); }, 2000);
-  }, [wallet, user, cmpAmount, providerName, fiatAmount, router]);
+  const handleCryptoPayment = useCallback(() => {
+    router.push(`/wallet/topup/crypto?amount=${fiatAmount}&cmp=${cmpAmount}&currency=${currency}`);
+  }, [fiatAmount, cmpAmount, currency, router]);
 
   const handleProceed = async () => {
     setError('');

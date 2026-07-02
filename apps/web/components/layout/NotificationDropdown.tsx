@@ -30,8 +30,9 @@ export default function NotificationDropdown() {
   // Real-time subscription for notifications
   useEffect(() => {
     if (!user?.id) return;
+    const channelName = `notifications_changes_${user.id}_${Date.now()}`;
     const channel = supabase
-      .channel('notifications_changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
