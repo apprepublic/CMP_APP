@@ -16,6 +16,7 @@ function MobileDashboard() {
   const { data: dailyResp } = useDailyTasks();
 
   const currentStreak = streakResp?.streak?.currentStreak ?? 0;
+  const tasksCompletedToday = streakResp?.streak?.tasksCompletedToday ?? 0;
   const coinBalance = wallet?.balance ?? 0;
   const dailyTasks = dailyResp?.tasks ?? [];
 
@@ -46,6 +47,9 @@ function MobileDashboard() {
     })();
   }, [user?.id]);
 
+  const { data: tasksResp, isLoading: tasksLoading } = useTasks();
+  const totalTasks = tasksResp?.tasks?.length ?? 0;
+
   const weekDays = useMemo(() => {
     const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const today = new Date();
@@ -75,7 +79,7 @@ function MobileDashboard() {
     return 'quickreply';
   };
 
-  const tasksRemaining = dailyTasks.filter((t: any) => !t.isLocked).length;
+  const tasksRemaining = Math.max(0, totalTasks - tasksCompletedToday);
 
   return (
     <div className="lg:hidden min-h-screen bg-surface pb-24">
@@ -376,8 +380,8 @@ export default function DashboardPage() {
                 <div className="h-10 w-24 bg-surface-dim animate-pulse rounded" />
               ) : (
                 <div className="flex items-baseline gap-2">
-                  <h3 className="font-data-lg text-data-lg text-h2 text-on-background">{tasks.length}</h3>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">Tasks</span>
+<h3 className="font-data-lg text-data-lg text-h2 text-on-background">{Math.max(0, tasks.length - (streakResp?.streak?.tasksCompletedToday ?? 0))}</h3>
+                    <span className="font-body-sm text-body-sm text-on-surface-variant">Remaining</span>
                 </div>
               )}
               <Link className="mt-4 inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-[#B8860B] font-medium transition-colors" href="/tasks">
