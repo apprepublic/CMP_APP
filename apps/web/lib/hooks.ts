@@ -44,7 +44,7 @@ export const useTasks = (category?: string) =>
   useQuery({ queryKey: ['tasks', category], queryFn: () => api.getTasks(undefined, category), staleTime: 5 * 60 * 1000 });
 
 export const useDailyTasks = () =>
-  useQuery({ queryKey: ['tasks', 'daily'], queryFn: () => api.getDailyTasks(), staleTime: 5 * 60 * 1000 });
+  useQuery({ queryKey: ['tasks', 'daily'], queryFn: () => api.getDailyTasks(), staleTime: 0, refetchOnMount: 'always' });
 
 export const useStreak = () =>
   useQuery({ queryKey: ['streak'], queryFn: () => api.getStreak(), staleTime: 5 * 60 * 1000 });

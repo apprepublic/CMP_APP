@@ -38,7 +38,9 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-surface">
-      {/* Top Navigation Shell - Desktop/Tablet Only */}
+      {/* Desktop/Tablet Landing Page */}
+      <div className="hidden md:block">
+        {/* Top Navigation Shell - Desktop/Tablet Only */}
 <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
   <Link href="/" className="flex items-center gap-3">
     <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
@@ -134,8 +136,129 @@ export default function LandingPage() {
                   Join the Economy
                   <span className="material-symbols-outlined text-xl">trending_up</span>
                 </Link>
-              </div>
+</div>
+
+      {/* Mobile Landing Page */}
+      <div className="md:hidden min-h-screen bg-surface text-on-surface font-body-md antialiased flex flex-col">
+        <header className="fixed top-0 w-full z-50 bg-primary shadow-[0px_4px_20px_rgba(13,27,53,0.15)] flex justify-between items-center px-4 h-16">
+          <div className="flex items-center gap-2">
+            <span className="font-['Montserrat'] text-[24px] leading-8 font-bold text-gold-metallic">CMPapp</span>
           </div>
+          <Link href="/register">
+            <button className="bg-gold-metallic text-primary font-label-caps text-label-caps px-4 py-2 rounded-full hover:opacity-80 transition-opacity active:scale-95" style={{border: '1px solid #f7bd48', boxShadow: 'inset 0 0 0 1px rgba(247, 189, 72, 0.3)'}}>
+              Sign Up
+            </button>
+          </Link>
+        </header>
+
+        <main className="flex-grow pt-16">
+          <section className="bg-hero-fluid px-4 py-stack-lg text-center">
+            <div className="content-relative flex flex-col items-center justify-center min-h-[442px]">
+              <h1 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-4 max-w-2xl mx-auto">
+                Empower Your Creativity. Monetize Your Passion.
+              </h1>
+              <p className="font-body-md text-body-md text-on-surface-muted mb-6 max-w-xl mx-auto">
+                The platform designed for modern creators to build, share, and earn seamlessly.
+              </p>
+              <Link href="/register">
+                <button className="btn-gold font-body-lg text-body-lg px-8 py-3 rounded-full hover:opacity-80 transition-opacity active:scale-95 inline-flex items-center gap-2">
+                  Join the Economy
+                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </button>
+              </Link>
+            </div>
+          </section>
+
+          <section className="px-4 py-stack-lg bg-surface">
+            <div className="grid grid-cols-1 gap-4 max-w-5xl mx-auto">
+              <div className="neumorphic-card rounded-xl p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 text-gold-metallic">
+                  <span className="material-symbols-outlined text-[24px]">stream</span>
+                </div>
+                <h3 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-1">Stream to Earn</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-muted">Monetize your live content instantly with our integrated coin system.</p>
+              </div>
+              <div className="neumorphic-card rounded-xl p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 text-gold-metallic">
+                  <span className="material-symbols-outlined text-[24px]">task_alt</span>
+                </div>
+                <h3 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-1">Micro-Task Market</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-muted">Complete small tasks for direct payouts to your CMP wallet.</p>
+              </div>
+              <div className="neumorphic-card rounded-xl p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 text-gold-metallic">
+                  <span className="material-symbols-outlined text-[24px]">group_add</span>
+                </div>
+                <h3 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-1">Referral Network</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-muted">Invite friends and earn a percentage of their ongoing success.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="px-4 py-stack-lg bg-surface-container-low">
+            <div className="max-w-4xl mx-auto flex flex-col items-center gap-6">
+              <div className="flex-1 text-center">
+                <h2 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-2">The Coin Economy</h2>
+                <p className="font-body-md text-body-md text-on-surface-muted mb-4">A stable, transparent currency designed for digital creators.</p>
+                <div className="inline-flex items-center gap-4 bg-surface rounded-full py-2 px-6 shadow-sm border border-outline-variant mb-4">
+                  <div className="flex items-center gap-1 font-['JetBrains_Mono'] text-[20px] leading-6 font-semibold text-primary">
+                    <span className="material-symbols-outlined text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
+                    100
+                  </div>
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">=</span>
+                  <div className="font-['JetBrains_Mono'] text-[20px] leading-6 font-semibold text-success-verified">
+                    $1.00 USD
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)]">
+                  <span className="material-symbols-outlined text-[80px] text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="px-4 py-stack-lg bg-surface text-center">
+            <div className="max-w-xl mx-auto neumorphic-card-high rounded-xl p-6">
+              <h2 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-2">Ready to Start Earning?</h2>
+              <p className="font-body-sm text-body-sm text-on-surface-muted mb-4">Join thousands of creators building their digital empire on CMPapp.</p>
+              <form onSubmit={handleEmailSubmit} className="flex flex-col gap-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="neumorphic-input w-full rounded-lg border-outline-variant py-3 px-4 focus:ring-primary focus:border-primary font-body-md text-body-md text-primary placeholder-on-surface-muted"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="btn-primary font-body-md text-body-md py-3 rounded-lg hover:opacity-90 transition-opacity active:scale-95 w-full"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Get Started'}
+                </button>
+              </form>
+            </div>
+          </section>
+        </main>
+
+        <footer className="bg-surface-container-high py-stack-lg px-4 mt-auto">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
+            <div className="text-center">
+              <span className="font-['Montserrat'] text-[20px] font-bold text-primary">CMPapp</span>
+              <p className="font-body-sm text-body-sm text-on-surface-muted mt-1">© 2024 CMPapp. All rights reserved.</p>
+            </div>
+            <div className="flex gap-4 font-body-sm text-body-sm text-on-surface-variant">
+              <Link className="hover:text-primary transition-colors" href="#">Platform</Link>
+              <Link className="hover:text-primary transition-colors" href="#">Company</Link>
+              <Link className="hover:text-primary transition-colors" href="#">Terms</Link>
+              <Link className="hover:text-primary transition-colors" href="#">Privacy</Link>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
         </div>
 
 
@@ -349,6 +472,128 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
+
+      {/* Mobile Landing Page */}
+      <div className="md:hidden min-h-screen bg-surface text-on-surface font-body-md antialiased flex flex-col">
+        <header className="fixed top-0 w-full z-50 bg-primary shadow-[0px_4px_20px_rgba(13,27,53,0.15)] flex justify-between items-center px-4 h-16">
+          <div className="flex items-center gap-2">
+            <span className="font-['Montserrat'] text-[24px] leading-8 font-bold text-gold-metallic">CMPapp</span>
+          </div>
+          <Link href="/register">
+            <button className="bg-gold-metallic text-primary font-label-caps text-label-caps px-4 py-2 rounded-full hover:opacity-80 transition-opacity active:scale-95" style={{border: '1px solid #f7bd48', boxShadow: 'inset 0 0 0 1px rgba(247, 189, 72, 0.3)'}}>
+              Sign Up
+            </button>
+          </Link>
+        </header>
+
+        <main className="flex-grow pt-16">
+          <section className="bg-hero-fluid px-4 py-stack-lg text-center">
+            <div className="content-relative flex flex-col items-center justify-center min-h-[442px]">
+              <h1 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-4 max-w-2xl mx-auto">
+                Empower Your Creativity. Monetize Your Passion.
+              </h1>
+              <p className="font-body-md text-body-md text-on-surface-muted mb-6 max-w-xl mx-auto">
+                The platform designed for modern creators to build, share, and earn seamlessly.
+              </p>
+              <Link href="/register">
+                <button className="btn-gold font-body-lg text-body-lg px-8 py-3 rounded-full hover:opacity-80 transition-opacity active:scale-95 inline-flex items-center gap-2">
+                  Join the Economy
+                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </button>
+              </Link>
+            </div>
+          </section>
+
+          <section className="px-4 py-stack-lg bg-surface">
+            <div className="grid grid-cols-1 gap-4 max-w-5xl mx-auto">
+              <div className="neumorphic-card rounded-xl p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 text-gold-metallic">
+                  <span className="material-symbols-outlined text-[24px]">stream</span>
+                </div>
+                <h3 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-1">Stream to Earn</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-muted">Monetize your live content instantly with our integrated coin system.</p>
+              </div>
+              <div className="neumorphic-card rounded-xl p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 text-gold-metallic">
+                  <span className="material-symbols-outlined text-[24px]">task_alt</span>
+                </div>
+                <h3 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-1">Micro-Task Market</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-muted">Complete small tasks for direct payouts to your CMP wallet.</p>
+              </div>
+              <div className="neumorphic-card rounded-xl p-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-2 text-gold-metallic">
+                  <span className="material-symbols-outlined text-[24px]">group_add</span>
+                </div>
+                <h3 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-1">Referral Network</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-muted">Invite friends and earn a percentage of their ongoing success.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="px-4 py-stack-lg bg-surface-container-low">
+            <div className="max-w-4xl mx-auto flex flex-col items-center gap-6">
+              <div className="flex-1 text-center">
+                <h2 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-2">The Coin Economy</h2>
+                <p className="font-body-md text-body-md text-on-surface-muted mb-4">A stable, transparent currency designed for digital creators.</p>
+                <div className="inline-flex items-center gap-4 bg-surface rounded-full py-2 px-6 shadow-sm border border-outline-variant mb-4">
+                  <div className="flex items-center gap-1 font-['JetBrains_Mono'] text-[20px] leading-6 font-semibold text-primary">
+                    <span className="material-symbols-outlined text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
+                    100
+                  </div>
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">=</span>
+                  <div className="font-['JetBrains_Mono'] text-[20px] leading-6 font-semibold text-success-verified">
+                    $1.00 USD
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)]">
+                  <span className="material-symbols-outlined text-[80px] text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="px-4 py-stack-lg bg-surface text-center">
+            <div className="max-w-xl mx-auto neumorphic-card-high rounded-xl p-6">
+              <h2 className="font-['Montserrat'] text-[24px] leading-8 font-bold text-primary mb-2">Ready to Start Earning?</h2>
+              <p className="font-body-sm text-body-sm text-on-surface-muted mb-4">Join thousands of creators building their digital empire on CMPapp.</p>
+              <form onSubmit={handleEmailSubmit} className="flex flex-col gap-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="neumorphic-input w-full rounded-lg border-outline-variant py-3 px-4 focus:ring-primary focus:border-primary font-body-md text-body-md text-primary placeholder-on-surface-muted"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="btn-primary font-body-md text-body-md py-3 rounded-lg hover:opacity-90 transition-opacity active:scale-95 w-full"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Get Started'}
+                </button>
+              </form>
+            </div>
+          </section>
+        </main>
+
+        <footer className="bg-surface-container-high py-stack-lg px-4 mt-auto">
+          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
+            <div className="text-center">
+              <span className="font-['Montserrat'] text-[20px] font-bold text-primary">CMPapp</span>
+              <p className="font-body-sm text-body-sm text-on-surface-muted mt-1">© 2024 CMPapp. All rights reserved.</p>
+            </div>
+            <div className="flex gap-4 font-body-sm text-body-sm text-on-surface-variant">
+              <Link className="hover:text-primary transition-colors" href="#">Platform</Link>
+              <Link className="hover:text-primary transition-colors" href="#">Company</Link>
+              <Link className="hover:text-primary transition-colors" href="#">Terms</Link>
+              <Link className="hover:text-primary transition-colors" href="#">Privacy</Link>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
