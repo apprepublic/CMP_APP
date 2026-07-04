@@ -211,9 +211,8 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-center">
-                <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)]">
-                  <span className="material-symbols-outlined text-[80px] text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
+              <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)] overflow-hidden">
+                  <img src="/coin.png" alt="CMP Coin" className="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
@@ -547,9 +546,8 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-center">
-                <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)]">
-                  <span className="material-symbols-outlined text-[80px] text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
+              <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)] overflow-hidden">
+                  <img src="/coin.png" alt="CMP Coin" className="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
