@@ -24,5 +24,10 @@
   "packageManager": "npm@10.2.4",
   "engines": {
     "node": ">=20"
+  },
+  "optionalDependencies": {
+    "@next/swc-linux-x64-gnu": "14.2.35",
+    "@next/swc-linux-x64-musl": "14.2.35",
+    "@next/swc-win32-x64-msvc": "14.2.35"
   }
 }
