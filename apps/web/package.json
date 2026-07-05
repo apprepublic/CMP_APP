@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@cmpapp/types": "*",
-    "@cmpapp/utils": "*",
+    "@cmpapp/types": "file:../../packages/types",
+    "@cmpapp/utils": "file:../../packages/utils",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",

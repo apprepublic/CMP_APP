@@ -15,8 +15,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@cmpapp/types": "*",
-    "@cmpapp/utils": "*",
+    "@cmpapp/types": "file:../../packages/types",
+    "@cmpapp/utils": "file:../../packages/utils",
     "@prisma/client": "^5.10.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.4.0",
