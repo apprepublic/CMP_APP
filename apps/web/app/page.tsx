@@ -336,7 +336,9 @@ export default function LandingPage() {
       <div className="md:hidden min-h-screen bg-surface text-on-surface font-body-md antialiased flex flex-col">
         <header className="fixed top-0 w-full z-50 bg-primary shadow-[0px_4px_20px_rgba(13,27,53,0.15)] flex justify-between items-center px-4 h-16">
           <div className="flex items-center gap-2">
-            <span className="font-['Montserrat'] text-[24px] leading-8 font-bold text-gold-metallic">CMPapp</span>
+            <Link href="/">
+              <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
+            </Link>
           </div>
           <Link href="/register">
             <button className="bg-gold-metallic text-primary font-label-caps text-label-caps px-4 py-2 rounded-full hover:opacity-80 transition-opacity active:scale-95" style={{border: '1px solid #f7bd48', boxShadow: 'inset 0 0 0 1px rgba(247, 189, 72, 0.3)'}}>
