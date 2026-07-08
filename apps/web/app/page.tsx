@@ -352,10 +352,10 @@ export default function LandingPage() {
             <img src="/auth.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40" />
             <div className="content-relative flex flex-col items-center justify-center min-h-[442px]">
-              <h1 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-4 max-w-2xl mx-auto">
+              <h1 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-white mb-4 max-w-2xl mx-auto">
                 Empower Your Creativity. Monetize Your Passion.
               </h1>
-              <p className="font-body-md text-body-md text-on-surface-muted mb-6 max-w-xl mx-auto">
+              <p className="font-body-md text-body-md text-white/80 mb-6 max-w-xl mx-auto">
                 The platform designed for modern creators to build, share, and earn seamlessly.
               </p>
               <Link href="/register">
