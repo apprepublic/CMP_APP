@@ -348,7 +348,9 @@ export default function LandingPage() {
         </header>
 
         <main className="flex-grow pt-16">
-          <section className="bg-hero-fluid px-4 py-stack-lg text-center">
+          <section className="relative px-4 py-stack-lg text-center overflow-hidden">
+            <img src="/auth.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/40" />
             <div className="content-relative flex flex-col items-center justify-center min-h-[442px]">
               <h1 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-4 max-w-2xl mx-auto">
                 Empower Your Creativity. Monetize Your Passion.
