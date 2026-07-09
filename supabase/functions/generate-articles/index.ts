@@ -317,8 +317,10 @@ async function generateCoverImage(
 }
 
 // ===========================================
-// MAIN HANDLER
+// MAIN HANDLER WITH RETRY LOOP
 // ===========================================
+
+const MAX_RETRIES = 10;
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -356,141 +358,171 @@ const handler = async (req: Request): Promise<Response> => {
     const critiqueModel = Deno.env.get("OPENROUTER_CRITIQUE_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
     const imageModel = "black-forest-labs/flux.2-klein-4b";
 
-    // Step 1: Select topic
-    console.log("Step 1: Selecting topic...");
-    const { category, topic } = await selectTopic(pool, openRouterKey);
-    console.log(`Selected category="${category}" topic="${topic}"`);
+    // RETRY LOOP: keep trying until successful insertion
+    let attempt = 0;
+    let articleId: string | null = null;
+    let finalDraft: any = null;
+    let finalCategory: string | null = null;
+    let finalTopic: string | null = null;
+    let finalCoverUrl: string | null = null;
 
-    // Step 2: Research
-    console.log("Step 2: Researching...");
-    let sources: { title: string; url: string; content: string }[] = [];
-    try {
-      sources = await researchTopic(topic, tavilyKey);
-    } catch (err) {
-      console.error("Research failed, continuing with empty sources:", err);
-    }
+    while (attempt < MAX_RETRIES && !articleId) {
+      attempt++;
+      console.log(`=== Attempt ${attempt}/${MAX_RETRIES} ===`);
 
-    // Step 3: Write draft
-    console.log("Step 3: Writing draft...");
-    let draft: any;
-    try {
-      draft = await writeDraft(topic, category, sources, openRouterKey);
-    } catch (err: any) {
-      // Log failure and return
-      const client = await pool.connect();
       try {
-        await client.queryObject`
-          INSERT INTO article_generation_logs (category, topic, status, error_message, model_used)
-          VALUES (${category}, ${topic}, 'failed', ${err.message || "Write draft failed"}, ${writerModel})
-        `;
-      } finally {
-        client.release();
+        // Step 1: Select topic (fresh topic each attempt)
+        console.log("Step 1: Selecting topic...");
+        const { category, topic } = await selectTopic(pool, openRouterKey);
+        console.log(`Selected category="${category}" topic="${topic}"`);
+
+        // Step 2: Research
+        console.log("Step 2: Researching...");
+        let sources: { title: string; url: string; content: string }[] = [];
+        try {
+          sources = await researchTopic(topic, tavilyKey);
+        } catch (err) {
+          console.error("Research failed, continuing with empty sources:", err);
+        }
+
+        // Step 3: Write draft
+        console.log("Step 3: Writing draft...");
+        let draft: any;
+        try {
+          draft = await writeDraft(topic, category, sources, openRouterKey);
+        } catch (err: any) {
+          console.error("Write draft failed:", err);
+          throw new Error(`Write draft failed: ${err.message}`);
+        }
+
+        // Step 4: Quality check
+        console.log("Step 4: Quality check...");
+        let qualityPassed = true;
+        let qualityReason = "";
+        if (sources.length > 0) {
+          try {
+            const check = await qualityCheck(draft, sources, openRouterKey);
+            qualityPassed = check.passed;
+            qualityReason = check.reason || "";
+          } catch (err) {
+            console.error("Quality check failed, allowing publish:", err);
+          }
+        }
+
+        if (!qualityPassed) {
+          // Log flagged quality but continue retry loop
+          const client = await pool.connect();
+          try {
+            await client.queryObject`
+              INSERT INTO article_generation_logs (category, topic, status, error_message, source_urls, model_used)
+              VALUES (${category}, ${topic}, 'flagged_quality', ${qualityReason}, ${sources.map((s) => s.url)}, ${writerModel})
+            `;
+          } finally {
+            client.release();
+          }
+          console.log(`Quality check failed: ${qualityReason}. Retrying...`);
+          continue; // Retry with new topic
+        }
+
+        // Step 5: Generate cover image
+        console.log("Step 5: Generating cover image...");
+        const coverImageUrl = await generateCoverImage(topic, openRouterKey, supabase);
+
+        // Step 6: Insert into articles
+        console.log("Step 6: Inserting article...");
+        const newArticleId = crypto.randomUUID();
+        const sourceUrls = sources.map((s) => s.url);
+
+        const client = await pool.connect();
+        try {
+          // Ensure unique slug
+          let slug = draft.slug;
+          const slugCheck = await client.queryObject`
+            SELECT id FROM articles WHERE slug = ${draft.slug} LIMIT 1
+          `;
+          if ((slugCheck.rows as any[]).length > 0) {
+            slug = `${draft.slug}-${Date.now()}`;
+          }
+
+          await client.queryObject`
+            INSERT INTO articles (id, title, slug, content, excerpt, cover_image_url, author_id, category, tags, read_time_minutes, coin_reward, source_urls, is_ai_generated, is_published, published_at)
+            VALUES (
+              ${newArticleId},
+              ${draft.title},
+              ${slug},
+              ${draft.content_html},
+              ${draft.excerpt},
+              ${coverImageUrl},
+              ${authorId},
+              ${category},
+              ${draft.tags},
+              ${draft.read_time_minutes},
+              50,
+              ${sources.map((s) => s.url)},
+              true,
+              true,
+              NOW()
+            )
+          `;
+
+          // Update category config
+          await client.queryObject`
+            UPDATE article_categories_config
+            SET last_generated_at = NOW()
+            WHERE category = ${category}
+          `;
+
+          // Log success
+          await client.queryObject`
+            INSERT INTO article_generation_logs (category, topic, status, article_id, source_urls, model_used, image_model_used, tokens_used)
+            VALUES (${category}, ${topic}, 'success', ${newArticleId}, ${sources.map((s) => s.url)}, ${writerModel}, ${imageModel}, ${0})
+          `;
+
+          // Success! Capture results for response
+          articleId = newArticleId;
+          finalDraft = draft;
+          finalCategory = category;
+          finalTopic = topic;
+          finalCoverUrl = coverImageUrl;
+        } finally {
+          client.release();
+        }
+      } catch (err: any) {
+        console.error(`Attempt ${attempt} failed:`, err);
+        // Log the failure but continue retry loop
+        try {
+          const client = await pool.connect();
+          try {
+            await client.queryObject`
+              INSERT INTO article_generation_logs (category, topic, status, error_message, model_used)
+              VALUES (${'unknown'}, ${'unknown'}, 'failed', ${err.message || "Unknown error"}, ${writerModel})
+            `;
+          } finally {
+            client.release();
+          }
+        } catch (logErr) {
+          console.error("Failed to log error:", logErr);
+        }
+        // Continue to next retry
       }
-      return new Response(
-        JSON.stringify({ error: "Write draft failed", category, topic }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    // Step 4: Quality check
-    console.log("Step 4: Quality check...");
-    let qualityPassed = true;
-    let qualityReason = "";
-    if (sources.length > 0) {
-      try {
-        const check = await qualityCheck(draft, sources, openRouterKey);
-        qualityPassed = check.passed;
-        qualityReason = check.reason || "";
-      } catch (err) {
-        console.error("Quality check failed, allowing publish:", err);
-      }
-    }
-
-    if (!qualityPassed) {
-      const client = await pool.connect();
-      try {
-        await client.queryObject`
-          INSERT INTO article_generation_logs (category, topic, status, error_message, source_urls, model_used)
-          VALUES (${category}, ${topic}, 'flagged_quality', ${qualityReason}, ${sources.map((s) => s.url)}, ${writerModel})
-        `;
-      } finally {
-        client.release();
-      }
-      return new Response(
-        JSON.stringify({ error: "Quality check failed", reason: qualityReason, category, topic }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Step 5: Generate cover image
-    console.log("Step 5: Generating cover image...");
-    const coverImageUrl = await generateCoverImage(topic, openRouterKey, supabase);
-
-    // Step 6: Insert into articles
-    console.log("Step 6: Inserting article...");
-    const articleId = crypto.randomUUID();
-    const sourceUrls = sources.map((s) => s.url);
-    const tokensUsed = 0; // OpenRouter response doesn't always include usage; this is approximate
-
-    const client = await pool.connect();
-    try {
-      // Ensure unique slug
-      let slug = draft.slug;
-      const slugCheck = await client.queryObject`
-        SELECT id FROM articles WHERE slug = ${slug} LIMIT 1
-      `;
-      if ((slugCheck.rows as any[]).length > 0) {
-        slug = `${slug}-${Date.now()}`;
-      }
-
-      await client.queryObject`
-        INSERT INTO articles (id, title, slug, content, excerpt, cover_image_url, author_id, category, tags, read_time_minutes, coin_reward, source_urls, is_ai_generated, is_published, published_at)
-        VALUES (
-          ${articleId},
-          ${draft.title},
-          ${slug},
-          ${draft.content_html},
-          ${draft.excerpt},
-          ${coverImageUrl},
-          ${authorId},
-          ${category},
-          ${draft.tags},
-          ${draft.read_time_minutes},
-          50,
-          ${sourceUrls},
-          true,
-          true,
-          NOW()
-        )
-      `;
-
-      // Update category config
-      await client.queryObject`
-        UPDATE article_categories_config
-        SET last_generated_at = NOW()
-        WHERE category = ${category}
-      `;
-
-      // Log success
-      await client.queryObject`
-        INSERT INTO article_generation_logs (category, topic, status, article_id, source_urls, model_used, image_model_used, tokens_used)
-        VALUES (${category}, ${topic}, 'success', ${articleId}, ${sourceUrls}, ${writerModel}, ${imageModel}, ${tokensUsed})
-      `;
-    } finally {
-      client.release();
+    if (!articleId) {
+      throw new Error(`All ${MAX_RETRIES} attempts failed to generate a valid article`);
     }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`Article generated in ${elapsed}s: "${draft.title}"`);
+    console.log(`Article generated in ${elapsed}s after ${attempt} attempt(s): "${finalDraft.title}"`);
 
     return new Response(
       JSON.stringify({
         success: true,
         article_id: articleId,
-        title: draft.title,
-        slug: draft.slug,
-        category,
-        cover_image_url: coverImageUrl,
+        title: finalDraft.title,
+        slug: finalDraft.slug,
+        category: finalCategory,
+        cover_image_url: finalCoverUrl,
+        attempts: attempt,
         elapsed_seconds: Number(elapsed),
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
