@@ -35,6 +35,8 @@ router.get('/', async (req: Request, res: Response) => {
         readTimeMinutes: true,
         coinReward: true,
         publishedAt: true,
+        isAiGenerated: true,
+        sourceUrls: true,
         author: {
           select: {
             id: true,
@@ -127,7 +129,9 @@ router.get('/category/:category', async (req: Request, res: Response) => {
         category: true,
         readTimeMinutes: true,
         coinReward: true,
-        publishedAt: true
+        publishedAt: true,
+        isAiGenerated: true,
+        sourceUrls: true
       },
       orderBy: { publishedAt: 'desc' },
       skip: (Number(page) - 1) * Number(limit),
@@ -163,7 +167,9 @@ const createArticleSchema = z.object({
   tags: z.array(z.string()).max(10).default([]),
   readTimeMinutes: z.number().min(1).default(5),
   coinReward: z.number().min(10).max(200).default(50),
-  isPublished: z.boolean().default(false)
+  isPublished: z.boolean().default(false),
+  isAiGenerated: z.boolean().default(false),
+  sourceUrls: z.array(z.string()).default([])
 });
 
 router.post('/', authenticate, authorize('ADMIN', 'SUPER_ADMIN'), async (req: Request, res: Response) => {
