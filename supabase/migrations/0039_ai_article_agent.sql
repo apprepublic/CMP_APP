@@ -124,23 +124,35 @@ END $$;
 -- ===========================================
 -- SYSTEM AUTHOR: CMP Editorial
 -- Creates a user for the agent to use as author_id
--- NOTE: This user is NOT tied to Supabase Auth (no auth.uid() trigger)
--- It exists only in the public.users table for FK reference
+-- NOTE: Disables the wallet trigger temporarily since this is a
+-- system user (not a real person who needs a wallet)
 -- ===========================================
 DO $$
 DECLARE
   existing_id UUID;
+  new_user_id UUID;
 BEGIN
   SELECT id INTO existing_id FROM public.users WHERE email = 'editorial@cmpapp.ng';
   IF existing_id IS NULL THEN
+    -- Temporarily disable the wallet trigger
+    ALTER TABLE public.users DISABLE TRIGGER trigger_create_wallet_on_user;
+
+    new_user_id := gen_random_uuid();
     INSERT INTO public.users (id, email, full_name, is_active, created_at, updated_at)
     VALUES (
-      gen_random_uuid(),
+      new_user_id,
       'editorial@cmpapp.ng',
       'CMP Editorial',
       true,
       NOW(),
       NOW()
     );
+
+    -- Re-enable the trigger
+    ALTER TABLE public.users ENABLE TRIGGER trigger_create_wallet_on_user;
+
+    -- Also create a wallet for this user manually (needed for FK references)
+    INSERT INTO public.wallets (user_id, coin_balance, lifetime_earned, lifetime_spent)
+    VALUES (new_user_id, 0, 0, 0);
   END IF;
 END $$;
