@@ -194,6 +194,7 @@ class ApiService {
     ]);
 
     let approvedPosted = new Map<string, boolean>();
+    const articleClaimsMap = new Map<string, number>();
     if (session?.user) {
       const { data: completions } = await supabase
         .from('user_task_completions')
@@ -201,6 +202,17 @@ class ApiService {
         .eq('user_id', session.user.id)
         .eq('status', 'APPROVED');
       (completions || []).forEach((c: any) => approvedPosted.set(c.posted_task_id, true));
+
+      const { data: articleClaims } = await supabase
+        .from('coin_transactions')
+        .select('metadata')
+        .eq('user_id', session.user.id)
+        .eq('type', 'earn')
+        .ilike('description', 'Read article:%');
+
+      (articleClaims || [])
+        .filter((t: any) => t.metadata?.article_id)
+        .forEach((t: any) => articleClaimsMap.set(t.metadata.article_id, 1));
     }
 
     const postedTasks = (postedRes.data || []).map((t: any) => ({
@@ -214,26 +226,29 @@ class ApiService {
 
     const systemTasks = systemRes.data || [];
 
-    const articleTasks = (articlesRes.data || []).map((a: any) => ({
-      id: `article-${a.id}`,
-      title: `Read: ${a.title}`,
-      description: a.excerpt || `Read "${a.title}" and earn coins`,
-      type: 'CONTENT',
-      category: 'Article',
-      coin_reward: a.coin_reward || 50,
-      coinReward: a.coin_reward || 50,
-      requiresAdGate: true,
-      linkedArticle: { slug: a.slug, title: a.title },
-      cover_image_url: a.cover_image_url,
-      read_time_minutes: a.read_time_minutes || 5,
-      dailyLimit: 1,
-      frequency: 'DAILY',
-      is_active: true,
-      isLocked: false,
-      completedToday: 0,
-      canComplete: true,
-      sort_order: 0,
-    }));
+    const articleTasks = (articlesRes.data || []).map((a: any) => {
+      const completedToday = articleClaimsMap.get(a.id) || 0;
+      return {
+        id: `article-${a.id}`,
+        title: `Read: ${a.title}`,
+        description: a.excerpt || `Read "${a.title}" and earn coins`,
+        type: 'CONTENT',
+        category: 'Article',
+        coin_reward: a.coin_reward || 50,
+        coinReward: a.coin_reward || 50,
+        requiresAdGate: true,
+        linkedArticle: { slug: a.slug, title: a.title },
+        cover_image_url: a.cover_image_url,
+        read_time_minutes: a.read_time_minutes || 5,
+        dailyLimit: 1,
+        frequency: 'DAILY',
+        is_active: true,
+        isLocked: completedToday >= 1,
+        completedToday,
+        canComplete: completedToday < 1,
+        sort_order: 0,
+      };
+    });
 
     return { tasks: [...articleTasks, ...systemTasks, ...postedTasks] };
   }
@@ -702,6 +717,28 @@ class ApiService {
       title: 'Reading Reward',
       message: `You earned ${article.coin_reward} coins for reading: ${article.title}`,
     });
+
+    // If article is linked to a system task, track completion there too
+    const articleAny = article as any;
+    if (articleAny.linked_task_id) {
+      const { data: existingCompletion } = await supabase
+        .from('task_completions')
+        .select('id, completion_count')
+        .eq('user_id', session.user.id)
+        .eq('task_id', articleAny.linked_task_id)
+        .maybeSingle();
+
+      if (existingCompletion) {
+        await supabase
+          .from('task_completions')
+          .update({ completion_count: (existingCompletion.completion_count || 0) + 1, last_completed_at: new Date().toISOString(), status: 'COMPLETED' })
+          .eq('id', existingCompletion.id);
+      } else {
+        await supabase
+          .from('task_completions')
+          .insert({ user_id: session.user.id, task_id: articleAny.linked_task_id, status: 'COMPLETED', completion_count: 1, last_completed_at: new Date().toISOString() });
+      }
+    }
 
     // Update streak
     await this.updateTaskCompletionStreak(session.user.id);
