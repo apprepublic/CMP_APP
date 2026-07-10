@@ -21,7 +21,7 @@ function slugify(text: string): string {
 
 async function callOpenRouter(
   model: string,
-  messages: { role: string; content: any }[],
+  messages: { role: string; content: string }[],
   apiKey: string,
   responseFormat?: "json_object"
 ): Promise<any> {
@@ -50,7 +50,25 @@ async function callOpenRouter(
     throw new Error(`OpenRouter error ${res.status}: ${text}`);
   }
 
-  return res.json();
+  const data = await res.json();
+  const raw = data.choices?.[0]?.message?.content;
+  if (!raw) throw new Error("Empty response from OpenRouter");
+
+  // Some OpenRouter models don't support response_format — extract JSON if raw isn't pure JSON
+  let content = raw;
+  if (responseFormat) {
+    try {
+      JSON.parse(raw);
+    } catch {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) content = jsonMatch[0];
+      else content = JSON.stringify({ content: raw.trim() });
+    }
+  }
+
+  return {
+    choices: [{ message: { content } }],
+  };
 }
 
 async function generateImageViaPollinations(prompt: string): Promise<Uint8Array> {
@@ -198,7 +216,7 @@ async function selectTopic(pool: Pool, openRouterKey: string): Promise<{ categor
       : "";
 
     const response = await callOpenRouter(
-      Deno.env.get("OPENROUTER_WRITER_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free",
+      Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash",
       [
         {
           role: "system",
@@ -265,7 +283,7 @@ async function writeDraft(
     .join("\n\n");
 
   const response = await callOpenRouter(
-    Deno.env.get("OPENROUTER_WRITER_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free",
+    Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash",
     [
       {
         role: "system",
@@ -319,7 +337,7 @@ async function qualityCheck(
     .join("\n\n");
 
   const response = await callOpenRouter(
-    Deno.env.get("OPENROUTER_CRITIQUE_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free",
+    Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash",
     [
       {
         role: "system",
@@ -410,7 +428,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     pool = new Pool(dbUrl, 1);
-    const writerModel = Deno.env.get("OPENROUTER_WRITER_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
+    const writerModel = Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash";
     const imageModel = "black-forest-labs/flux.2-klein-4b";
 
     // RETRY LOOP: keep trying until successful insertion
