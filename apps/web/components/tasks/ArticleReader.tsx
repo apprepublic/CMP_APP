@@ -20,6 +20,15 @@ function createConfetti() {
 }
 
 function renderArticleContent(content: string) {
+  const isHtml = /^\s*<(h[12]|p|ul|ol|div|section|article)/i.test(content.trim());
+  if (isHtml) {
+    return (
+      <div
+        className="article-html-content"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
   const paragraphs = content.split('\n\n');
   return paragraphs.map((paragraph: string, index: number) => {
     const imgMatch = paragraph.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);

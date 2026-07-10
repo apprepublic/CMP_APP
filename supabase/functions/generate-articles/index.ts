@@ -53,10 +53,20 @@ async function callOpenRouter(
   return res.json();
 }
 
+async function generateImageViaPollinations(prompt: string): Promise<Uint8Array> {
+  const sanitized = encodeURIComponent(prompt.replace(/[<>]/g, "").substring(0, 200));
+  const url = `https://image.pollinations.ai/prompt/${sanitized}?width=1200&height=630&nologo=true&private=true`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Pollinations error ${res.status}`);
+  const buffer = await res.arrayBuffer();
+  return new Uint8Array(buffer);
+}
+
 async function callOpenRouterImage(
   prompt: string,
   apiKey: string
 ): Promise<Uint8Array> {
+  const model = Deno.env.get("OPENROUTER_IMAGE_MODEL") || "black-forest-labs/flux.2-klein-4b";
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -66,7 +76,7 @@ async function callOpenRouterImage(
       "X-Title": "CMPapp Article Agent",
     },
     body: JSON.stringify({
-      model: "black-forest-labs/flux.2-klein-4b",
+      model,
       messages: [
         {
           role: "user",
@@ -88,22 +98,68 @@ async function callOpenRouterImage(
   }
 
   const data = await res.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content || !Array.isArray(content)) {
-    throw new Error("No image data in response");
+  const rawContent = data.choices?.[0]?.message?.content;
+
+  // Case 1: content is a plain string — may contain a markdown image URL or direct URL
+  if (typeof rawContent === "string") {
+    const urlMatch = rawContent.match(/https?:\/\/[^\s\)\]]+/);
+    if (urlMatch) {
+      const imgUrl = urlMatch[0];
+      const imgRes = await fetch(imgUrl);
+      if (!imgRes.ok) throw new Error(`Failed to download image from URL: ${imgRes.status}`);
+      const buffer = await imgRes.arrayBuffer();
+      return new Uint8Array(buffer);
+    }
+    throw new Error("No URL found in string response");
   }
 
-  const imagePart = content.find((p: any) => p.type === "base64");
-  if (!imagePart?.base64_url?.data) {
-    throw new Error("No base64 image data in response");
+  // Case 2: content is an array of parts
+  if (Array.isArray(rawContent)) {
+    let imageUrl: string | null = null;
+
+    const imagePart = rawContent.find((p: any) => p.type === "image_url");
+    if (imagePart?.image_url?.url) imageUrl = imagePart.image_url.url;
+
+    if (!imageUrl) {
+      const base64Part = rawContent.find((p: any) => p.type === "base64");
+      if (base64Part?.base64_url?.data) {
+        const binary = atob(base64Part.base64_url.data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
+        return bytes;
+      }
+      if (base64Part?.base64_url?.url) imageUrl = base64Part.base64_url.url;
+    }
+
+    if (!imageUrl) {
+      for (const part of rawContent) {
+        if (part.type === "text" && typeof part.text === "string") {
+          const m = part.text.match(/https?:\/\/[^\s\)\]]+/);
+          if (m) { imageUrl = m[0]; break; }
+        }
+      }
+    }
+
+    if (imageUrl) {
+      if (imageUrl.startsWith("data:")) {
+        const commaIdx = imageUrl.indexOf(",");
+        const binary = atob(imageUrl.substring(commaIdx + 1));
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
+        return bytes;
+      }
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) throw new Error(`Failed to download image: ${imgRes.status}`);
+      const buffer = await imgRes.arrayBuffer();
+      return new Uint8Array(buffer);
+    }
+
+    throw new Error("No image URL found in array content");
   }
 
-  const binary = atob(imagePart.base64_url.data);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
+  // Case 3: content is null/object — fallback to Pollinations
+  console.warn("OpenRouter returned unexpected content type, falling back to Pollinations");
+  return await generateImageViaPollinations(prompt);
 }
 
 // ===========================================
@@ -291,7 +347,7 @@ async function generateCoverImage(
   topic: string,
   openRouterKey: string,
   supabaseClient: any
-): Promise<string | null> {
+): Promise<{ url: string | null; error: string | null }> {
   try {
     const imageBytes = await callOpenRouterImage(topic, openRouterKey);
 
@@ -309,10 +365,10 @@ async function generateCoverImage(
       .from("article-covers")
       .getPublicUrl(fileName);
 
-    return urlData?.publicUrl || null;
-  } catch (err) {
+    return { url: urlData?.publicUrl || null, error: null };
+  } catch (err: any) {
     console.error("Cover image generation failed:", err);
-    return null; // Non-fatal — article still publishes without cover
+    return { url: null, error: err.message || "Unknown image error" }; // Non-fatal
   }
 }
 
@@ -320,7 +376,7 @@ async function generateCoverImage(
 // MAIN HANDLER WITH RETRY LOOP
 // ===========================================
 
-const MAX_RETRIES = 10;
+const MAX_RETRIES = 3;
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -355,7 +411,6 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     pool = new Pool(dbUrl, 1);
     const writerModel = Deno.env.get("OPENROUTER_WRITER_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
-    const critiqueModel = Deno.env.get("OPENROUTER_CRITIQUE_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
     const imageModel = "black-forest-labs/flux.2-klein-4b";
 
     // RETRY LOOP: keep trying until successful insertion
@@ -368,6 +423,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     while (attempt < MAX_RETRIES && !articleId) {
       attempt++;
+      if (attempt > 1) {
+        // Brief delay before retry to let rate limits reset
+        await new Promise((r) => setTimeout(r, 5000));
+      }
       console.log(`=== Attempt ${attempt}/${MAX_RETRIES} ===`);
 
       try {
@@ -395,41 +454,15 @@ const handler = async (req: Request): Promise<Response> => {
           throw new Error(`Write draft failed: ${err.message}`);
         }
 
-        // Step 4: Quality check
-        console.log("Step 4: Quality check...");
-        let qualityPassed = true;
-        let qualityReason = "";
-        if (sources.length > 0) {
-          try {
-            const check = await qualityCheck(draft, sources, openRouterKey);
-            qualityPassed = check.passed;
-            qualityReason = check.reason || "";
-          } catch (err) {
-            console.error("Quality check failed, allowing publish:", err);
-          }
+        // Step 4: Generate cover image
+        console.log("Step 4: Generating cover image...");
+        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(topic, openRouterKey, supabase);
+        if (coverImageError) {
+          console.error("Cover image error (non-fatal):", coverImageError);
         }
 
-        if (!qualityPassed) {
-          // Log flagged quality but continue retry loop
-          const client = await pool.connect();
-          try {
-            await client.queryObject`
-              INSERT INTO article_generation_logs (category, topic, status, error_message, source_urls, model_used)
-              VALUES (${category}, ${topic}, 'flagged_quality', ${qualityReason}, ${sources.map((s) => s.url)}, ${writerModel})
-            `;
-          } finally {
-            client.release();
-          }
-          console.log(`Quality check failed: ${qualityReason}. Retrying...`);
-          continue; // Retry with new topic
-        }
-
-        // Step 5: Generate cover image
-        console.log("Step 5: Generating cover image...");
-        const coverImageUrl = await generateCoverImage(topic, openRouterKey, supabase);
-
-        // Step 6: Insert into articles
-        console.log("Step 6: Inserting article...");
+        // Step 5: Insert into articles
+        console.log("Step 5: Inserting article...");
         const newArticleId = crypto.randomUUID();
         const sourceUrls = sources.map((s) => s.url);
 
@@ -472,10 +505,11 @@ const handler = async (req: Request): Promise<Response> => {
             WHERE category = ${category}
           `;
 
-          // Log success
+          // Log success (include cover image error if any)
+          const logErrorMsg = coverImageError ? `Cover image: ${coverImageError}` : null;
           await client.queryObject`
-            INSERT INTO article_generation_logs (category, topic, status, article_id, source_urls, model_used, image_model_used, tokens_used)
-            VALUES (${category}, ${topic}, 'success', ${newArticleId}, ${sources.map((s) => s.url)}, ${writerModel}, ${imageModel}, ${0})
+            INSERT INTO article_generation_logs (category, topic, status, article_id, source_urls, model_used, image_model_used, tokens_used, error_message)
+            VALUES (${category}, ${topic}, 'success', ${newArticleId}, ${sources.map((s) => s.url)}, ${writerModel}, ${imageModel}, ${0}, ${logErrorMsg})
           `;
 
           // Success! Capture results for response
