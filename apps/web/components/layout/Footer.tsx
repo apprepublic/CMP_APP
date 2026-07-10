@@ -9,10 +9,10 @@ const footerLinks = {
     { href: '/contests', label: 'Contests' },
   ],
   company: [
-    { href: '/about', label: 'About Us' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/careers', label: 'Careers' },
-    { href: '/blog', label: 'Blog' },
+    { href: '/', label: 'Home' },
+    { href: '/articles', label: 'Articles' },
+    { href: '/contests', label: 'Contests' },
+    { href: '/referrals', label: 'Referrals' },
   ],
   legal: [
     { href: '/terms', label: 'Terms of Service' },

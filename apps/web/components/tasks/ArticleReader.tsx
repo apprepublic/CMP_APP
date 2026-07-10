@@ -190,59 +190,16 @@ export default function ArticleReader({ slug }: { slug: string }) {
   return (
     <div className="bg-background text-on-surface font-body-md min-h-screen">
 
-      {/* ── STICKY HEADER with progress bar ─────────────── */}
-      <header
-        className="fixed top-0 w-full z-50 shadow-md h-20 flex justify-between items-center px-6 lg:px-[40px]"
-        style={{ backdropFilter: 'blur(12px)', background: 'rgba(13, 27, 53, 0.95)' }}
-      >
-        <div className="flex items-center gap-4">
-          <Link href="/articles" className="text-white hover:text-[#ffdea6] transition-colors">
-            <span className="material-symbols-outlined text-[32px]">arrow_back</span>
-          </Link>
-          <div className="flex flex-col">
-            <span className="font-h3 text-[20px] font-bold text-white">CMPapp</span>
-            <span className="text-[10px] text-[#fdc34d] tracking-widest uppercase font-bold">
-              {article.category || 'Article'}
-            </span>
-          </div>
-        </div>
-
-        {/* Desktop progress tracker */}
-        <div className="hidden md:flex flex-1 mx-12 flex-col gap-1">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#7784a3]">Reading Progress</span>
-            <span className="font-data-md text-data-md text-[#ffdea6]">{Math.round(readingProgress)}%</span>
-          </div>
-          <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${readingProgress}%`,
-                background: '#ffdea6',
-                boxShadow: '0 0 8px rgba(253,195,77,0.5)',
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 px-4 py-2 border border-[#7b5800] rounded-lg bg-white/5">
-            <span className="material-symbols-outlined text-[#7b5800] text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>monetization_on</span>
-            <span className="font-data-md text-data-md text-[#ffdea6]">{coinReward} CMP</span>
-          </div>
-        </div>
-
-        {/* Mobile progress bar */}
-        <div className="absolute bottom-0 left-0 w-full h-[2px] md:hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-          <div
-            className="h-full transition-all duration-300"
-            style={{ width: `${readingProgress}%`, background: '#ffdea6' }}
-          />
-        </div>
-      </header>
+      {/* ── READING PROGRESS BAR (thin, full-width) ──────── */}
+      <div className="fixed top-0 left-0 w-full h-[3px] z-50" style={{ background: 'rgba(255,255,255,0.1)' }}>
+        <div
+          className="h-full transition-all duration-300"
+          style={{ width: `${readingProgress}%`, background: '#ffdea6', boxShadow: '0 0 8px rgba(253,195,77,0.5)' }}
+        />
+      </div>
 
       {/* ── MAIN ARTICLE CONTENT ────────────────────────── */}
-      <main className="pt-20 pb-48 max-w-4xl mx-auto px-6 lg:px-0">
+      <main className="pt-6 pb-48 max-w-4xl mx-auto px-6 lg:px-0">
 
         {/* Hero */}
         <section className="mt-12 mb-16">

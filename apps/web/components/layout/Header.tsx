@@ -84,7 +84,7 @@ export function Header() {
                   </span>
                 </Button>
               </Link>
-              <Link href="/profile">
+              <Link href="/settings">
                 <NeuIconBadge size="sm">
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />

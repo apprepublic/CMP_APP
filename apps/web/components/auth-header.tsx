@@ -25,7 +25,7 @@ export function AuthHeader() {
             <button className="text-white hover:text-secondary-fixed transition-colors">
               <span className="material-symbols-outlined text-2xl">notifications</span>
             </button>
-            <Link href="/profile">
+            <Link href="/settings">
               <span className="material-symbols-outlined text-2xl text-white hover:text-secondary-fixed transition-colors cursor-pointer">account_circle</span>
             </Link>
           </>
