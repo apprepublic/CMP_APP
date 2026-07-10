@@ -1,11 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ArticleReader from '@/components/tasks/ArticleReader';
 
-export default function ArticlePage() {
+function ArticleContent() {
   const searchParams = useSearchParams();
-  const slug = searchParams.get('slug');
+  const slug = searchParams?.get('slug');
 
   if (!slug) {
     return (
@@ -19,4 +20,18 @@ export default function ArticlePage() {
   }
 
   return <ArticleReader slug={slug} />;
+}
+
+export default function ArticlePage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-background min-h-screen flex items-center justify-center">
+        <div className="text-center p-10">
+          <p className="font-h3 text-h3 text-primary mb-2">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ArticleContent />
+    </Suspense>
+  );
 }
