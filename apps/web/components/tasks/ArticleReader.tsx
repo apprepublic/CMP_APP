@@ -159,10 +159,7 @@ export default function ArticleReader({ slug }: { slug: string }) {
   if (isLoading) {
     return (
       <div className="bg-background min-h-screen">
-        <header className="fixed top-0 left-0 w-full z-50 h-20 bg-primary shadow-md flex items-center px-6">
-          <div className="h-6 w-32 bg-primary-fixed-dim/20 rounded animate-pulse" />
-        </header>
-        <main className="pt-20 max-w-4xl mx-auto px-6 py-12 space-y-6">
+        <main className="max-w-4xl mx-auto px-6 py-12 space-y-6">
           <div className="h-10 w-3/4 bg-surface-container rounded-lg animate-pulse" />
           <div className="h-64 w-full bg-surface-container rounded-xl animate-pulse" />
           <div className="space-y-3">
