@@ -366,9 +366,20 @@ async function generateCoverImage(
   openRouterKey: string,
   supabaseClient: any
 ): Promise<{ url: string | null; error: string | null }> {
+  let imageBytes: Uint8Array | null = null;
   try {
-    const imageBytes = await callOpenRouterImage(topic, openRouterKey);
+    imageBytes = await callOpenRouterImage(topic, openRouterKey);
+  } catch (err: any) {
+    console.warn("OpenRouter image failed, trying Pollinations:", err.message);
+    try {
+      imageBytes = await generateImageViaPollinations(topic);
+    } catch (e) {
+      return { url: null, error: `Image failed: ${e.message}` };
+    }
+  }
+  if (!imageBytes) return { url: null, error: "No image generated" };
 
+  try {
     const fileName = `cover-${crypto.randomUUID()}.png`;
     const { data, error } = await supabaseClient.storage
       .from("article-covers")
@@ -376,17 +387,14 @@ async function generateCoverImage(
         contentType: "image/png",
         upsert: false,
       });
-
     if (error) throw error;
-
     const { data: urlData } = supabaseClient.storage
       .from("article-covers")
       .getPublicUrl(fileName);
-
     return { url: urlData?.publicUrl || null, error: null };
   } catch (err: any) {
-    console.error("Cover image generation failed:", err);
-    return { url: null, error: err.message || "Unknown image error" }; // Non-fatal
+    console.error("Storage upload failed:", err);
+    return { url: null, error: err.message || "Unknown error" };
   }
 }
 
@@ -394,29 +402,24 @@ async function generateImagePrompt(
   draft: { title: string; excerpt: string; content_html: string },
   openRouterKey: string
 ): Promise<string> {
-  try {
-    const response = await callOpenRouter(
-      "google/gemma-4-31b-it",
-      [
-        {
-          role: "system",
-          content: "Generate a detailed, vivid image generation prompt for an editorial cover image based on this article. Describe a scene — no text overlay, no logos, no real identifiable people. Return ONLY the prompt text, 1-2 sentences.",
-        },
-        {
-          role: "user",
-          content: `Article title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${(draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000)}`,
-        },
-      ],
-      openRouterKey
-    );
-
-    const prompt = response.choices?.[0]?.message?.content?.trim();
-    if (prompt && prompt.length > 10) return prompt;
-    throw new Error("Generated prompt too short or empty");
-  } catch (err: any) {
-    console.error("Image prompt generation failed, falling back to topic:", err.message);
-    return draft.title; // fallback
+  const content = (draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000);
+  for (const model of ["z-ai/glm-5.2", "deepseek/deepseek-v4-flash"]) {
+    try {
+      const response = await callOpenRouter(
+        model,
+        [
+          { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
+          { role: "user", content: `Title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${content}` },
+        ],
+        openRouterKey
+      );
+      const raw = response.choices?.[0]?.message?.content?.trim();
+      if (raw && raw.length > 10) return raw.replace(/^["'\s]+|["'\s]+$/g, "");
+    } catch (err: any) {
+      console.warn(`Image prompt via ${model} failed: ${err.message}`);
+    }
   }
+  return draft.title;
 }
 
 // ===========================================
