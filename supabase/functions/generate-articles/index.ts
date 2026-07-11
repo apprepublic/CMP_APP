@@ -390,6 +390,35 @@ async function generateCoverImage(
   }
 }
 
+async function generateImagePrompt(
+  draft: { title: string; excerpt: string; content_html: string },
+  openRouterKey: string
+): Promise<string> {
+  try {
+    const response = await callOpenRouter(
+      "google/gemma-4-31b-it",
+      [
+        {
+          role: "system",
+          content: "Generate a detailed, vivid image generation prompt for an editorial cover image based on this article. Describe a scene — no text overlay, no logos, no real identifiable people. Return ONLY the prompt text, 1-2 sentences.",
+        },
+        {
+          role: "user",
+          content: `Article title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${(draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000)}`,
+        },
+      ],
+      openRouterKey
+    );
+
+    const prompt = response.choices?.[0]?.message?.content?.trim();
+    if (prompt && prompt.length > 10) return prompt;
+    throw new Error("Generated prompt too short or empty");
+  } catch (err: any) {
+    console.error("Image prompt generation failed, falling back to topic:", err.message);
+    return draft.title; // fallback
+  }
+}
+
 // ===========================================
 // MAIN HANDLER WITH RETRY LOOP
 // ===========================================
@@ -429,7 +458,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     pool = new Pool(dbUrl, 1);
     const writerModel = Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash";
-    const imageModel = "black-forest-labs/flux.2-klein-4b";
+    const imageModel = "sourceful/riverflow-v2-fast";
 
     // RETRY LOOP: keep trying until successful insertion
     let attempt = 0;
@@ -472,15 +501,20 @@ const handler = async (req: Request): Promise<Response> => {
           throw new Error(`Write draft failed: ${err.message}`);
         }
 
-        // Step 4: Generate cover image
-        console.log("Step 4: Generating cover image...");
-        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(topic, openRouterKey, supabase);
+        // Step 4: Generate image prompt from article content
+        console.log("Step 4: Generating image prompt from article...");
+        const imagePrompt = await generateImagePrompt(draft, openRouterKey);
+        console.log(`Image prompt: "${imagePrompt.substring(0, 100)}..."`);
+
+        // Step 5: Generate cover image
+        console.log("Step 5: Generating cover image...");
+        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(imagePrompt, openRouterKey, supabase);
         if (coverImageError) {
           console.error("Cover image error (non-fatal):", coverImageError);
         }
 
-        // Step 5: Insert into articles
-        console.log("Step 5: Inserting article...");
+        // Step 6: Insert into articles
+        console.log("Step 6: Inserting article...");
         const newArticleId = crypto.randomUUID();
         const sourceUrls = sources.map((s) => s.url);
 
