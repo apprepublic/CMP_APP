@@ -84,7 +84,7 @@ async function callOpenRouterImage(
   prompt: string,
   apiKey: string
 ): Promise<Uint8Array> {
-  const model = Deno.env.get("OPENROUTER_IMAGE_MODEL") || "black-forest-labs/flux.2-klein-4b";
+  const model = Deno.env.get("OPENROUTER_IMAGE_MODEL") || "sourceful/riverflow-v2-fast";
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
