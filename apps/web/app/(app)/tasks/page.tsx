@@ -543,11 +543,11 @@ export default function EarnMarketplacePage() {
 
     const dailyInfo = dailyStatusMap.get(task.id);
     if (dailyInfo?.linkedArticle?.slug) {
-      window.location.href = `/tasks/article/${dailyInfo.linkedArticle.slug}`;
+      window.location.href = `/tasks/article?slug=${dailyInfo.linkedArticle.slug}`;
       return;
     }
     if (task.linkedArticle?.slug) {
-      window.location.href = `/tasks/article/${task.linkedArticle.slug}`;
+      window.location.href = `/tasks/article?slug=${task.linkedArticle.slug}`;
       return;
     }
     if (!dailyInfo?.isLocked && !dailyInfo?.canComplete === false) {

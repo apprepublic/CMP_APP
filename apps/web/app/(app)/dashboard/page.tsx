@@ -234,7 +234,7 @@ function MobileDashboard() {
                   {task.isLocked ? (
                     <button className="bg-surface-variant text-on-surface-muted px-4 py-2 rounded-lg font-label-caps text-label-caps cursor-not-allowed" disabled>Done</button>
                   ) : (
-                    <Link href={task.linkedArticle?.slug ? `/tasks/article/${task.linkedArticle.slug}` : '/tasks'} className="bg-[#B8860B] text-primary px-4 py-2 rounded-lg font-label-caps text-label-caps transition-all shadow-[-2px_-2px_5px_rgba(255,255,255,0.4),2px_2px_5px_rgba(13,27,53,0.15)] border border-[#f7bd48] hover:brightness-110 active:scale-[0.98]">
+                    <Link href={task.linkedArticle?.slug ? `/tasks/article?slug=${task.linkedArticle.slug}` : '/tasks'} className="bg-[#B8860B] text-primary px-4 py-2 rounded-lg font-label-caps text-label-caps transition-all shadow-[-2px_-2px_5px_rgba(255,255,255,0.4),2px_2px_5px_rgba(13,27,53,0.15)] border border-[#f7bd48] hover:brightness-110 active:scale-[0.98]">
                       Start
                     </Link>
                   )}
