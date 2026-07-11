@@ -1,0 +1,1 @@
+SELECT status, error_message, model_used, category, topic FROM article_generation_logs ORDER BY created_at DESC LIMIT 5;
