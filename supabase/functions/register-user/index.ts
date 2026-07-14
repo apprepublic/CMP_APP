@@ -66,8 +66,10 @@ const handler = async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "An account with this email already exists. Please sign in." });
     }
 
-    // Generate verification credentials
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate verification credentials (cryptographically secure RNG)
+    const randBuf = new Uint32Array(1);
+    crypto.getRandomValues(randBuf);
+    const verificationCode = String(100000 + (randBuf[0] % 900000));
     const verificationToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -123,12 +125,12 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (emailError) {
         console.error("Resend error:", emailError);
-      } else {
-        console.log("Verification email sent:", emailData?.id);
+        return jsonResponse({ error: "Failed to send verification email. Please try again." });
       }
+      console.log("Verification email sent:", emailData?.id);
     } catch (emailError) {
       console.error("Email send exception:", emailError);
-      // Non-fatal: registration row exists, user can request resend
+      return jsonResponse({ error: "Failed to send verification email. Please try again." });
     }
 
     return jsonResponse({
