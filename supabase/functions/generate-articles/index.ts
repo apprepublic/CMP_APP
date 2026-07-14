@@ -327,40 +327,6 @@ Return ONLY valid JSON with this exact structure:
   };
 }
 
-async function qualityCheck(
-  draft: { title: string; content_html: string },
-  sources: { title: string; url: string; content: string }[],
-  openRouterKey: string
-): Promise<{ passed: boolean; reason?: string }> {
-  const sourcesText = sources
-    .map((s, i) => `[${i + 1}] ${s.title}: ${s.content.substring(0, 800)}`)
-    .join("\n\n");
-
-  const response = await callOpenRouter(
-    Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash",
-    [
-      {
-        role: "system",
-        content: `You are a fact-checker. Review the article against the provided sources. Identify any claims, statistics, or statements that are NOT supported by the sources.
-
-Return ONLY JSON: {"passed": boolean, "reason": "string if failed, empty if passed"}
-
-Mark as failed only if there are clear factual claims contradicted or unsupported by the sources. Minor style differences are fine.`,
-      },
-      {
-        role: "user",
-        content: `Article title: ${draft.title}\n\nArticle content:\n${draft.content_html.substring(0, 4000)}\n\nSources:\n${sourcesText}`,
-      },
-    ],
-    openRouterKey,
-    "json_object"
-  );
-
-  const content = response.choices?.[0]?.message?.content;
-  const parsed = JSON.parse(content || '{"passed": false, "reason": "Parse error"}');
-  return { passed: parsed.passed !== false, reason: parsed.reason };
-}
-
 async function generateCoverImage(
   topic: string,
   openRouterKey: string,
