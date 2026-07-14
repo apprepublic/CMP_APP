@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
   if (authError || !user) {
     // Also allow service role key
     const apiKey = req.headers.get("apikey");
-    if (apiKey !== Deno.env.get("SUPABASE_ANON_KEY")) {
+    if (apiKey !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -84,16 +84,16 @@ const handler = async (req: Request): Promise<Response> => {
           const wallet = walletResult.rows[0] as any;
 
           if (wallet) {
-            const newBalance = Number(wallet.coin_balance) + Number(completion.coins_earned);
-            const newLifetimeEarned = Number(wallet.lifetime_earned) + Number(completion.coins_earned);
-
-            await client.queryObject`
+            const res = await client.queryObject`
               UPDATE wallets
-              SET coin_balance = ${newBalance}, lifetime_earned = ${newLifetimeEarned}, updated_at = NOW()
+              SET coin_balance = coin_balance + ${Number(completion.coins_earned)},
+                  lifetime_earned = lifetime_earned + ${Number(completion.coins_earned)},
+                  updated_at = NOW()
               WHERE id = ${wallet.id}
+              RETURNING coin_balance
             `;
+            const newBalance = Number((res.rows[0] as any)?.coin_balance || 0);
 
-            // Create coin transaction
             const txId = crypto.randomUUID();
             await client.queryObject`
               INSERT INTO coin_transactions (id, wallet_id, user_id, type, amount, balance_after, description)

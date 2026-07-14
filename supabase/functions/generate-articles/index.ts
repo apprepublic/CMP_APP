@@ -433,6 +433,24 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify cron secret for auth
+  const authHeader = req.headers.get("authorization");
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (cronSecret) {
+    const token = authHeader?.replace("Bearer ", "") || "";
+    if (token !== cronSecret) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+  } else {
+    // Fallback: verify JWT
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const token = authHeader?.replace("Bearer ", "") || "";
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+  }
+
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

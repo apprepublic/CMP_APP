@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Pool } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,57 +92,56 @@ const handler = async (req: Request): Promise<Response> => {
 
     const amountKobo = result.data.amount;
     const amountNaira = amountKobo / 100;
-    const coinAmount = Math.floor(amountNaira * 90); // 10% platform fee
-    const coinsToCredit = Math.max(coinAmount, cmpAmount);
+    const coinsToCredit = Math.max(Math.floor(amountNaira * 0.9), Number(cmpAmount) || 0); // 10% platform fee → 0.9 coins per Naira
 
-    // Credit wallet
-    const { data: wallet, error: walletError } = await supabase
-      .from("wallets")
-      .select("id, coin_balance")
-      .eq("user_id", user.id)
-      .single();
+    // Credit wallet via DB pool for atomic update
+    const dbUrl = Deno.env.get("SUPABASE_DB_URL")!;
+    const pool = new Pool(dbUrl, 1);
+    const pgClient = await pool.connect();
+    let newBalance: number;
+    let walletId: string;
 
-    if (walletError || !wallet) {
-      return new Response(JSON.stringify({ error: "Wallet not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    try {
+      const res = await pgClient.queryObject`
+        UPDATE wallets SET coin_balance = coin_balance + ${coinsToCredit}, updated_at = NOW()
+        WHERE user_id = ${user.id}
+        RETURNING id, coin_balance
+      `;
 
-    const currentBalance = Number((wallet as any).coin_balance) || 0;
-    const newBalance = currentBalance + coinsToCredit;
+      if (!res.rows.length) {
+        return new Response(JSON.stringify({ error: "Wallet not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    const { error: updateError } = await supabase
-      .from("wallets")
-      .update({ coin_balance: newBalance.toString() } as any)
-      .eq("id", (wallet as any).id);
+      const row = res.rows[0] as any;
+      walletId = row.id;
+      newBalance = Number(row.coin_balance);
 
-    if (updateError) {
-      return new Response(JSON.stringify({ error: "Failed to credit wallet" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+      // Record transaction
+      const { error: txnError } = await supabase
+        .from("coin_transactions")
+        .insert({
+          wallet_id: walletId,
+          user_id: user.id,
+          type: "TOPUP",
+          amount: coinsToCredit,
+          balance_after: newBalance.toString(),
+          description: `Top-up via Paystack: ₦${amountNaira.toLocaleString()}`,
+          metadata: {
+            paystackReference: reference,
+            amountNaira,
+            amountKobo,
+          },
+        } as any);
 
-    // Record transaction
-    const { error: txnError } = await supabase
-      .from("coin_transactions")
-      .insert({
-        wallet_id: (wallet as any).id,
-        user_id: user.id,
-        type: "TOPUP",
-        amount: coinsToCredit,
-        balance_after: newBalance.toString(),
-        description: `Top-up via Paystack: ₦${amountNaira.toLocaleString()}`,
-        metadata: {
-          paystackReference: reference,
-          amountNaira,
-          amountKobo,
-        },
-      } as any);
-
-    if (txnError) {
-      console.error("[PAYSTACK] Failed to record transaction:", txnError);
+      if (txnError) {
+        console.error("[PAYSTACK] Failed to record transaction:", txnError);
+      }
+    } finally {
+      pgClient.release();
+      await pool.end();
     }
 
     return new Response(

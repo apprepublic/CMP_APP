@@ -80,21 +80,23 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    if (!participantThreshold || participantThreshold < 10 || participantThreshold > 10000) {
+    const parsedThreshold = Number(participantThreshold);
+    const parsedBudget = Number(totalBudget);
+    if (!parsedThreshold || parsedThreshold < 10 || parsedThreshold > 10000) {
       return new Response(JSON.stringify({ error: "Participants must be 10-10000" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!totalBudget || totalBudget < 1000 || totalBudget > 1000000) {
+    if (!parsedBudget || parsedBudget < 1000 || parsedBudget > 1000000) {
       return new Response(JSON.stringify({ error: "Budget must be 1000-1000000" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const coinPerParticipant = Math.floor(totalBudget / participantThreshold);
+    const coinPerParticipant = Math.floor(parsedBudget / parsedThreshold);
     if (coinPerParticipant < 10) {
       return new Response(JSON.stringify({ error: "Coin per participant must be at least 10" }), {
         status: 400,
@@ -118,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    const totalCost = CREATION_FEE + totalBudget;
+    const totalCost = CREATION_FEE + parsedBudget;
 
     // Connect to database
     const dbUrl = Deno.env.get("SUPABASE_DB_URL")!;
@@ -148,8 +150,6 @@ const handler = async (req: Request): Promise<Response> => {
           available: currentBalance,
         }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-
-      const newBalance = currentBalance - totalCost;
 
       let artistId = null;
       let songId = null;
@@ -190,21 +190,23 @@ const handler = async (req: Request): Promise<Response> => {
 
       const taskResult = await client.queryObject`
         INSERT INTO user_posted_tasks (creator_id, title, description, type, category, participant_threshold, total_budget, coin_per_participant, creation_fee, status, current_participants, is_active, social_requirements, audio_url, cover_image_url, genre, duration_seconds, is_download_enabled, song_id, vote_requirements)
-        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${participantThreshold}, ${totalBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'ACTIVE', 0, true, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId}, ${voteRequirements ? JSON.stringify(voteRequirements) : null}::jsonb)
+        VALUES (${user.id}, ${title}, ${description}, ${type}, 'USER_CREATED', ${parsedThreshold}, ${parsedBudget}, ${coinPerParticipant}, ${CREATION_FEE}, 'ACTIVE', 0, true, ${socialRequirements ? JSON.stringify(socialRequirements) : null}::jsonb, ${musicMetadata?.audioUrl || null}, ${musicMetadata?.coverImageUrl || null}, ${musicMetadata?.genre || null}, ${musicMetadata?.durationSeconds || null}, ${musicMetadata?.isDownloadEnabled || false}, ${songId}, ${voteRequirements ? JSON.stringify(voteRequirements) : null}::jsonb)
         RETURNING id
       `;
       const postedTask = taskResult.rows[0] as any;
       console.log("Task created:", postedTask.id);
 
-      await client.queryObject`
-        UPDATE wallets SET coin_balance = ${newBalance}, updated_at = NOW() WHERE id = ${wallet.id}
+      const walletRes = await client.queryObject`
+        UPDATE wallets SET coin_balance = coin_balance - ${totalCost}, updated_at = NOW() WHERE id = ${wallet.id}
+        RETURNING coin_balance
       `;
+      const actualBalance = Number((walletRes.rows[0] as any)?.coin_balance || 0);
 
 // Record transaction
     const txId = crypto.randomUUID();
     await client.queryObject`
       INSERT INTO coin_transactions (id, wallet_id, user_id, type, amount, balance_after, description)
-      VALUES (${txId}, ${wallet.id}, ${user.id}, 'spend', ${totalCost}, ${newBalance}, ${`Posted task: ${title}`})
+      VALUES (${txId}, ${wallet.id}, ${user.id}, 'spend', ${totalCost}, ${actualBalance}, ${`Posted task: ${title}`})
     `;
 
       return new Response(JSON.stringify({
