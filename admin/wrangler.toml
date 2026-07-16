@@ -1,0 +1,13 @@
+name = "hometutors-admin"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "bun install && bun run build"
+cwd = "../admin"
+
+[site]
+bucket = "./dist"
+
+[env.production]
+name = "hometutors-admin"
+routes = [{ pattern = "admin.hometutors.pro", custom_domain = true }]
