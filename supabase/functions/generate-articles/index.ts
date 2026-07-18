@@ -126,7 +126,7 @@ async function selectTopic(pool: Pool, textApiKey: string): Promise<{ category: 
       : "";
 
     const response = await callOpenAIText(
-      Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash",
+      Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash",
       [
         {
           role: "system",
@@ -279,7 +279,7 @@ async function generateImagePrompt(
   textApiKey: string
 ): Promise<string> {
   const content = (draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000);
-  const model = Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash";
+  const model = Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash";
   try {
     const response = await callOpenAIText(
       model,
@@ -355,7 +355,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     pool = new Pool(dbUrl, 1);
-    const writerModel = Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash";
+    const writerModel = Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash";
     const imageModel = "deepai-text2img";
 
     // RETRY LOOP: keep trying until successful insertion

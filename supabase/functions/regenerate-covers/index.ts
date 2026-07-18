@@ -31,7 +31,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const textBaseUrl = Deno.env.get("TEXT_API_BASE_URL") || "https://api.opencode.ai/v1";
-    const textModel = Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash";
+    const textModel = Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash";
 
     async function textFetch(messages: any[], format?: "json_object"): Promise<string> {
       const body: any = { model: textModel, messages, max_tokens: 4096 };

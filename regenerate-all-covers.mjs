@@ -5,7 +5,7 @@ const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const TEXT_KEY = Deno.env.get('TEXT_API_KEY');
 const DEEPAI_KEY = Deno.env.get('DEEPAI_API_KEY');
 const TEXT_BASE = Deno.env.get('TEXT_API_BASE_URL') || 'https://api.opencode.ai/v1';
-const TEXT_MODEL = Deno.env.get('TEXT_MODEL') || 'deepseek/deepseek-v4-flash';
+const TEXT_MODEL = Deno.env.get('TEXT_MODEL') || 'deepseek-v4-flash';
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 

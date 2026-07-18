@@ -9,7 +9,7 @@ if (!DEEPAI_KEY) { console.error('Missing DEEPAI_API_KEY'); process.exit(1); }
 
 const AUTH = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 const TEXT_BASE = process.env.TEXT_API_BASE_URL || 'https://api.opencode.ai/v1';
-const TEXT_MODEL = process.env.TEXT_MODEL || 'deepseek/deepseek-v4-flash';
+const TEXT_MODEL = process.env.TEXT_MODEL || 'deepseek-v4-flash';
 
 async function textFetch(messages, format) {
   const body = { model: TEXT_MODEL, messages, max_tokens: 4096 };
