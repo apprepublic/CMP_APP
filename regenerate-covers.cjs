@@ -1,9 +1,11 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eztaonlpenuzpoosqonx.supabase.co';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OR_KEY = process.env.OPENROUTER_API_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 if (!KEY) { console.error('Missing SUPABASE_SERVICE_ROLE_KEY'); process.exit(1); }
 if (!OR_KEY) { console.error('Missing OPENROUTER_API_KEY'); process.exit(1); }
+if (!GEMINI_KEY) { console.error('Missing GEMINI_API_KEY'); process.exit(1); }
 
 const AUTH = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 const OR_HDR = { 'Authorization': `Bearer ${OR_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://cmpapp.ng', 'X-Title': 'CMPapp Cover Regenerator' };
@@ -27,17 +29,23 @@ async function generatePrompt(title, excerpt, content) {
 }
 
 async function generateImage(prompt) {
-  const r = await orFetch('sourceful/riverflow-v2-fast', [
-    { role: 'user', content: [{ type: 'text', text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }] },
-  ]);
-  const c = r.choices?.[0]?.message?.content;
-  let url = null;
-  if (typeof c === 'string') { const m = c.match(/https?:\/\/[^\s)\]]+/); if (m) url = m[0]; }
-  else if (Array.isArray(c)) { const i = c.find(p => p.type === 'image_url'); if (i?.image_url?.url) url = i.image_url.url; }
-  if (!url) throw new Error('No image URL: ' + JSON.stringify(c).slice(0,200));
-  const img = await fetch(url);
-  if (!img.ok) throw new Error(`Download ${img.status}`);
-  return new Uint8Array(await img.arrayBuffer());
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${GEMINI_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }] }],
+      generationConfig: { responseModalities: ['Text', 'Image'] },
+    }),
+  });
+  if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+  const data = await r.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+  if (!imagePart?.inlineData?.data) throw new Error('No image data in Gemini response');
+  const binary = atob(imagePart.inlineData.data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
 }
 
 async function uploadAndUpdate(articleId, bytes) {

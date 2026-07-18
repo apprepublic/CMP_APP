@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://eztaonlpenuzpoosqonx.supabase.co';
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dGFvbmxwZW51enBvb3Nxb254Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU5NDE3NSwiZXhwIjoyMDk4MTcwMTc1fQ.1qF9UMLV0SMMgviakSqzkzdiy7LbppOzTofYQp--kf0';
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_API_KEY');
+const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -36,26 +37,23 @@ async function generateImagePrompt(article) {
 }
 
 async function generateCoverImage(prompt) {
-  const textRes = await callOpenRouter('sourceful/riverflow-v2-fast', [
-    { role: 'user', content: [{ type: 'text', text: `Editorial cover: ${prompt}. No text, no logos.` }] },
-  ]);
-  const content = textRes.choices?.[0]?.message?.content;
-  if (!content) throw new Error('No image content');
-
-  // Try to extract URL from response
-  let imageUrl = null;
-  if (typeof content === 'string') {
-    const m = content.match(/https?:\/\/[^\s)\]]+/);
-    if (m) imageUrl = m[0];
-  } else if (Array.isArray(content)) {
-    const img = content.find(p => p.type === 'image_url');
-    if (img?.image_url?.url) imageUrl = img.image_url.url;
-  }
-  if (!imageUrl) throw new Error('Could not extract image URL from response');
-
-  const imgRes = await fetch(imageUrl);
-  if (!imgRes.ok) throw new Error(`Download failed: ${imgRes.status}`);
-  return new Uint8Array(await imgRes.arrayBuffer());
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${GEMINI_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `Editorial cover: ${prompt}. No text, no logos.` }] }],
+      generationConfig: { responseModalities: ['Text', 'Image'] },
+    }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+  if (!imagePart?.inlineData?.data) throw new Error('No image data in Gemini response');
+  const binary = atob(imagePart.inlineData.data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
 }
 
 async function uploadToStorage(articleId, imageBytes) {

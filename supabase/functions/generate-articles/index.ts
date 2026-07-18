@@ -80,104 +80,35 @@ async function generateImageViaPollinations(prompt: string): Promise<Uint8Array>
   return new Uint8Array(buffer);
 }
 
-async function callOpenRouterImage(
-  prompt: string,
-  apiKey: string
-): Promise<Uint8Array> {
-  const model = Deno.env.get("OPENROUTER_IMAGE_MODEL") || "sourceful/riverflow-v2-fast";
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://cmpapp.ng",
-      "X-Title": "CMPapp Article Agent",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Generate a clean editorial cover image for an article about: ${prompt}. No text overlay, no logos, no real identifiable people.`,
-            },
-          ],
-        },
-      ],
-      max_tokens: 1024,
-    }),
-  });
+async function callGeminiImage(prompt: string, apiKey: string): Promise<Uint8Array> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Generate a clean editorial cover image for an article about: ${prompt}. No text overlay, no logos, no real identifiable people.` }] }],
+        generationConfig: { responseModalities: ["Text", "Image"] },
+      }),
+    }
+  );
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Image generation error ${res.status}: ${text}`);
+    throw new Error(`Gemini image error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
-  const rawContent = data.choices?.[0]?.message?.content;
-
-  // Case 1: content is a plain string — may contain a markdown image URL or direct URL
-  if (typeof rawContent === "string") {
-    const urlMatch = rawContent.match(/https?:\/\/[^\s\)\]]+/);
-    if (urlMatch) {
-      const imgUrl = urlMatch[0];
-      const imgRes = await fetch(imgUrl);
-      if (!imgRes.ok) throw new Error(`Failed to download image from URL: ${imgRes.status}`);
-      const buffer = await imgRes.arrayBuffer();
-      return new Uint8Array(buffer);
-    }
-    throw new Error("No URL found in string response");
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
+  if (imagePart?.inlineData?.data) {
+    const binary = atob(imagePart.inlineData.data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
   }
 
-  // Case 2: content is an array of parts
-  if (Array.isArray(rawContent)) {
-    let imageUrl: string | null = null;
-
-    const imagePart = rawContent.find((p: any) => p.type === "image_url");
-    if (imagePart?.image_url?.url) imageUrl = imagePart.image_url.url;
-
-    if (!imageUrl) {
-      const base64Part = rawContent.find((p: any) => p.type === "base64");
-      if (base64Part?.base64_url?.data) {
-        const binary = atob(base64Part.base64_url.data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
-        return bytes;
-      }
-      if (base64Part?.base64_url?.url) imageUrl = base64Part.base64_url.url;
-    }
-
-    if (!imageUrl) {
-      for (const part of rawContent) {
-        if (part.type === "text" && typeof part.text === "string") {
-          const m = part.text.match(/https?:\/\/[^\s\)\]]+/);
-          if (m) { imageUrl = m[0]; break; }
-        }
-      }
-    }
-
-    if (imageUrl) {
-      if (imageUrl.startsWith("data:")) {
-        const commaIdx = imageUrl.indexOf(",");
-        const binary = atob(imageUrl.substring(commaIdx + 1));
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
-        return bytes;
-      }
-      const imgRes = await fetch(imageUrl);
-      if (!imgRes.ok) throw new Error(`Failed to download image: ${imgRes.status}`);
-      const buffer = await imgRes.arrayBuffer();
-      return new Uint8Array(buffer);
-    }
-
-    throw new Error("No image URL found in array content");
-  }
-
-  // Case 3: content is null/object — fallback to Pollinations
-  console.warn("OpenRouter returned unexpected content type, falling back to Pollinations");
-  return await generateImageViaPollinations(prompt);
+  throw new Error("No image data in Gemini response");
 }
 
 // ===========================================
@@ -329,14 +260,14 @@ Return ONLY valid JSON with this exact structure:
 
 async function generateCoverImage(
   topic: string,
-  openRouterKey: string,
+  geminiKey: string,
   supabaseClient: any
 ): Promise<{ url: string | null; error: string | null }> {
   let imageBytes: Uint8Array | null = null;
   try {
-    imageBytes = await callOpenRouterImage(topic, openRouterKey);
+    imageBytes = await callGeminiImage(topic, geminiKey);
   } catch (err: any) {
-    console.warn("OpenRouter image failed, trying Pollinations:", err.message);
+    console.warn("Gemini image failed, trying Pollinations:", err.message);
     try {
       imageBytes = await generateImageViaPollinations(topic);
     } catch (e) {
@@ -421,6 +352,7 @@ const handler = async (req: Request): Promise<Response> => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const openRouterKey = Deno.env.get("OPENROUTER_API_KEY")!;
+  const geminiKey = Deno.env.get("GEMINI_API_KEY")!;
   const tavilyKey = Deno.env.get("TAVILY_API_KEY")!;
   const authorId = Deno.env.get("AI_ARTICLE_AUTHOR_ID")!;
 
@@ -429,6 +361,7 @@ const handler = async (req: Request): Promise<Response> => {
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseServiceKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
   if (!openRouterKey) missing.push("OPENROUTER_API_KEY");
+  if (!geminiKey) missing.push("GEMINI_API_KEY");
   if (!tavilyKey) missing.push("TAVILY_API_KEY");
   if (!authorId) missing.push("AI_ARTICLE_AUTHOR_ID");
   if (missing.length > 0) {
@@ -445,7 +378,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     pool = new Pool(dbUrl, 1);
     const writerModel = Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash";
-    const imageModel = "sourceful/riverflow-v2-fast";
+    const imageModel = "gemini-3.1-flash-image";
 
     // RETRY LOOP: keep trying until successful insertion
     let attempt = 0;
@@ -495,7 +428,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Step 5: Generate cover image
         console.log("Step 5: Generating cover image...");
-        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(imagePrompt, openRouterKey, supabase);
+        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(imagePrompt, geminiKey, supabase);
         if (coverImageError) {
           console.error("Cover image error (non-fatal):", coverImageError);
         }

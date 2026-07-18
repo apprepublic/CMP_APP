@@ -25,7 +25,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const openRouterKey = Deno.env.get("OPENROUTER_API_KEY")!;
+    const geminiKey = Deno.env.get("GEMINI_API_KEY")!;
     if (!openRouterKey) throw new Error("Missing OPENROUTER_API_KEY");
+    if (!geminiKey) throw new Error("Missing GEMINI_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const orHeaders = { "Authorization": `Bearer ${openRouterKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://cmpapp.ng", "X-Title": "CMPapp Cover Regenerator" };
@@ -47,16 +49,29 @@ serve(async (req) => {
 
     async function getImageBytes(prompt: string): Promise<Uint8Array> {
       try {
-        const r = await orFetch("sourceful/riverflow-v2-fast", [
-          { role: "user", content: [{ type: "text", text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }] },
-        ]);
-        const c = r.choices?.[0]?.message?.content;
-        if (c && typeof c === "string") { const m = c.match(/https?:\/\/[^\s)\]]+/); if (m) { const dl = await fetch(m[0]); if (dl.ok) return new Uint8Array(await dl.arrayBuffer()); } }
-        if (Array.isArray(c)) {
-          const imgPart = c.find((p: any) => p.type === "image_url");
-          if (imgPart?.image_url?.url) { const dl = await fetch(imgPart.image_url.url); if (dl.ok) return new Uint8Array(await dl.arrayBuffer()); }
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }] }],
+              generationConfig: { responseModalities: ["Text", "Image"] },
+            }),
+          }
+        );
+        if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+        const data = await r.json();
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
+        if (imagePart?.inlineData?.data) {
+          const binary = atob(imagePart.inlineData.data);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          return bytes;
         }
-      } catch (e) { console.warn(`Riverflow failed, using Pollinations: ${e.message}`); }
+        throw new Error("No image data in Gemini response");
+      } catch (e) { console.warn(`Gemini image failed, using Pollinations: ${e.message}`); }
       return await pollinations(prompt);
     }
 
