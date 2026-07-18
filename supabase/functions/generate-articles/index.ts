@@ -19,42 +19,49 @@ function slugify(text: string): string {
     .substring(0, 200);
 }
 
-async function callOpenRouter(
+async function callGeminiText(
   model: string,
   messages: { role: string; content: string }[],
   apiKey: string,
   responseFormat?: "json_object"
 ): Promise<any> {
-  const body: any = {
-    model,
-    messages,
-    max_tokens: 4096,
-  };
-  if (responseFormat) {
-    body.response_format = { type: responseFormat };
+  let systemInstruction: string | undefined;
+  const contents: any[] = [];
+
+  for (const msg of messages) {
+    if (msg.role === "system") {
+      systemInstruction = msg.content;
+    } else {
+      contents.push({ role: msg.role, parts: [{ text: msg.content }] });
+    }
   }
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://cmpapp.ng",
-      "X-Title": "CMPapp Article Agent",
-    },
-    body: JSON.stringify(body),
-  });
+  const body: any = {
+    contents,
+    generationConfig: { maxOutputTokens: 4096 },
+  };
+
+  if (systemInstruction) body.system_instruction = { parts: [{ text: systemInstruction }] };
+  if (responseFormat) body.generationConfig.response_mime_type = "application/json";
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`OpenRouter error ${res.status}: ${text}`);
+    throw new Error(`Gemini text error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
-  const raw = data.choices?.[0]?.message?.content;
-  if (!raw) throw new Error("Empty response from OpenRouter");
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!raw) throw new Error("Empty response from Gemini");
 
-  // Some OpenRouter models don't support response_format — extract JSON if raw isn't pure JSON
   let content = raw;
   if (responseFormat) {
     try {
@@ -115,7 +122,7 @@ async function callGeminiImage(prompt: string, apiKey: string): Promise<Uint8Arr
 // PIPELINE STEPS
 // ===========================================
 
-async function selectTopic(pool: Pool, openRouterKey: string): Promise<{ category: string; topic: string }> {
+async function selectTopic(pool: Pool, geminiKey: string): Promise<{ category: string; topic: string }> {
   const client = await pool.connect();
   try {
     // Pick the most overdue category
@@ -146,8 +153,8 @@ async function selectTopic(pool: Pool, openRouterKey: string): Promise<{ categor
       ? `\n\nAvoid topics similar to these recent articles:\n${recentTitles.map((t: string) => `- ${t}`).join("\n")}`
       : "";
 
-    const response = await callOpenRouter(
-      Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash",
+    const response = await callGeminiText(
+      Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash",
       [
         {
           role: "system",
@@ -158,7 +165,7 @@ async function selectTopic(pool: Pool, openRouterKey: string): Promise<{ categor
           content: `Suggest a fresh article topic in the category "${category}" that hasn't been covered recently.`,
         },
       ],
-      openRouterKey,
+      geminiKey,
       "json_object"
     );
 
@@ -200,7 +207,7 @@ async function writeDraft(
   topic: string,
   category: string,
   sources: { title: string; url: string; content: string }[],
-  openRouterKey: string
+  geminiKey: string
 ): Promise<{
   title: string;
   slug: string;
@@ -213,8 +220,8 @@ async function writeDraft(
     .map((s, i) => `[${i + 1}] ${s.title}\n    URL: ${s.url}\n    Content: ${s.content.substring(0, 1500)}`)
     .join("\n\n");
 
-  const response = await callOpenRouter(
-    Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash",
+  const response = await callGeminiText(
+    Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash",
     [
       {
         role: "system",
@@ -238,7 +245,7 @@ Return ONLY valid JSON with this exact structure:
         content: `Write an article about: ${topic}\n\nUse these sources for facts and context:\n\n${sourcesText}`,
       },
     ],
-    openRouterKey,
+    geminiKey,
     "json_object"
   );
 
@@ -297,24 +304,23 @@ async function generateCoverImage(
 
 async function generateImagePrompt(
   draft: { title: string; excerpt: string; content_html: string },
-  openRouterKey: string
+  geminiKey: string
 ): Promise<string> {
   const content = (draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000);
-  for (const model of ["z-ai/glm-5.2", "deepseek/deepseek-v4-flash"]) {
-    try {
-      const response = await callOpenRouter(
-        model,
-        [
-          { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
-          { role: "user", content: `Title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${content}` },
-        ],
-        openRouterKey
-      );
-      const raw = response.choices?.[0]?.message?.content?.trim();
-      if (raw && raw.length > 10) return raw.replace(/^["'\s]+|["'\s]+$/g, "");
-    } catch (err: any) {
-      console.warn(`Image prompt via ${model} failed: ${err.message}`);
-    }
+  const model = Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash";
+  try {
+    const response = await callGeminiText(
+      model,
+      [
+        { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
+        { role: "user", content: `Title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${content}` },
+      ],
+      geminiKey
+    );
+    const raw = response.choices?.[0]?.message?.content?.trim();
+    if (raw && raw.length > 10) return raw.replace(/^["'\s]+|["'\s]+$/g, "");
+  } catch (err: any) {
+    console.warn(`Image prompt via ${model} failed: ${err.message}`);
   }
   return draft.title;
 }
@@ -351,7 +357,6 @@ const handler = async (req: Request): Promise<Response> => {
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const openRouterKey = Deno.env.get("OPENROUTER_API_KEY")!;
   const geminiKey = Deno.env.get("GEMINI_API_KEY")!;
   const tavilyKey = Deno.env.get("TAVILY_API_KEY")!;
   const authorId = Deno.env.get("AI_ARTICLE_AUTHOR_ID")!;
@@ -360,7 +365,6 @@ const handler = async (req: Request): Promise<Response> => {
   const missing = [];
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseServiceKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
-  if (!openRouterKey) missing.push("OPENROUTER_API_KEY");
   if (!geminiKey) missing.push("GEMINI_API_KEY");
   if (!tavilyKey) missing.push("TAVILY_API_KEY");
   if (!authorId) missing.push("AI_ARTICLE_AUTHOR_ID");
@@ -377,7 +381,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     pool = new Pool(dbUrl, 1);
-    const writerModel = Deno.env.get("OPENROUTER_WRITER_MODEL") || "deepseek/deepseek-v4-flash";
+    const writerModel = Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash";
     const imageModel = "gemini-3.1-flash-image";
 
     // RETRY LOOP: keep trying until successful insertion
@@ -399,7 +403,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         // Step 1: Select topic (fresh topic each attempt)
         console.log("Step 1: Selecting topic...");
-        const { category, topic } = await selectTopic(pool, openRouterKey);
+        const { category, topic } = await selectTopic(pool, geminiKey);
         console.log(`Selected category="${category}" topic="${topic}"`);
 
         // Step 2: Research
@@ -415,7 +419,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("Step 3: Writing draft...");
         let draft: any;
         try {
-          draft = await writeDraft(topic, category, sources, openRouterKey);
+          draft = await writeDraft(topic, category, sources, geminiKey);
         } catch (err: any) {
           console.error("Write draft failed:", err);
           throw new Error(`Write draft failed: ${err.message}`);
@@ -423,7 +427,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Step 4: Generate image prompt from article content
         console.log("Step 4: Generating image prompt from article...");
-        const imagePrompt = await generateImagePrompt(draft, openRouterKey);
+        const imagePrompt = await generateImagePrompt(draft, geminiKey);
         console.log(`Image prompt: "${imagePrompt.substring(0, 100)}..."`);
 
         // Step 5: Generate cover image

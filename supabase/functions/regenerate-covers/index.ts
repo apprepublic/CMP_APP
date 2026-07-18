@@ -24,20 +24,27 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openRouterKey = Deno.env.get("OPENROUTER_API_KEY")!;
     const geminiKey = Deno.env.get("GEMINI_API_KEY")!;
-    if (!openRouterKey) throw new Error("Missing OPENROUTER_API_KEY");
     if (!geminiKey) throw new Error("Missing GEMINI_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const orHeaders = { "Authorization": `Bearer ${openRouterKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://cmpapp.ng", "X-Title": "CMPapp Cover Regenerator" };
 
-    async function orFetch(model: string, messages: any[], format?: "json_object") {
-      const body: any = { model, messages, max_tokens: 4096 };
-      if (format) body.response_format = { type: format };
-      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", { method: "POST", headers: orHeaders, body: JSON.stringify(body) });
-      if (!r.ok) throw new Error(`OR ${r.status}: ${await r.text()}`);
-      return r.json();
+    async function geminiTextFetch(messages: any[]): Promise<string> {
+      let systemInstruction: string | undefined;
+      const contents: any[] = [];
+      for (const msg of messages) {
+        if (msg.role === "system") { systemInstruction = msg.content; }
+        else { contents.push({ role: msg.role, parts: [{ text: msg.content }] }); }
+      }
+      const body: any = { contents, generationConfig: { maxOutputTokens: 4096 } };
+      if (systemInstruction) body.system_instruction = { parts: [{ text: systemInstruction }] };
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash"}:generateContent?key=${geminiKey}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      );
+      if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+      const data = await r.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     }
 
     async function pollinations(prompt: string): Promise<Uint8Array> {
@@ -83,17 +90,14 @@ serve(async (req) => {
 
     const clean = (article.content || "").replace(/<[^>]*>/g, "").substring(0, 2000);
     let prompt = article.title;
-    for (const model of ["z-ai/glm-5.2", "deepseek/deepseek-v4-flash"]) {
-      try {
-        const gemma = await orFetch(model, [
-          { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
-          { role: "user", content: `Title: ${article.title}\n\nExcerpt: ${article.excerpt || ""}\n\nContent: ${clean}` },
-        ]);
-        const raw = gemma.choices?.[0]?.message?.content || "";
-        const extracted = raw.replace(/^["'\s]+|["'\s]+$/g, "").substring(0, 500);
-        if (extracted.length > 10) { prompt = extracted; break; }
-      } catch (e) { console.warn(`${model} failed: ${e.message}`); }
-    }
+    try {
+      const raw = await geminiTextFetch([
+        { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
+        { role: "user", content: `Title: ${article.title}\n\nExcerpt: ${article.excerpt || ""}\n\nContent: ${clean}` },
+      ]);
+      const extracted = raw.replace(/^["'\s]+|["'\s]+$/g, "").substring(0, 500);
+      if (extracted.length > 10) prompt = extracted;
+    } catch (e) { console.warn(`Gemini text prompt failed: ${e.message}`); }
     console.log(`  Prompt: ${prompt.substring(0, 80)}...`);
 
     const bytes = await getImageBytes(prompt);

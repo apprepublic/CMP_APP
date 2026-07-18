@@ -1,31 +1,37 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eztaonlpenuzpoosqonx.supabase.co';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OR_KEY = process.env.OPENROUTER_API_KEY;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 if (!KEY) { console.error('Missing SUPABASE_SERVICE_ROLE_KEY'); process.exit(1); }
-if (!OR_KEY) { console.error('Missing OPENROUTER_API_KEY'); process.exit(1); }
 if (!GEMINI_KEY) { console.error('Missing GEMINI_API_KEY'); process.exit(1); }
 
 const AUTH = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
-const OR_HDR = { 'Authorization': `Bearer ${OR_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://cmpapp.ng', 'X-Title': 'CMPapp Cover Regenerator' };
+const GEMINI_MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-2.0-flash';
 
-async function orFetch(model, messages, format) {
-  const body = { model, messages, max_tokens: 4096 };
-  if (format) body.response_format = { type: format };
-  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', { method: 'POST', headers: OR_HDR, body: JSON.stringify(body) });
-  if (!r.ok) throw new Error(`OR ${r.status}: ${await r.text()}`);
-  return r.json();
+async function geminiFetch(messages) {
+  let systemInstruction;
+  const contents = [];
+  for (const msg of messages) {
+    if (msg.role === 'system') { systemInstruction = msg.content; }
+    else { contents.push({ role: msg.role, parts: [{ text: msg.content }] }); }
+  }
+  const body = { contents, generationConfig: { maxOutputTokens: 4096 } };
+  if (systemInstruction) body.system_instruction = { parts: [{ text: systemInstruction }] };
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+  const data = await r.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 async function generatePrompt(title, excerpt, content) {
   const clean = (content||'').replace(/<[^>]*>/g,'').substring(0,2000);
-  const r = await orFetch('google/gemma-4-31b-it', [
+  const raw = await geminiFetch([
     { role: 'system', content: 'Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return ONLY JSON: {"prompt":"string"}' },
     { role: 'user', content: `Title: ${title}\n\nExcerpt: ${excerpt||''}\n\nContent: ${clean}` },
-  ], 'json_object');
-  const parsed = JSON.parse(r.choices?.[0]?.message?.content||'{}');
-  return parsed.prompt || title;
+  ]);
+  try { return JSON.parse(raw).prompt || title; } catch { return raw.replace(/^["'\s]+|["'\s]+$/g, '') || title; }
 }
 
 async function generateImage(prompt) {
