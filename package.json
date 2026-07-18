@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "packages/*",
+    "packages/types",
+    "packages/utils",
     "services/*",
-    "apps/*",
-    "admin"
+    "apps/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
