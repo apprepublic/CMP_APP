@@ -1,57 +1,48 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eztaonlpenuzpoosqonx.supabase.co';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
+const TEXT_KEY = process.env.TEXT_API_KEY;
+const DEEPAI_KEY = process.env.DEEPAI_API_KEY;
 
 if (!KEY) { console.error('Missing SUPABASE_SERVICE_ROLE_KEY'); process.exit(1); }
-if (!GEMINI_KEY) { console.error('Missing GEMINI_API_KEY'); process.exit(1); }
+if (!TEXT_KEY) { console.error('Missing TEXT_API_KEY'); process.exit(1); }
+if (!DEEPAI_KEY) { console.error('Missing DEEPAI_API_KEY'); process.exit(1); }
 
 const AUTH = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
-const GEMINI_MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-2.0-flash';
+const TEXT_BASE = process.env.TEXT_API_BASE_URL || 'https://api.opencode.ai/v1';
+const TEXT_MODEL = process.env.TEXT_MODEL || 'deepseek/deepseek-v4-flash';
 
-async function geminiFetch(messages) {
-  let systemInstruction;
-  const contents = [];
-  for (const msg of messages) {
-    if (msg.role === 'system') { systemInstruction = msg.content; }
-    else { contents.push({ role: msg.role, parts: [{ text: msg.content }] }); }
-  }
-  const body = { contents, generationConfig: { maxOutputTokens: 4096 } };
-  if (systemInstruction) body.system_instruction = { parts: [{ text: systemInstruction }] };
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+async function textFetch(messages, format) {
+  const body = { model: TEXT_MODEL, messages, max_tokens: 4096 };
+  if (format) body.response_format = { type: format };
+  const r = await fetch(`${TEXT_BASE}/chat/completions`, {
+    method: 'POST', headers: { 'Authorization': `Bearer ${TEXT_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`Text API ${r.status}: ${await r.text()}`);
   const data = await r.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return data.choices?.[0]?.message?.content || '';
 }
 
 async function generatePrompt(title, excerpt, content) {
   const clean = (content||'').replace(/<[^>]*>/g,'').substring(0,2000);
-  const raw = await geminiFetch([
+  const raw = await textFetch([
     { role: 'system', content: 'Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return ONLY JSON: {"prompt":"string"}' },
     { role: 'user', content: `Title: ${title}\n\nExcerpt: ${excerpt||''}\n\nContent: ${clean}` },
-  ]);
+  ], 'json_object');
   try { return JSON.parse(raw).prompt || title; } catch { return raw.replace(/^["'\s]+|["'\s]+$/g, '') || title; }
 }
 
 async function generateImage(prompt) {
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${GEMINI_KEY}`, {
+  const r = await fetch('https://api.deepai.org/api/text2img', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }] }],
-      generationConfig: { responseModalities: ['Text', 'Image'] },
-    }),
+    headers: { 'api-key': DEEPAI_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }),
   });
-  if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`DeepAI ${r.status}: ${await r.text()}`);
   const data = await r.json();
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-  if (!imagePart?.inlineData?.data) throw new Error('No image data in Gemini response');
-  const binary = atob(imagePart.inlineData.data);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
+  if (!data.output_url) throw new Error('No image URL in DeepAI response');
+  const img = await fetch(data.output_url);
+  if (!img.ok) throw new Error(`Download ${img.status}`);
+  return new Uint8Array(await img.arrayBuffer());
 }
 
 async function uploadAndUpdate(articleId, bytes) {

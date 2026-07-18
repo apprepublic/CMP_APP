@@ -24,27 +24,26 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const geminiKey = Deno.env.get("GEMINI_API_KEY")!;
-    if (!geminiKey) throw new Error("Missing GEMINI_API_KEY");
+    const textApiKey = Deno.env.get("TEXT_API_KEY")!;
+    const deepaiKey = Deno.env.get("DEEPAI_API_KEY")!;
+    if (!textApiKey) throw new Error("Missing TEXT_API_KEY");
+    if (!deepaiKey) throw new Error("Missing DEEPAI_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const textBaseUrl = Deno.env.get("TEXT_API_BASE_URL") || "https://api.opencode.ai/v1";
+    const textModel = Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash";
 
-    async function geminiTextFetch(messages: any[]): Promise<string> {
-      let systemInstruction: string | undefined;
-      const contents: any[] = [];
-      for (const msg of messages) {
-        if (msg.role === "system") { systemInstruction = msg.content; }
-        else { contents.push({ role: msg.role, parts: [{ text: msg.content }] }); }
-      }
-      const body: any = { contents, generationConfig: { maxOutputTokens: 4096 } };
-      if (systemInstruction) body.system_instruction = { parts: [{ text: systemInstruction }] };
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash"}:generateContent?key=${geminiKey}`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
-      );
-      if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+    async function textFetch(messages: any[], format?: "json_object"): Promise<string> {
+      const body: any = { model: textModel, messages, max_tokens: 4096 };
+      if (format) body.response_format = { type: format };
+      const r = await fetch(`${textBaseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${textApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(`Text API ${r.status}: ${await r.text()}`);
       const data = await r.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      return data.choices?.[0]?.message?.content || "";
     }
 
     async function pollinations(prompt: string): Promise<Uint8Array> {
@@ -56,29 +55,19 @@ serve(async (req) => {
 
     async function getImageBytes(prompt: string): Promise<Uint8Array> {
       try {
-        const r = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${geminiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }] }],
-              generationConfig: { responseModalities: ["Text", "Image"] },
-            }),
-          }
-        );
-        if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+        const r = await fetch("https://api.deepai.org/api/text2img", {
+          method: "POST",
+          headers: { "api-key": deepaiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ text: `Editorial cover: ${prompt}. No text, no logos, no identifiable people.` }),
+        });
+        if (!r.ok) throw new Error(`DeepAI ${r.status}: ${await r.text()}`);
         const data = await r.json();
-        const parts = data.candidates?.[0]?.content?.parts || [];
-        const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
-        if (imagePart?.inlineData?.data) {
-          const binary = atob(imagePart.inlineData.data);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          return bytes;
-        }
-        throw new Error("No image data in Gemini response");
-      } catch (e) { console.warn(`Gemini image failed, using Pollinations: ${e.message}`); }
+        const imageUrl = data.output_url;
+        if (!imageUrl) throw new Error("No image URL in DeepAI response");
+        const dl = await fetch(imageUrl);
+        if (!dl.ok) throw new Error(`Download ${dl.status}`);
+        return new Uint8Array(await dl.arrayBuffer());
+      } catch (e) { console.warn(`DeepAI image failed, using Pollinations: ${e.message}`); }
       return await pollinations(prompt);
     }
 
@@ -91,13 +80,13 @@ serve(async (req) => {
     const clean = (article.content || "").replace(/<[^>]*>/g, "").substring(0, 2000);
     let prompt = article.title;
     try {
-      const raw = await geminiTextFetch([
+      const raw = await textFetch([
         { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
         { role: "user", content: `Title: ${article.title}\n\nExcerpt: ${article.excerpt || ""}\n\nContent: ${clean}` },
       ]);
       const extracted = raw.replace(/^["'\s]+|["'\s]+$/g, "").substring(0, 500);
       if (extracted.length > 10) prompt = extracted;
-    } catch (e) { console.warn(`Gemini text prompt failed: ${e.message}`); }
+    } catch (e) { console.warn(`Text prompt failed: ${e.message}`); }
     console.log(`  Prompt: ${prompt.substring(0, 80)}...`);
 
     const bytes = await getImageBytes(prompt);

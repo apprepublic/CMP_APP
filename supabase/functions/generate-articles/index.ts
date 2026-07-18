@@ -19,63 +19,45 @@ function slugify(text: string): string {
     .substring(0, 200);
 }
 
-async function callGeminiText(
+async function callOpenAIText(
   model: string,
   messages: { role: string; content: string }[],
   apiKey: string,
   responseFormat?: "json_object"
 ): Promise<any> {
-  let systemInstruction: string | undefined;
-  const contents: any[] = [];
+  const baseUrl = Deno.env.get("TEXT_API_BASE_URL") || "https://api.opencode.ai/v1";
 
-  for (const msg of messages) {
-    if (msg.role === "system") {
-      systemInstruction = msg.content;
-    } else {
-      contents.push({ role: msg.role, parts: [{ text: msg.content }] });
-    }
-  }
+  const body: any = { model, messages, max_tokens: 4096 };
+  if (responseFormat) body.response_format = { type: responseFormat };
 
-  const body: any = {
-    contents,
-    generationConfig: { maxOutputTokens: 4096 },
-  };
-
-  if (systemInstruction) body.system_instruction = { parts: [{ text: systemInstruction }] };
-  if (responseFormat) body.generationConfig.response_mime_type = "application/json";
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }
-  );
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gemini text error ${res.status}: ${text}`);
+    throw new Error(`Text API error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error("Empty response from Gemini");
+  const raw = data.choices?.[0]?.message?.content;
+  if (!raw) throw new Error("Empty response from text API");
 
   let content = raw;
   if (responseFormat) {
-    try {
-      JSON.parse(raw);
-    } catch {
+    try { JSON.parse(raw); } catch {
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (jsonMatch) content = jsonMatch[0];
       else content = JSON.stringify({ content: raw.trim() });
     }
   }
 
-  return {
-    choices: [{ message: { content } }],
-  };
+  return { choices: [{ message: { content } }] };
 }
 
 async function generateImageViaPollinations(prompt: string): Promise<Uint8Array> {
@@ -87,42 +69,32 @@ async function generateImageViaPollinations(prompt: string): Promise<Uint8Array>
   return new Uint8Array(buffer);
 }
 
-async function callGeminiImage(prompt: string, apiKey: string): Promise<Uint8Array> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `Generate a clean editorial cover image for an article about: ${prompt}. No text overlay, no logos, no real identifiable people.` }] }],
-        generationConfig: { responseModalities: ["Text", "Image"] },
-      }),
-    }
-  );
+async function callDeepAIImage(prompt: string, apiKey: string): Promise<Uint8Array> {
+  const res = await fetch("https://api.deepai.org/api/text2img", {
+    method: "POST",
+    headers: { "api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ text: `Editorial cover: ${prompt}. No text overlay, no logos, no real identifiable people.` }),
+  });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gemini image error ${res.status}: ${text}`);
+    throw new Error(`DeepAI error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
-  if (imagePart?.inlineData?.data) {
-    const binary = atob(imagePart.inlineData.data);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes;
-  }
+  const imageUrl = data.output_url;
+  if (!imageUrl) throw new Error("No image URL in DeepAI response");
 
-  throw new Error("No image data in Gemini response");
+  const imgRes = await fetch(imageUrl);
+  if (!imgRes.ok) throw new Error(`Download failed: ${imgRes.status}`);
+  return new Uint8Array(await imgRes.arrayBuffer());
 }
 
 // ===========================================
 // PIPELINE STEPS
 // ===========================================
 
-async function selectTopic(pool: Pool, geminiKey: string): Promise<{ category: string; topic: string }> {
+async function selectTopic(pool: Pool, textApiKey: string): Promise<{ category: string; topic: string }> {
   const client = await pool.connect();
   try {
     // Pick the most overdue category
@@ -153,8 +125,8 @@ async function selectTopic(pool: Pool, geminiKey: string): Promise<{ category: s
       ? `\n\nAvoid topics similar to these recent articles:\n${recentTitles.map((t: string) => `- ${t}`).join("\n")}`
       : "";
 
-    const response = await callGeminiText(
-      Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash",
+    const response = await callOpenAIText(
+      Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash",
       [
         {
           role: "system",
@@ -165,7 +137,7 @@ async function selectTopic(pool: Pool, geminiKey: string): Promise<{ category: s
           content: `Suggest a fresh article topic in the category "${category}" that hasn't been covered recently.`,
         },
       ],
-      geminiKey,
+      textApiKey,
       "json_object"
     );
 
@@ -207,7 +179,7 @@ async function writeDraft(
   topic: string,
   category: string,
   sources: { title: string; url: string; content: string }[],
-  geminiKey: string
+  textApiKey: string
 ): Promise<{
   title: string;
   slug: string;
@@ -220,8 +192,8 @@ async function writeDraft(
     .map((s, i) => `[${i + 1}] ${s.title}\n    URL: ${s.url}\n    Content: ${s.content.substring(0, 1500)}`)
     .join("\n\n");
 
-  const response = await callGeminiText(
-    Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash",
+  const response = await callOpenAIText(
+    Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash",
     [
       {
         role: "system",
@@ -245,7 +217,7 @@ Return ONLY valid JSON with this exact structure:
         content: `Write an article about: ${topic}\n\nUse these sources for facts and context:\n\n${sourcesText}`,
       },
     ],
-    geminiKey,
+    textApiKey,
     "json_object"
   );
 
@@ -267,14 +239,14 @@ Return ONLY valid JSON with this exact structure:
 
 async function generateCoverImage(
   topic: string,
-  geminiKey: string,
+  deepaiKey: string,
   supabaseClient: any
 ): Promise<{ url: string | null; error: string | null }> {
   let imageBytes: Uint8Array | null = null;
   try {
-    imageBytes = await callGeminiImage(topic, geminiKey);
+    imageBytes = await callDeepAIImage(topic, deepaiKey);
   } catch (err: any) {
-    console.warn("Gemini image failed, trying Pollinations:", err.message);
+    console.warn("DeepAI image failed, trying Pollinations:", err.message);
     try {
       imageBytes = await generateImageViaPollinations(topic);
     } catch (e) {
@@ -304,18 +276,18 @@ async function generateCoverImage(
 
 async function generateImagePrompt(
   draft: { title: string; excerpt: string; content_html: string },
-  geminiKey: string
+  textApiKey: string
 ): Promise<string> {
   const content = (draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000);
-  const model = Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash";
+  const model = Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash";
   try {
-    const response = await callGeminiText(
+    const response = await callOpenAIText(
       model,
       [
         { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
         { role: "user", content: `Title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${content}` },
       ],
-      geminiKey
+      textApiKey
     );
     const raw = response.choices?.[0]?.message?.content?.trim();
     if (raw && raw.length > 10) return raw.replace(/^["'\s]+|["'\s]+$/g, "");
@@ -357,7 +329,8 @@ const handler = async (req: Request): Promise<Response> => {
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const geminiKey = Deno.env.get("GEMINI_API_KEY")!;
+  const textApiKey = Deno.env.get("TEXT_API_KEY")!;
+  const deepaiKey = Deno.env.get("DEEPAI_API_KEY")!;
   const tavilyKey = Deno.env.get("TAVILY_API_KEY")!;
   const authorId = Deno.env.get("AI_ARTICLE_AUTHOR_ID")!;
 
@@ -365,7 +338,8 @@ const handler = async (req: Request): Promise<Response> => {
   const missing = [];
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseServiceKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
-  if (!geminiKey) missing.push("GEMINI_API_KEY");
+  if (!textApiKey) missing.push("TEXT_API_KEY");
+  if (!deepaiKey) missing.push("DEEPAI_API_KEY");
   if (!tavilyKey) missing.push("TAVILY_API_KEY");
   if (!authorId) missing.push("AI_ARTICLE_AUTHOR_ID");
   if (missing.length > 0) {
@@ -381,8 +355,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     pool = new Pool(dbUrl, 1);
-    const writerModel = Deno.env.get("GEMINI_TEXT_MODEL") || "gemini-2.0-flash";
-    const imageModel = "gemini-3.1-flash-image";
+    const writerModel = Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash";
+    const imageModel = "deepai-text2img";
 
     // RETRY LOOP: keep trying until successful insertion
     let attempt = 0;
@@ -403,7 +377,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         // Step 1: Select topic (fresh topic each attempt)
         console.log("Step 1: Selecting topic...");
-        const { category, topic } = await selectTopic(pool, geminiKey);
+        const { category, topic } = await selectTopic(pool, textApiKey);
         console.log(`Selected category="${category}" topic="${topic}"`);
 
         // Step 2: Research
@@ -419,7 +393,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("Step 3: Writing draft...");
         let draft: any;
         try {
-          draft = await writeDraft(topic, category, sources, geminiKey);
+          draft = await writeDraft(topic, category, sources, textApiKey);
         } catch (err: any) {
           console.error("Write draft failed:", err);
           throw new Error(`Write draft failed: ${err.message}`);
@@ -427,12 +401,12 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Step 4: Generate image prompt from article content
         console.log("Step 4: Generating image prompt from article...");
-        const imagePrompt = await generateImagePrompt(draft, geminiKey);
+        const imagePrompt = await generateImagePrompt(draft, textApiKey);
         console.log(`Image prompt: "${imagePrompt.substring(0, 100)}..."`);
 
         // Step 5: Generate cover image
         console.log("Step 5: Generating cover image...");
-        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(imagePrompt, geminiKey, supabase);
+        const { url: coverImageUrl, error: coverImageError } = await generateCoverImage(imagePrompt, deepaiKey, supabase);
         if (coverImageError) {
           console.error("Cover image error (non-fatal):", coverImageError);
         }
