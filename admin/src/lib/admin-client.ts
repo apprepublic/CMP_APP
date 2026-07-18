@@ -35,19 +35,28 @@ export async function adminFetch<T = unknown>(
 
 export type AdminStats = {
   totalUsers: number
-  totalTutors: number
-  activeBookings: number
-  revenueMtd: number
-  pendingKyc: number
-  pendingCredentials: number
-  pendingUpgrades: number
+  activeUsers: number
+  totalCoinSupply: number
   pendingWithdrawals: number
-  unreadMessages: number
+  pendingKyc: number
+  totalArticles: number
+  postedTasksCount: number
+  systemTasksCount: number
+  totalSongs: number
+  todayRegistrations: number
+  totalWithdrawnCoins: number
   usersByType: { type: string; count: number }[]
   revenueByMonth: { month: string; amount: number }[]
 }
 
+const defaultStats: AdminStats = {
+  totalUsers: 0, activeUsers: 0, totalCoinSupply: 0, pendingWithdrawals: 0,
+  pendingKyc: 0, totalArticles: 0, postedTasksCount: 0, systemTasksCount: 0,
+  totalSongs: 0, todayRegistrations: 0, totalWithdrawnCoins: 0,
+  usersByType: [], revenueByMonth: [],
+}
+
 export async function getAdminStats(): Promise<AdminStats> {
   const { data } = await adminFetch<AdminStats>('admin-stats')
-  return data || ({} as AdminStats)
+  return data || defaultStats
 }

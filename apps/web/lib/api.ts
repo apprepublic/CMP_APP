@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zympjjrkiqfsuhdwddur.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eztaonlpenuzpoosqonx.supabase.co';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cmpapp.ng';
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1`;
 

@@ -9,22 +9,22 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import {
-  LayoutDashboard, Users, GraduationCap, BookOpen, CalendarDays, Wallet, ShieldCheck,
-  Award, UserPlus, ArrowUpDown, MessageSquare, Settings, ChevronLeft, ChevronRight,
+  LayoutDashboard, Users, BookOpen, CheckSquare, UserPlus, Music, Wallet,
+  ArrowUpDown, Trophy, Store, MessageSquare, Settings, ChevronLeft, ChevronRight,
   LogOut, Menu, X, Bell,
 } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/users', label: 'Users', icon: Users },
-  { href: '/tutors', label: 'Tutors', icon: GraduationCap },
-  { href: '/bookings', label: 'Bookings', icon: BookOpen },
-  { href: '/sessions', label: 'Sessions', icon: CalendarDays },
-  { href: '/payments', label: 'Payments', icon: Wallet },
-  { href: '/kyc', label: 'KYC Verifications', icon: ShieldCheck },
-  { href: '/credentials', label: 'Credentials', icon: Award },
-  { href: '/tutor-upgrades', label: 'Tutor Upgrades', icon: UserPlus },
+  { href: '/articles', label: 'Articles', icon: BookOpen },
+  { href: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { href: '/posted-tasks', label: 'Posted Tasks', icon: UserPlus },
+  { href: '/music', label: 'Music', icon: Music },
+  { href: '/wallet', label: 'Wallet', icon: Wallet },
   { href: '/withdrawals', label: 'Withdrawals', icon: ArrowUpDown },
+  { href: '/contests', label: 'Contests', icon: Trophy },
+  { href: '/marketplace', label: 'Marketplace', icon: Store },
   { href: '/contact', label: 'Contact Messages', icon: MessageSquare },
   { href: '/config', label: 'System Config', icon: Settings },
 ]
@@ -48,9 +48,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {!collapsed && (
           <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">HT</span>
+              <span className="text-primary-foreground font-bold text-sm">CMP</span>
             </div>
-            <span className="font-semibold">Admin Panel</span>
+            <span className="font-semibold">CMP Admin</span>
           </Link>
         )}
         {collapsed && (

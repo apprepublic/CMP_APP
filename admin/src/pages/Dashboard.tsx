@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getAdminStats, type AdminStats } from '@/lib/admin-client'
 import { formatCurrency } from '@/lib/utils'
-import { supabase } from '@shared/supabase-client'
-import { Users, GraduationCap, BookOpen, Wallet, ShieldCheck, Award, UserPlus, MessageSquare, Loader2, ArrowUpDown } from 'lucide-react'
+import { Users, CheckCircle, Wallet, ArrowUpDown, ShieldCheck, BookOpen, UserPlus, Music, Loader2, TrendingUp, Activity } from 'lucide-react'
 
 const defaultStats: AdminStats = {
-  totalUsers: 0, totalTutors: 0, activeBookings: 0, revenueMtd: 0,
-  pendingKyc: 0, pendingCredentials: 0, pendingUpgrades: 0, pendingWithdrawals: 0,
-  unreadMessages: 0, usersByType: [], revenueByMonth: [],
+  totalUsers: 0, activeUsers: 0, totalCoinSupply: 0, pendingWithdrawals: 0,
+  pendingKyc: 0, totalArticles: 0, postedTasksCount: 0, systemTasksCount: 0,
+  totalSongs: 0, todayRegistrations: 0, totalWithdrawnCoins: 0,
+  usersByType: [], revenueByMonth: [],
 }
 
 export default function Dashboard() {
@@ -35,13 +35,13 @@ export default function Dashboard() {
 
   const cards = [
     { title: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { title: 'Total Tutors', value: stats.totalTutors.toLocaleString(), icon: GraduationCap, color: 'text-green-600', bg: 'bg-green-100' },
-    { title: 'Active Bookings', value: stats.activeBookings.toLocaleString(), icon: BookOpen, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { title: 'Revenue (MTD)', value: formatCurrency(stats.revenueMtd), icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { title: 'Active Users', value: stats.activeUsers.toLocaleString(), icon: Activity, color: 'text-green-600', bg: 'bg-green-100' },
+    { title: 'Today Signups', value: stats.todayRegistrations.toLocaleString(), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { title: 'Coin Supply', value: BigInt(stats.totalCoinSupply).toLocaleString(), icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-100' },
     { title: 'Pending KYC', value: stats.pendingKyc.toLocaleString(), icon: ShieldCheck, color: 'text-orange-600', bg: 'bg-orange-100' },
-    { title: 'Pending Credentials', value: stats.pendingCredentials.toLocaleString(), icon: Award, color: 'text-amber-600', bg: 'bg-amber-100' },
-    { title: 'Pending Upgrades', value: stats.pendingUpgrades.toLocaleString(), icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-100' },
-    { title: 'Unread Messages', value: stats.unreadMessages.toLocaleString(), icon: MessageSquare, color: 'text-rose-600', bg: 'bg-rose-100' },
+    { title: 'Articles', value: stats.totalArticles.toLocaleString(), icon: BookOpen, color: 'text-cyan-600', bg: 'bg-cyan-100' },
+    { title: 'Posted Tasks', value: stats.postedTasksCount.toLocaleString(), icon: UserPlus, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { title: 'Songs', value: stats.totalSongs.toLocaleString(), icon: Music, color: 'text-rose-600', bg: 'bg-rose-100' },
     { title: 'Pending Withdrawals', value: stats.pendingWithdrawals.toLocaleString(), icon: ArrowUpDown, color: 'text-indigo-600', bg: 'bg-indigo-100' },
   ]
 

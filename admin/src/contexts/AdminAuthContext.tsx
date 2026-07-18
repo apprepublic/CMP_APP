@@ -58,38 +58,15 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Check if user is admin in profiles table
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', newSession.user.id)
-        .single()
-
-      if (profile?.user_type !== 'admin') {
-        setAdmin(null)
-        setIsLoading(false)
-        return
-      }
-
       const adminProfile = await loadAdmin(newSession.user.id)
-      if (!adminProfile) {
-        setAdmin(null)
-      }
+      if (!adminProfile) setAdmin(null)
       setIsLoading(false)
     })
 
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s)
       if (s?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', s.user.id)
-          .single()
-
-        if (profile?.user_type === 'admin') {
-          await loadAdmin(s.user.id)
-        }
+        await loadAdmin(s.user.id)
       }
       setIsLoading(false)
     })
@@ -100,17 +77,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { error: error.message }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('user_type')
-      .eq('id', data.user.id)
-      .single()
-
-    if (profile?.user_type !== 'admin') {
-      await supabase.auth.signOut()
-      return { error: 'Access denied. Admin privileges required.' }
-    }
 
     const adminProfile = await loadAdmin(data.user.id)
     if (!adminProfile) {

@@ -38,9 +38,9 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold text-xl">HT</span>
+            <span className="text-primary-foreground font-bold text-xl">CMP</span>
           </div>
-          <CardTitle>Admin Portal</CardTitle>
+          <CardTitle>CMP Admin Portal</CardTitle>
           <CardDescription>Sign in with your admin credentials</CardDescription>
         </CardHeader>
         <CardContent>
@@ -52,7 +52,7 @@ export default function Login() {
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@example.com" required />
+              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@cmpapp.ng" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
