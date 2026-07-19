@@ -402,20 +402,19 @@ export default function LandingPage() {
               <div className="flex-1 text-center">
                 <h2 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-white mb-2">The Coin Economy</h2>
                 <p className="font-body-md text-body-md text-white/80 mb-4">A stable, transparent currency designed for digital creators.</p>
-              </div>
-              <div className="flex-1 w-full max-w-md">
-                <div className="aspect-square glass-dark rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                  <div className="mb-6 relative">
-                    <div className="w-32 h-32 flex items-center justify-center animate-pulse shadow-lg">
-                      <img src="/coin.png" alt="CMP Coin" className="w-full h-full object-contain" />
-                    </div>
-                    <div className="absolute -top-4 -right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full font-data-md text-data-md shadow-xl">
-                      Live Value
-                    </div>
+                <div className="flex items-center gap-4 glass-dark p-4 rounded-xl w-max mx-auto mb-4">
+                  <div className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-primary-container/50">
+                    <span className="font-data-lg text-data-lg text-secondary-fixed">1</span>
                   </div>
-                  <div className="font-data-lg text-data-lg text-white mb-2">Current Balance Value</div>
-                  <div className="font-h1 text-h1 text-secondary-fixed">$ 12,500.00</div>
-                  <div className="font-body-sm text-body-sm text-white/70 mt-4">1,250,000 CMP COINS</div>
+                  <div className="text-left">
+                    <div className="font-h3 text-h3 text-white">100 Coins : 1 USD</div>
+                    <div className="font-body-sm text-body-sm text-white/70">Guaranteed conversion rate for liquidity.</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="relative w-48 h-48 rounded-full bg-gold-metallic/10 border-2 border-gold-metallic flex items-center justify-center shadow-[0_0_40px_rgba(184,134,11,0.2)] overflow-hidden">
+                  <img src="/coin.png" alt="CMP Coin" className="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
