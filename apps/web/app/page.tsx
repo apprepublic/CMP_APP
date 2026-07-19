@@ -393,19 +393,22 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section className="px-4 py-stack-lg bg-surface-container-low">
-            <div className="max-w-4xl mx-auto flex flex-col items-center gap-6">
+          <section className="relative px-4 py-stack-lg overflow-hidden">
+            <div className="absolute inset-0 z-0">
+              <img alt="" src="/coin-economy-bg.png" className="w-full h-full object-cover" />
+            </div>
+            <div className="absolute inset-0 z-[1] bg-black/40"></div>
+            <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 relative z-[2]">
               <div className="flex-1 text-center">
-                <h2 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-primary mb-2">The Coin Economy</h2>
-                <p className="font-body-md text-body-md text-on-surface-muted mb-4">A stable, transparent currency designed for digital creators.</p>
-                <div className="inline-flex items-center gap-4 bg-surface rounded-full py-2 px-6 shadow-sm border border-outline-variant mb-4">
-                  <div className="flex items-center gap-1 font-['JetBrains_Mono'] text-[20px] leading-6 font-semibold text-primary">
-                    <span className="material-symbols-outlined text-gold-metallic" style={{fontVariationSettings: "'FILL' 1"}}>generating_tokens</span>
-                    100
+                <h2 className="font-['Montserrat'] text-[28px] leading-9 font-bold text-white mb-2">The Coin Economy</h2>
+                <p className="font-body-md text-body-md text-white/80 mb-4">A stable, transparent currency designed for digital creators.</p>
+                <div className="flex items-center gap-4 glass-dark p-4 rounded-xl w-max mx-auto mb-4">
+                  <div className="w-12 h-12 rounded-full border border-secondary-fixed/50 flex items-center justify-center bg-primary-container/50">
+                    <span className="font-data-lg text-data-lg text-secondary-fixed">1</span>
                   </div>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">=</span>
-                  <div className="font-['JetBrains_Mono'] text-[20px] leading-6 font-semibold text-success-verified">
-                    $1.00 USD
+                  <div className="text-left">
+                    <div className="font-h3 text-h3 text-white">100 Coins : 1 USD</div>
+                    <div className="font-body-sm text-body-sm text-white/70">Guaranteed conversion rate for liquidity.</div>
                   </div>
                 </div>
               </div>

@@ -1,0 +1,18 @@
+name: Generate Articles Hourly
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call generate-articles edge function
+        run: |
+          curl -s --max-time 120 -X POST \
+            "https://eztaonlpenuzpoosqonx.supabase.co/functions/v1/generate-articles" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'

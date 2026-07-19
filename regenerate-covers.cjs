@@ -1,23 +1,29 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eztaonlpenuzpoosqonx.supabase.co';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const TEXT_KEY = process.env.TEXT_API_KEY;
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const DEEPAI_KEY = process.env.DEEPAI_API_KEY;
 
 if (!KEY) { console.error('Missing SUPABASE_SERVICE_ROLE_KEY'); process.exit(1); }
-if (!TEXT_KEY) { console.error('Missing TEXT_API_KEY'); process.exit(1); }
+if (!OPENROUTER_KEY) { console.error('Missing OPENROUTER_API_KEY'); process.exit(1); }
 if (!DEEPAI_KEY) { console.error('Missing DEEPAI_API_KEY'); process.exit(1); }
 
 const AUTH = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
-const TEXT_BASE = process.env.TEXT_API_BASE_URL || 'https://api.opencode.ai/v1';
-const TEXT_MODEL = process.env.TEXT_MODEL || 'deepseek-v4-flash';
+const TEXT_MODEL = process.env.TEXT_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b:free';
 
 async function textFetch(messages, format) {
   const body = { model: TEXT_MODEL, messages, max_tokens: 4096 };
   if (format) body.response_format = { type: format };
-  const r = await fetch(`${TEXT_BASE}/chat/completions`, {
-    method: 'POST', headers: { 'Authorization': `Bearer ${TEXT_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENROUTER_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://cmpapp.ng',
+      'X-Title': 'CMPapp Cover Agent',
+    },
+    body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error(`Text API ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`OpenRouter ${r.status}: ${await r.text()}`);
   const data = await r.json();
   return data.choices?.[0]?.message?.content || '';
 }

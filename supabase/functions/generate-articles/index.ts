@@ -19,34 +19,34 @@ function slugify(text: string): string {
     .substring(0, 200);
 }
 
-async function callOpenAIText(
+async function callOpenRouterText(
   model: string,
   messages: { role: string; content: string }[],
   apiKey: string,
   responseFormat?: "json_object"
 ): Promise<any> {
-  const baseUrl = Deno.env.get("TEXT_API_BASE_URL") || "https://api.opencode.ai/v1";
-
   const body: any = { model, messages, max_tokens: 4096 };
   if (responseFormat) body.response_format = { type: responseFormat };
 
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "HTTP-Referer": "https://cmpapp.ng",
+      "X-Title": "CMPapp Article Agent",
     },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Text API error ${res.status}: ${text}`);
+    throw new Error(`OpenRouter error ${res.status}: ${text}`);
   }
 
   const data = await res.json();
   const raw = data.choices?.[0]?.message?.content;
-  if (!raw) throw new Error("Empty response from text API");
+  if (!raw) throw new Error("Empty response from OpenRouter");
 
   let content = raw;
   if (responseFormat) {
@@ -94,7 +94,7 @@ async function callDeepAIImage(prompt: string, apiKey: string): Promise<Uint8Arr
 // PIPELINE STEPS
 // ===========================================
 
-async function selectTopic(pool: Pool, textApiKey: string): Promise<{ category: string; topic: string }> {
+async function selectTopic(pool: Pool, openRouterKey: string): Promise<{ category: string; topic: string }> {
   const client = await pool.connect();
   try {
     // Pick the most overdue category
@@ -125,8 +125,8 @@ async function selectTopic(pool: Pool, textApiKey: string): Promise<{ category: 
       ? `\n\nAvoid topics similar to these recent articles:\n${recentTitles.map((t: string) => `- ${t}`).join("\n")}`
       : "";
 
-    const response = await callOpenAIText(
-      Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash",
+    const response = await callOpenRouterText(
+      Deno.env.get("TEXT_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free",
       [
         {
           role: "system",
@@ -137,7 +137,7 @@ async function selectTopic(pool: Pool, textApiKey: string): Promise<{ category: 
           content: `Suggest a fresh article topic in the category "${category}" that hasn't been covered recently.`,
         },
       ],
-      textApiKey,
+      openRouterKey,
       "json_object"
     );
 
@@ -179,7 +179,7 @@ async function writeDraft(
   topic: string,
   category: string,
   sources: { title: string; url: string; content: string }[],
-  textApiKey: string
+  openRouterKey: string
 ): Promise<{
   title: string;
   slug: string;
@@ -192,7 +192,7 @@ async function writeDraft(
     .map((s, i) => `[${i + 1}] ${s.title}\n    URL: ${s.url}\n    Content: ${s.content.substring(0, 1500)}`)
     .join("\n\n");
 
-  const response = await callOpenAIText(
+  const response = await callOpenRouterText(
     Deno.env.get("TEXT_MODEL") || "deepseek/deepseek-v4-flash",
     [
       {
@@ -217,7 +217,7 @@ Return ONLY valid JSON with this exact structure:
         content: `Write an article about: ${topic}\n\nUse these sources for facts and context:\n\n${sourcesText}`,
       },
     ],
-    textApiKey,
+    openRouterKey,
     "json_object"
   );
 
@@ -276,18 +276,65 @@ async function generateCoverImage(
 
 async function generateImagePrompt(
   draft: { title: string; excerpt: string; content_html: string },
-  textApiKey: string
+  openRouterKey: string
 ): Promise<string> {
-  const content = (draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 2000);
-  const model = Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash";
+  const content = (draft.content_html || "").replace(/<[^>]*>/g, "").substring(0, 3000);
+  const model = Deno.env.get("TEXT_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
+
+  const skillDocs = `You are an expert at generating hyperrealistic, photorealistic cover image prompts for blog posts and articles. Your default and non-negotiable visual style is hyperrealistic photography — every element in the prompt (people, objects, environments, lighting) must read as a real photograph, never an illustration, painting, 3D render, or cartoon.
+
+## Workflow
+
+### 1. Read the whole article first
+Identify:
+- Core theme in one sentence
+- Central human subject, if any (a founder, a nurse, a developer, a farmer). If abstract, use a scene or symbolic environment instead.
+- Setting and geography — use real, specific place cues (skyline landmarks, regional architecture, climate, light quality)
+- Tone — aspirational, cautionary, urgent, celebratory, technical, investigative. Tone drives lighting and expression choices.
+- Anything that must NOT be implied — don't produce a purely triumphant image if the article discusses risk alongside opportunity
+
+### 2. Pick ONE visual concept
+Pick the single strongest concrete visual moment or metaphor that represents the piece. Good source material:
+- A specific action mid-motion (someone signing, coding, presenting, packing, reviewing)
+- A specific transitional moment if the article is about change (leaving one place, arriving at another) — render as one real, physically plausible scene, not a collage or split-screen
+- A telling environmental detail if there's no human subject (equipment, a workspace, a landscape, a document/object central to the story)
+
+Avoid: literal metaphor stacking (person standing on a graph, glowing brain icons, floating money symbols) — these read as stock-illustration clichés.
+
+### 3. Write the prompt using this structure (as flowing prose paragraphs, not bullets)
+[SUBJECT] — who/what is in frame, described physically and specifically (age range, build, clothing, ethnicity/region if relevant to the story's setting, expression, pose/action)
+[SETTING] — specific location, time of day, background detail, real-world landmarks or environmental cues
+[COMPOSITION & LIGHT] — camera angle, framing (close-up / medium / wide), lighting quality (golden hour, overcast, window light, studio), mood conveyed by light
+[CAMERA/LENS SPEC] — e.g. "shot on a full-frame mirrorless camera, 50mm lens, shallow depth of field, sharp focus on subject"
+[STYLE LOCK] — "photorealistic, hyperrealistic, natural skin texture, true-to-life detail, editorial photography style"
+[NEGATIVE CONSTRAINTS] — "no illustration, no 3D render, no CGI, no cartoon, no anime, no vector art, no painting, no beauty filter, no text, no logos, no watermark"
+[FORMAT] — 16:9 aspect ratio for blog header
+
+### 4. Default technical conventions
+- Full-frame camera, 50mm or 35mm lens, shallow depth of field
+- Natural or golden-hour lighting unless the article's mood calls for something else
+- 16:9 aspect ratio
+
+### Things to avoid
+- Never drift toward flat illustration, isometric graphics, icon-style, or "corporate memphis" art
+- Never depict real, named, identifiable public figures
+- Don't overload the prompt with more than one central subject/action
+- Don't literalize abstract concepts (charts, arrows, glowing icons) — represent ideas through real physical scenes and objects instead
+
+Return ONLY the final image prompt as plain text, no JSON wrapping, no commentary.`;
+
   try {
-    const response = await callOpenAIText(
+    const response = await callOpenRouterText(
       model,
       [
-        { role: "system", content: "Generate a detailed image prompt for an editorial cover image. Describe a scene — no text, no logos, no real people. Return the prompt as a plain sentence, no JSON wrapping." },
-        { role: "user", content: `Title: ${draft.title}\n\nExcerpt: ${draft.excerpt || ""}\n\nContent: ${content}` },
+        { role: "system", content: skillDocs },
+        { role: "user", content: `Generate a photorealistic cover image prompt for this article:
+
+Title: ${draft.title}
+Excerpt: ${draft.excerpt || ""}
+Content: ${content}` },
       ],
-      textApiKey
+      openRouterKey
     );
     const raw = response.choices?.[0]?.message?.content?.trim();
     if (raw && raw.length > 10) return raw.replace(/^["'\s]+|["'\s]+$/g, "");
@@ -329,7 +376,7 @@ const handler = async (req: Request): Promise<Response> => {
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const textApiKey = Deno.env.get("TEXT_API_KEY")!;
+  const openRouterKey = Deno.env.get("OPENROUTER_API_KEY")!;
   const deepaiKey = Deno.env.get("DEEPAI_API_KEY")!;
   const tavilyKey = Deno.env.get("TAVILY_API_KEY")!;
   const authorId = Deno.env.get("AI_ARTICLE_AUTHOR_ID")!;
@@ -338,7 +385,7 @@ const handler = async (req: Request): Promise<Response> => {
   const missing = [];
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseServiceKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
-  if (!textApiKey) missing.push("TEXT_API_KEY");
+  if (!openRouterKey) missing.push("OPENROUTER_API_KEY");
   if (!deepaiKey) missing.push("DEEPAI_API_KEY");
   if (!tavilyKey) missing.push("TAVILY_API_KEY");
   if (!authorId) missing.push("AI_ARTICLE_AUTHOR_ID");
@@ -355,7 +402,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     pool = new Pool(dbUrl, 1);
-    const writerModel = Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash";
+    const writerModel = Deno.env.get("TEXT_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
     const imageModel = "deepai-text2img";
 
     // RETRY LOOP: keep trying until successful insertion
@@ -377,7 +424,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         // Step 1: Select topic (fresh topic each attempt)
         console.log("Step 1: Selecting topic...");
-        const { category, topic } = await selectTopic(pool, textApiKey);
+        const { category, topic } = await selectTopic(pool, openRouterKey);
         console.log(`Selected category="${category}" topic="${topic}"`);
 
         // Step 2: Research
@@ -393,7 +440,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("Step 3: Writing draft...");
         let draft: any;
         try {
-          draft = await writeDraft(topic, category, sources, textApiKey);
+          draft = await writeDraft(topic, category, sources, openRouterKey);
         } catch (err: any) {
           console.error("Write draft failed:", err);
           throw new Error(`Write draft failed: ${err.message}`);
@@ -401,7 +448,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Step 4: Generate image prompt from article content
         console.log("Step 4: Generating image prompt from article...");
-        const imagePrompt = await generateImagePrompt(draft, textApiKey);
+        const imagePrompt = await generateImagePrompt(draft, openRouterKey);
         console.log(`Image prompt: "${imagePrompt.substring(0, 100)}..."`);
 
         // Step 5: Generate cover image

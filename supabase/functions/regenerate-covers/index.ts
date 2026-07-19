@@ -24,24 +24,28 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const textApiKey = Deno.env.get("TEXT_API_KEY")!;
+    const openRouterKey = Deno.env.get("OPENROUTER_API_KEY")!;
     const deepaiKey = Deno.env.get("DEEPAI_API_KEY")!;
-    if (!textApiKey) throw new Error("Missing TEXT_API_KEY");
+    if (!openRouterKey) throw new Error("Missing OPENROUTER_API_KEY");
     if (!deepaiKey) throw new Error("Missing DEEPAI_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const textBaseUrl = Deno.env.get("TEXT_API_BASE_URL") || "https://api.opencode.ai/v1";
-    const textModel = Deno.env.get("TEXT_MODEL") || "deepseek-v4-flash";
+    const textModel = Deno.env.get("TEXT_MODEL") || "nvidia/nemotron-3-ultra-550b-a55b:free";
 
     async function textFetch(messages: any[], format?: "json_object"): Promise<string> {
       const body: any = { model: textModel, messages, max_tokens: 4096 };
       if (format) body.response_format = { type: format };
-      const r = await fetch(`${textBaseUrl}/chat/completions`, {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${textApiKey}`, "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${openRouterKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://cmpapp.ng",
+          "X-Title": "CMPapp Cover Agent",
+        },
         body: JSON.stringify(body),
       });
-      if (!r.ok) throw new Error(`Text API ${r.status}: ${await r.text()}`);
+      if (!r.ok) throw new Error(`OpenRouter ${r.status}: ${await r.text()}`);
       const data = await r.json();
       return data.choices?.[0]?.message?.content || "";
     }

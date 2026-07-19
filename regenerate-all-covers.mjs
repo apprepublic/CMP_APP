@@ -2,21 +2,25 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://eztaonlpenuzpoosqonx.supabase.co';
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6dGFvbmxwZW51enBvb3Nxb254Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU5NDE3NSwiZXhwIjoyMDk4MTcwMTc1fQ.1qF9UMLV0SMMgviakSqzkzdiy7LbppOzTofYQp--kf0';
-const TEXT_KEY = Deno.env.get('TEXT_API_KEY');
+const OPENROUTER_KEY = Deno.env.get('OPENROUTER_API_KEY');
 const DEEPAI_KEY = Deno.env.get('DEEPAI_API_KEY');
-const TEXT_BASE = Deno.env.get('TEXT_API_BASE_URL') || 'https://api.opencode.ai/v1';
-const TEXT_MODEL = Deno.env.get('TEXT_MODEL') || 'deepseek-v4-flash';
+const TEXT_MODEL = Deno.env.get('TEXT_MODEL') || 'nvidia/nemotron-3-ultra-550b-a55b:free';
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
 async function textFetch(messages) {
   const body = { model: TEXT_MODEL, messages, max_tokens: 4096, response_format: { type: 'json_object' } };
-  const res = await fetch(`${TEXT_BASE}/chat/completions`, {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${TEXT_KEY}`, 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `Bearer ${OPENROUTER_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://cmpapp.ng',
+      'X-Title': 'CMPapp Cover Agent',
+    },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Text API ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return data.choices?.[0]?.message?.content || '{}';
 }
