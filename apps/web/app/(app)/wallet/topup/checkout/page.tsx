@@ -42,7 +42,7 @@ function CheckoutContent() {
 
   const providerName = method === 'crypto' ? 'NowPayments' : 'Paystack';
   const providerIcon = method === 'crypto' ? 'currency_bitcoin' : 'account_balance';
-  const symbol = currency === 'NGN' ? '₦' : '$';
+  const symbol = method === 'crypto' ? '$' : (currency === 'NGN' ? '₦' : '$');
 
   // Load Paystack inline script
   useEffect(() => {
@@ -98,8 +98,8 @@ function CheckoutContent() {
   }, [user, scriptLoaded, fiatAmount, currency, cmpAmount, wallet, router]);
 
   const handleCryptoPayment = useCallback(() => {
-    router.push(`/wallet/topup/crypto?amount=${fiatAmount}&cmp=${cmpAmount}&currency=${currency}`);
-  }, [fiatAmount, cmpAmount, currency, router]);
+    router.push(`/wallet/topup/crypto?amount=${fiatAmount}&cmp=${cmpAmount}&currency=USD`);
+  }, [fiatAmount, cmpAmount, router]);
 
   const handleProceed = async () => {
     setError('');

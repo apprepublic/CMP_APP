@@ -82,6 +82,18 @@ export default async function handler(
       return res.status(400).json({ error: 'Invalid order ID format' });
     }
 
+    // Verify the order_id exists in crypto_payments
+    const { data: cryptoPayment, error: cryptoError } = await supabase
+      .from('crypto_payments')
+      .select('id, coin_amount, status')
+      .eq('order_id', order_id)
+      .single();
+
+    if (cryptoError || !cryptoPayment) {
+      console.error('crypto_payments record not found for order_id:', order_id);
+      return res.status(404).json({ error: 'Payment record not found' });
+    }
+
     // Get user's wallet
     const { data: wallet, error: walletError } = await supabase
       .from('wallets')
@@ -94,9 +106,8 @@ export default async function handler(
       return res.status(404).json({ error: 'Wallet not found' });
     }
 
-    // Calculate coin amount (1 NGN = 100 coins, adjust rate as needed)
-    const COIN_RATE = 100;
-    const coinAmount = Math.floor(price_amount * COIN_RATE);
+    // Use the pre-calculated coin_amount from the crypto_payments record
+    const coinAmount = cryptoPayment.coin_amount;
 
     if (internalStatus === 'COMPLETED') {
       // Update wallet balance
@@ -119,8 +130,9 @@ export default async function handler(
       const { error: txError } = await supabase
         .from('coin_transactions')
         .insert({
+          wallet_id: wallet.id,
           user_id: userId,
-          type: 'topup',
+          type: 'TOPUP',
           amount: coinAmount,
           balance_after: newBalance.toString(),
           description: `Crypto top-up via NOWPayments (${pay_currency.toUpperCase()})`,
@@ -132,6 +144,12 @@ export default async function handler(
         // Don't fail here, wallet already updated
       }
 
+      // Update crypto_payments status to COMPLETED
+      await supabase
+        .from('crypto_payments')
+        .update({ status: 'COMPLETED', updated_at: new Date().toISOString() })
+        .eq('id', cryptoPayment.id);
+
       // Send Notification
       await supabase.from('notifications').insert({
         user_id: userId,
@@ -140,12 +158,19 @@ export default async function handler(
         message: `Your deposit of ${coinAmount} coins via ${pay_currency.toUpperCase()} has been credited.`,
       });
     } else if (internalStatus === 'FAILED') {
+      // Update crypto_payments status to FAILED
+      await supabase
+        .from('crypto_payments')
+        .update({ status: 'FAILED', updated_at: new Date().toISOString() })
+        .eq('id', cryptoPayment.id);
+
       // Log failed payment
       await supabase
         .from('coin_transactions')
         .insert({
+          wallet_id: wallet.id,
           user_id: userId,
-          type: 'refund',
+          type: 'TOPUP',
           amount: 0,
           balance_after: wallet.coin_balance,
           description: `Failed crypto top-up via NOWPayments (${pay_currency.toUpperCase()})`,

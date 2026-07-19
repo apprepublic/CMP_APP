@@ -21,7 +21,7 @@ function CryptoPaymentContent() {
   const searchParams = useSearchParams();
   const fiatAmount = parseFloat(searchParams?.get('amount') || '0');
   const cmpAmount = parseInt(searchParams?.get('cmp') || '0');
-  const currency = searchParams?.get('currency') || 'USD';
+  const currency = 'USD';
   const { user } = useAuth();
 
   const [selectedCrypto, setSelectedCrypto] = useState<string | null>(null);
@@ -40,7 +40,7 @@ function CryptoPaymentContent() {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
 
-  const symbol = currency === 'NGN' ? '₦' : '$';
+  const symbol = '$';
 
   const selectedCurrencyInfo = CRYPTO_CURRENCIES.find(c => c.value === selectedCrypto);
 
