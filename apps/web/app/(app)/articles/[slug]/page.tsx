@@ -2,11 +2,14 @@ import { supabase } from '@/lib/supabase';
 import ArticleReader from '@/components/tasks/ArticleReader';
 
 export async function generateStaticParams() {
-  const { data: articles } = await (supabase as any)
-    .from('articles')
-    .select('slug')
-    .eq('is_published', true);
-  return (articles || []).map((a: { slug: string }) => ({ slug: a.slug }));
+  try {
+    const { data: articles } = await (supabase as any)
+      .from('articles')
+      .select('slug')
+      .eq('is_published', true);
+    if (articles && articles.length > 0) return articles.map((a: { slug: string }) => ({ slug: a.slug }));
+  } catch {}
+  return [{ slug: 'placeholder' }];
 }
 
 export default function ArticlePage({ params }: { params: { slug: string } }) {
