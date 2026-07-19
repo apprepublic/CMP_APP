@@ -39,3 +39,9 @@ verify_jwt = false
 
 [functions.get-wallet-balance]
 verify_jwt = false
+
+[functions.payments-nowpayments-create]
+verify_jwt = false
+
+[functions.payments-nowpayments-webhook]
+verify_jwt = false

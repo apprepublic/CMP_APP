@@ -52,43 +52,20 @@ function CryptoPaymentContent() {
     const orderId = generateOrderId(user.id);
 
     try {
-      const apiRes = await fetch('/api/payments/nowpayments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error: invokeError } = await supabase.functions.invoke('payments-nowpayments-create', {
+        body: {
           amount: fiatAmount,
           currency,
           pay_currency: selectedCrypto,
           orderId,
           description: `Top-up ${cmpAmount} CMP via ${selectedCrypto}`,
-        }),
+          cmpAmount,
+        },
       });
 
-      if (!apiRes.ok) {
-        const errBody = await apiRes.json().catch(() => ({}));
-        throw new Error(errBody.error || errBody.message || 'Failed to create payment');
-      }
+      if (invokeError) throw new Error(invokeError.message || 'Failed to create payment');
 
-      const data = await apiRes.json();
-
-      const { data: inserted, error: insertError } = await supabase.from('crypto_payments').insert({
-        user_id: user.id,
-        nowpayments_id: data.paymentId,
-        order_id: data.orderId,
-        price_amount: data.priceAmount,
-        price_currency: data.priceCurrency,
-        pay_amount: data.payAmount,
-        pay_currency: data.payCurrency,
-        pay_address: data.payAddress,
-        coin_amount: cmpAmount,
-        status: 'PENDING',
-        metadata: { cmpAmount, fiatAmount, paymentUrl: data.paymentUrl },
-        expires_at: data.expirationDate,
-      } as any).select('id').single();
-
-      if (insertError) throw new Error(insertError.message);
-
-      setCryptoPaymentId(inserted.id);
+      setCryptoPaymentId(data.id);
       setPaymentDetails({
         paymentId: data.paymentId,
         orderId: data.orderId,
