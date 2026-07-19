@@ -227,7 +227,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="font-data-lg text-data-lg text-white mb-2">Current Balance Value</div>
-                <div className="font-h1 text-h1 text-secondary-fixed">$ 12,500.00</div>
+                <div className="font-h1 text-h1 text-secondary-fixed">$ 83.33</div>
                 <div className="font-body-sm text-body-sm text-white/70 mt-4">1,250,000 CMP COINS</div>
               </div>
             </div>
