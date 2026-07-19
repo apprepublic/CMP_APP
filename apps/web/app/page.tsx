@@ -201,7 +201,7 @@ export default function LandingPage() {
                     <span className="font-data-lg text-data-lg text-secondary-fixed">1</span>
                   </div>
                   <div>
-                    <div className="font-h3 text-h3 text-white">100 Coins : 1 USD</div>
+                    <div className="font-h3 text-h3 text-white">15,000 Coins : 1 USD</div>
                     <div className="font-body-sm text-body-sm text-white/70">Guaranteed conversion rate for liquidity.</div>
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export default function LandingPage() {
                     <span className="font-data-lg text-data-lg text-secondary-fixed">1</span>
                   </div>
                   <div className="text-left">
-                    <div className="font-h3 text-h3 text-white">100 Coins : 1 USD</div>
+                    <div className="font-h3 text-h3 text-white">15,000 Coins : 1 USD</div>
                     <div className="font-body-sm text-body-sm text-white/70">Guaranteed conversion rate for liquidity.</div>
                   </div>
                 </div>
