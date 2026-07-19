@@ -147,7 +147,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-h3 text-h3 mb-4">Stream to Earn</h3>
                 <p className="font-body-md text-body-md text-on-surface-variant mb-6">
-                  Earn coins by discovering and listening to emerging African artists. Your ears are assets—get paid for every minute you spend on premium audio.
+                  Earn coins by discovering and listening to emerging African artists. Your ears are assets get paid for every minute you spend on premium audio.
                 </p>
                 <Link className="text-secondary font-bold flex items-center gap-2 hover:gap-4 transition-all" href="/music">
                   Start Listening <span className="material-symbols-outlined">arrow_forward</span>
