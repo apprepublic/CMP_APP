@@ -77,11 +77,11 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </ul>
           </div>
           <div>
-            <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">LEGAL</h5>
+            <h5 className="text-sm font-semibold mb-4">LEGAL</h5>
             <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/privacy">Privacy Policy</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/terms">Terms of Service</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/cookies">Cookie Policy</Link></li>
+              <li><Link className="hover:text-white transition-colors" href="/privacy">Privacy Policy</Link></li>
+              <li><Link className="hover:text-white transition-colors" href="/terms">Terms of Service</Link></li>
+              <li><Link className="hover:text-white transition-colors" href="/cookies">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
