@@ -7,9 +7,9 @@ import { useAuth } from '@/lib/useAuth';
 
 const CRYPTO_CURRENCIES = [
   { value: 'btc', label: 'Bitcoin', icon: 'currency_bitcoin', symbol: 'BTC', network: 'BTC' },
-  { value: 'eth', label: 'Ethereum', icon: 'currency_ethereum', symbol: 'ETH', network: 'ERC20' },
-  { value: 'usdterc20', label: 'USDT (ERC20)', icon: 'currency_dollar', symbol: 'USDT', network: 'ERC20' },
-  { value: 'usdttrc20', label: 'USDT (TRC20)', icon: 'currency_dollar', symbol: 'USDT', network: 'TRC20' },
+  { value: 'eth', label: 'Ethereum', icon: 'currency_exchange', symbol: 'ETH', network: 'ERC20' },
+  { value: 'usdterc20', label: 'USDT (ERC20)', icon: 'generating_tokens', symbol: 'USDT', network: 'ERC20' },
+  { value: 'usdttrc20', label: 'USDT (TRC20)', icon: 'generating_tokens', symbol: 'USDT', network: 'TRC20' },
 ];
 
 function generateOrderId(userId: string): string {
