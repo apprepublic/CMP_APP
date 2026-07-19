@@ -188,7 +188,7 @@ function TopUpAmountContent() {
         </main>
 
         {/* Fixed Bottom Button */}
-        <footer className="fixed bottom-0 w-full bg-background/80 backdrop-blur-md p-margin-mobile">
+        <footer className="fixed bottom-20 w-full bg-background/80 backdrop-blur-md p-margin-mobile z-50">
           <div className="max-w-md mx-auto">
             <button
               onClick={handleConfirm}

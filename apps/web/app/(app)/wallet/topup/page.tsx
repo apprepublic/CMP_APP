@@ -97,7 +97,7 @@ export default function TopUpSelectMethodPage() {
         </main>
 
         {/* Fixed Bottom Bar */}
-        <footer className="fixed bottom-0 w-full bg-surface py-6 px-margin-mobile shadow-[0px_-4px_20px_rgba(13,27,53,0.05)]">
+        <footer className="fixed bottom-20 w-full bg-surface py-6 px-margin-mobile shadow-[0px_-4px_20px_rgba(13,27,53,0.05)] z-50">
           <div className="w-full">
             <button
               onClick={handleContinue}

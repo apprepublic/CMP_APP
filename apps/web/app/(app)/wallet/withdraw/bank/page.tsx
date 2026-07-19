@@ -286,7 +286,7 @@ export default function WithdrawBankPage() {
 
         {/* Bottom Action Sheet */}
         {!showForm && (
-          <footer className="fixed bottom-0 left-0 w-full bg-primary-container text-on-primary rounded-t-[24px] shadow-[0_-8px_32px_rgba(13,27,53,0.2)] p-margin-mobile z-50">
+          <footer className="fixed bottom-20 left-0 w-full bg-primary-container text-on-primary rounded-t-[24px] shadow-[0_-8px_32px_rgba(13,27,53,0.2)] p-margin-mobile z-50">
             <div className="max-w-[1280px] mx-auto flex flex-col gap-4">
               {selectedAccount && (
                 <>
