@@ -27,7 +27,7 @@ export default function TopUpSelectMethodPage() {
           </div>
         </header>
 
-        <main className="flex-grow pt-24 pb-32 px-margin-mobile w-full mx-auto bg-background min-h-screen">
+        <main className="flex-grow pt-24 pb-48 px-margin-mobile w-full mx-auto bg-background min-h-screen">
           <div className="mb-stack-lg">
             <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-primary-container">Select Payment Method</h2>
             <p className="text-on-surface-muted font-body-sm mt-1">Choose your preferred provider to fund your account securely.</p>

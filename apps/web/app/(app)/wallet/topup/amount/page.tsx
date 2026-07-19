@@ -82,7 +82,7 @@ function TopUpAmountContent() {
           </div>
         </header>
 
-        <main className="w-full max-w-md mt-16 px-margin-mobile py-stack-lg flex flex-col gap-stack-lg pb-32 mx-auto">
+        <main className="w-full max-w-md mt-16 px-margin-mobile py-stack-lg flex flex-col gap-stack-lg pb-48 mx-auto">
           {/* Input Section */}
           <section className="flex flex-col gap-stack-md">
             {/* CMP Input */}
