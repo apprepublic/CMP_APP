@@ -119,6 +119,15 @@ function MobileWalletHub() {
                       <div>
                         <p className="font-body-sm text-body-sm font-medium text-on-surface">{TX_LABELS[tx.type] || tx.type}</p>
                         <p className="font-data-xs text-data-xs text-on-surface-variant">{formatDate(tx.created_at)}</p>
+                        {tx.type === 'WITHDRAWAL' && tx.withdrawal_status && (
+                          <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 ${
+                            tx.withdrawal_status === 'PROCESSED' ? 'bg-green-100 text-green-700' :
+                            tx.withdrawal_status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {tx.withdrawal_status}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -210,6 +219,15 @@ export default function WalletPage() {
                       <div>
                         <h4 className="font-body-md text-body-md font-medium text-on-surface">{TX_LABELS[tx.type] || tx.type}</h4>
                         <p className="font-body-sm text-body-sm text-on-surface-variant">{formatDate(tx.created_at)}</p>
+                        {tx.type === 'WITHDRAWAL' && tx.withdrawal_status && (
+                          <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5 ${
+                            tx.withdrawal_status === 'PROCESSED' ? 'bg-green-100 text-green-700' :
+                            tx.withdrawal_status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {tx.withdrawal_status}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">

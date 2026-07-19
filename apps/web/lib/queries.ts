@@ -105,6 +105,8 @@ export interface CoinTransaction {
   balance_after: string;
   description: string | null;
   created_at: string;
+  metadata?: { withdrawal_id?: string } | null;
+  withdrawal_status?: string | null;
 }
 
 export interface AppNotification {
@@ -147,9 +149,31 @@ function unwrap<T>(res: { data: T | null; error: any }): T {
 /* ----------------------------- WALLET ---------------------------- */
 
 export async function getTransactions(walletId: string): Promise<CoinTransaction[]> {
-  return unwrap<CoinTransaction[]>(
+  const txs = await unwrap<CoinTransaction[]>(
     await db.from('coin_transactions').select('*').eq('wallet_id', walletId).order('created_at', { ascending: false }).limit(20)
   );
+
+  const withdrawalTxIds = txs
+    .filter(tx => tx.type === 'WITHDRAWAL' && tx.metadata?.withdrawal_id)
+    .map(tx => tx.metadata!.withdrawal_id!);
+
+  if (withdrawalTxIds.length > 0) {
+    const { data: requests } = await db
+      .from('withdrawal_requests')
+      .select('id, status')
+      .in('id', withdrawalTxIds);
+
+    if (requests) {
+      const statusMap = Object.fromEntries(requests.map((r: any) => [r.id, r.status]));
+      for (const tx of txs) {
+        if (tx.type === 'WITHDRAWAL' && tx.metadata?.withdrawal_id) {
+          tx.withdrawal_status = statusMap[tx.metadata.withdrawal_id] || null;
+        }
+      }
+    }
+  }
+
+  return txs;
 }
 
 export async function processWithdrawal(

@@ -27,12 +27,19 @@ export default function Withdrawals() {
     setLoading(false)
   }
 
-  const handleAction = async (id: string, status: string) => {
+  const handleApprove = async (id: string) => {
     setProcessing(true)
-    const updates: any = { status, processed_at: new Date().toISOString() }
-    const { error } = await supabase.from('withdrawal_requests').update(updates).eq('id', id)
-    if (error) toast.error('Failed: ' + error.message)
-    else { toast.success(`Withdrawal ${status.toLowerCase()}`); setSelected(null); load() }
+    const { error } = await supabase.rpc('approve_withdrawal', { p_request_id: id })
+    if (error) toast.error('Approve failed: ' + error.message)
+    else { toast.success('Withdrawal approved'); setSelected(null); load() }
+    setProcessing(false)
+  }
+
+  const handleReject = async (id: string) => {
+    setProcessing(true)
+    const { error } = await supabase.rpc('reject_withdrawal', { p_request_id: id })
+    if (error) toast.error('Reject failed: ' + error.message)
+    else { toast.success('Withdrawal rejected, coins credited back'); setSelected(null); load() }
     setProcessing(false)
   }
 
@@ -96,10 +103,10 @@ export default function Withdrawals() {
               )}
               {selected.status === 'PENDING' && (
                 <div className="flex gap-2 pt-2 border-t">
-                  <Button onClick={() => handleAction(selected.id, 'PROCESSED')} disabled={processing} className="flex-1">
+                  <Button onClick={() => handleApprove(selected.id)} disabled={processing} className="flex-1">
                     {processing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />} Approve
                   </Button>
-                  <Button onClick={() => handleAction(selected.id, 'REJECTED')} disabled={processing} variant="destructive" className="flex-1">
+                  <Button onClick={() => handleReject(selected.id)} disabled={processing} variant="destructive" className="flex-1">
                     <XCircle className="h-4 w-4 mr-2" /> Reject
                   </Button>
                 </div>
