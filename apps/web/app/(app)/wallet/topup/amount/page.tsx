@@ -12,6 +12,8 @@ function TopUpAmountContent() {
   const method = searchParams?.get('method') || 'paystack';
   const { wallet } = useWallet();
   const { currency, activeRate, formatFiat, getCoinsFromFiat, loadingLocation } = useCurrency();
+  const displayCurrency = method === 'crypto' ? 'USD' : currency;
+  const displayRate = method === 'crypto' ? { symbol: '$', ratePerCmp: 0.00006667, code: 'USD' } : activeRate;
 
   const [mode, setMode] = useState<'cmp' | 'fiat'>('fiat');
   const [cmpAmount, setCmpAmount] = useState<string>('');
@@ -21,27 +23,27 @@ function TopUpAmountContent() {
   const numFiat = parseFloat(fiatAmount) || 0;
   const numCmp = parseInt(cmpAmount) || 0;
 
-  const processingFee = mode === 'fiat' ? (currency === 'USD' ? 0.45 : 50) : 2;
+  const processingFee = mode === 'fiat' ? (displayCurrency === 'USD' ? 0.45 : 50) : 2;
   const serviceFee = numFiat * 0.015;
   const totalPayable = numFiat + processingFee + serviceFee;
 
   const handleCmpChange = (val: string) => {
     setCmpAmount(val);
     const n = parseInt(val) || 0;
-    setFiatAmount(n > 0 ? (n * activeRate.ratePerCmp).toFixed(2) : '');
+    setFiatAmount(n > 0 ? (n * displayRate.ratePerCmp).toFixed(2) : '');
     setMode('cmp');
   };
 
   const handleFiatChange = (val: string) => {
     setFiatAmount(val);
     const n = parseFloat(val) || 0;
-    setCmpAmount(n > 0 ? Math.round(n / activeRate.ratePerCmp).toString() : '');
+    setCmpAmount(n > 0 ? Math.round(n / displayRate.ratePerCmp).toString() : '');
     setMode('fiat');
   };
 
   const handleQuickSelect = (val: number) => {
     setFiatAmount(val.toString());
-    setCmpAmount(Math.round(val / activeRate.ratePerCmp).toString());
+    setCmpAmount(Math.round(val / displayRate.ratePerCmp).toString());
     setMode('fiat');
   };
 
@@ -49,14 +51,14 @@ function TopUpAmountContent() {
     if (numFiat <= 0 || numCmp <= 0) return;
     setIsProcessing(true);
     setTimeout(() => {
-      router.push(`/wallet/topup/checkout?amount=${numFiat}&method=${method}&cmp=${numCmp}&currency=${currency}`);
+      router.push(`/wallet/topup/checkout?amount=${numFiat}&method=${method}&cmp=${numCmp}&currency=${displayCurrency}`);
     }, 500);
   };
 
   const quickOptions = useMemo(() => {
-    if (currency === 'NGN') return [1000, 5000, 10000, 50000];
+    if (displayCurrency === 'NGN') return [1000, 5000, 10000, 50000];
     return [10, 25, 50, 100];
-  }, [currency]);
+  }, [displayCurrency]);
 
   const formatNum = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -110,9 +112,9 @@ function TopUpAmountContent() {
 
             {/* Fiat Input */}
             <div className="flex flex-col gap-stack-xs">
-              <label className="font-label-caps text-label-caps text-on-surface-muted ml-1">AMOUNT IN FIAT ({currency})</label>
+              <label className="font-label-caps text-label-caps text-on-surface-muted ml-1">AMOUNT IN FIAT ({displayCurrency})</label>
               <div className="shadow-[inset_4px_4px_8px_rgba(13,27,53,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.9)] bg-surface-container-low rounded-xl p-stack-md flex items-center gap-stack-md border border-outline-variant/30">
-                <span className="font-numeric-display text-numeric-display text-on-surface-muted">{activeRate.symbol}</span>
+                <span className="font-numeric-display text-numeric-display text-on-surface-muted">{displayRate.symbol}</span>
                 <input
                   type="text" inputMode="decimal"
                   value={fiatAmount}
@@ -124,7 +126,7 @@ function TopUpAmountContent() {
                   className="bg-transparent border-none focus:ring-0 w-full font-numeric-display text-numeric-display text-on-surface p-0 outline-none"
                 />
                 <button className="bg-surface-container-highest rounded px-2 py-1 flex items-center gap-1 active:scale-95 transition-transform cursor-default">
-                  <span className="font-label-caps text-label-caps">{currency}</span>
+                  <span className="font-label-caps text-label-caps">{displayCurrency}</span>
                   <span className="material-symbols-outlined text-xs">expand_more</span>
                 </button>
               </div>
@@ -132,7 +134,7 @@ function TopUpAmountContent() {
                 <div className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-sm text-on-surface-muted">info</span>
                   <span className="text-body-sm font-body-sm text-on-surface-muted">
-                    Exchange Rate: <span className="font-numeric-display text-on-surface">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp}</span>
+                    Exchange Rate: <span className="font-numeric-display text-on-surface">1 CMP = {displayRate.symbol}{displayRate.ratePerCmp}</span>
                   </span>
                 </div>
               </div>
@@ -149,7 +151,7 @@ function TopUpAmountContent() {
                   parseFloat(fiatAmount) === val ? 'border-gold-metallic/50 bg-gold-metallic/10' : 'border-outline-variant/20 hover:border-gold-metallic/50'
                 }`}
               >
-                <span className="font-numeric-display text-body-sm text-on-surface">+{activeRate.symbol}{val.toLocaleString()}</span>
+                <span className="font-numeric-display text-body-sm text-on-surface">+{displayRate.symbol}{val.toLocaleString()}</span>
               </button>
             ))}
           </section>
@@ -170,12 +172,12 @@ function TopUpAmountContent() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-body-md font-body-md text-on-surface-muted">Processing Fee (1.5%)</span>
-                <span className="font-numeric-display text-body-md text-on-surface">{activeRate.symbol}{serviceFee.toFixed(2)}</span>
+                <span className="font-numeric-display text-body-md text-on-surface">{displayRate.symbol}{serviceFee.toFixed(2)}</span>
               </div>
               <div className="my-stack-sm border-t border-dashed border-outline-variant"></div>
               <div className="flex justify-between items-center">
                 <span className="font-body-lg text-body-lg text-on-surface font-bold">Total Charge</span>
-                <span className="font-numeric-display text-headline-md text-primary">{activeRate.symbol}{totalPayable.toFixed(2)}</span>
+                <span className="font-numeric-display text-headline-md text-primary">{displayRate.symbol}{totalPayable.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -250,22 +252,22 @@ function TopUpAmountContent() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="font-label-caps text-label-caps text-on-surface-variant block">Amount in {loadingLocation ? '...' : currency}</label>
+                  <label className="font-label-caps text-label-caps text-on-surface-variant block">Amount in {loadingLocation ? '...' : displayCurrency}</label>
                   <div className="relative">
                     <div className="absolute left-6 top-1/2 -translate-y-1/2">
-                      <span className="font-h2 text-h3 text-on-surface-variant">{activeRate.symbol}</span>
+                      <span className="font-h2 text-h3 text-on-surface-variant">{displayRate.symbol}</span>
                     </div>
                     <input type="number" value={fiatAmount} onChange={(e) => handleFiatChange(e.target.value)} placeholder="0.00"
                       className="w-full bg-surface-alt border-none py-6 pl-12 pr-6 rounded-lg font-data-lg text-h2 text-on-surface placeholder:text-outline-variant/60 focus:outline-none focus:ring-2 focus:ring-primary-container/20" />
                   </div>
-                  <p className="text-body-sm text-on-surface-variant text-right">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp} {activeRate.code}</p>
+                  <p className="text-body-sm text-on-surface-variant text-right">1 CMP = {displayRate.symbol}{displayRate.ratePerCmp} {displayRate.code}</p>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {quickOptions.map((val) => (
                     <button key={val} onClick={() => handleQuickSelect(val)}
-                      className={`py-3 rounded-lg border text-on-surface font-semibold hover:border-secondary transition-colors focus:bg-secondary-fixed focus:border-secondary-container ${parseFloat(fiatAmount) === val ? 'border-secondary bg-secondary-fixed/20' : 'border-outline-variant'}`}>
-                      +{activeRate.symbol}{val.toLocaleString()}
+className={`py-3 rounded-lg border text-on-surface font-semibold hover:border-secondary transition-colors focus:bg-secondary-fixed focus:border-secondary-container ${parseFloat(fiatAmount) === val ? 'border-secondary bg-secondary-fixed/20' : 'border-outline-variant'}`}>
+                       +{displayRate.symbol}{val.toLocaleString()}
                     </button>
                   ))}
                 </div>
@@ -277,15 +279,15 @@ function TopUpAmountContent() {
                   </div>
                   <div className="flex justify-between items-center text-body-sm font-body-sm">
                     <span className="text-on-surface-variant">Network Processing Fee</span>
-                    <span className="font-data-md text-data-md">{mode === 'fiat' ? `${activeRate.symbol}${processingFee.toFixed(2)}` : `${processingFee} CMP`}</span>
+                    <span className="font-data-md text-data-md">{mode === 'fiat' ? `${displayRate.symbol}${processingFee.toFixed(2)}` : `${processingFee} CMP`}</span>
                   </div>
                   <div className="flex justify-between items-center text-body-sm font-body-sm">
                     <span className="text-on-surface-variant">Platform Service Fee (0.5%)</span>
-                    <span className="font-data-md text-data-md">{activeRate.symbol}{serviceFee.toFixed(2)}</span>
+                    <span className="font-data-md text-data-md">{displayRate.symbol}{serviceFee.toFixed(2)}</span>
                   </div>
                   <div className="pt-3 border-t border-outline-variant flex justify-between items-center">
                     <span className="font-bold text-on-surface">Total Charge</span>
-                    <span className="font-data-lg text-data-lg text-primary">{activeRate.symbol}{totalPayable.toFixed(2)}</span>
+                    <span className="font-data-lg text-data-lg text-primary">{displayRate.symbol}{totalPayable.toFixed(2)}</span>
                   </div>
                 </div>
 
