@@ -14,7 +14,7 @@ export default function WithdrawAmountPage() {
   const availableBalance = wallet ? wallet.balance : 0;
   const { setAmountCoins } = useWithdrawStore();
   const [coins, setCoins] = useState<string>('');
-  const { activeRate, formatFiat, loadingLocation } = useCurrency();
+  const { activeRate, formatFiat, loadingLocation, getCoinsFromFiat } = useCurrency();
   const [accounts, setAccounts] = useState<SettlementAccount[]>([]);
   const [accountsLoaded, setAccountsLoaded] = useState(false);
 
@@ -31,9 +31,11 @@ export default function WithdrawAmountPage() {
 
   const parsedCoins = parseInt(coins) || 0;
   const isOverBalance = parsedCoins > availableBalance;
-  const isUnderMin = parsedCoins < 100 && parsedCoins > 0;
+  const minFiat = activeRate.code === 'NGN' ? 10000 : 10;
+  const minCoins = Math.ceil(getCoinsFromFiat(minFiat));
+  const isUnderMin = parsedCoins < minCoins && parsedCoins > 0;
   const hasAccounts = accounts.length > 0;
-  const isValid = hasAccounts && parsedCoins >= 100 && parsedCoins <= availableBalance;
+  const isValid = hasAccounts && parsedCoins >= minCoins && parsedCoins <= availableBalance;
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +94,7 @@ export default function WithdrawAmountPage() {
               <input
                 id="withdrawAmount"
                 type="number"
-                min="100"
+                min={minCoins}
                 max={availableBalance}
                 value={coins}
                 onChange={(e) => setCoins(e.target.value)}
@@ -101,7 +103,7 @@ export default function WithdrawAmountPage() {
               />
             </div>
             {isOverBalance && <p className="text-error-alert font-body-sm mt-1">Amount exceeds available balance.</p>}
-            {isUnderMin && <p className="text-error-alert font-body-sm mt-1">Minimum withdrawal amount is 100 coins.</p>}
+            {isUnderMin && <p className="text-error-alert font-body-sm mt-1">Minimum withdrawal is {minCoins.toLocaleString()} coins ({activeRate.symbol}{minFiat.toLocaleString()} {activeRate.code}).</p>}
           </div>
 
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">

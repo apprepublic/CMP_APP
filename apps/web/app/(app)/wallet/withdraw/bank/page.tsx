@@ -6,12 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useWithdrawStore, SettlementAccount } from '@/stores/withdrawStore';
 import { useUserStore } from '@/stores/userStore';
+import { useCurrency } from '@/lib/useCurrency';
 
 export default function WithdrawBankPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { amountCoins, selectedAccount, setSelectedAccount } = useWithdrawStore();
   const { user } = useUserStore();
+  const { activeRate, getFiatEquivalent, formatFiat, loadingLocation } = useCurrency();
   const [accounts, setAccounts] = useState<SettlementAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(searchParams?.get('add') === 'true');
@@ -102,7 +104,7 @@ export default function WithdrawBankPage() {
     }
   };
 
-  const fiatAmount = amountCoins * 10.50;
+  const fiatAmount = getFiatEquivalent(amountCoins);
   const processingFee = fiatAmount * 0.015;
   const finalAmount = fiatAmount - processingFee;
 
@@ -297,13 +299,13 @@ export default function WithdrawBankPage() {
                     <span className="text-body-sm text-on-primary-container">Amount</span>
                     <span className="text-body-sm font-numeric-display text-right">{amountCoins.toLocaleString()} CMP</span>
                     <span className="text-body-sm text-on-primary-container">Exchange Rate</span>
-                    <span className="text-body-sm font-numeric-display text-right text-gold-metallic">1 CMP = ₦10.50</span>
+                    <span className="text-body-sm font-numeric-display text-right text-gold-metallic">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp}</span>
                     <span className="text-body-sm text-on-primary-container">Processing Fee (1.5%)</span>
                     <span className="text-body-sm font-numeric-display text-right text-error">- {processingFee.toFixed(2)} CMP</span>
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-body-lg font-bold">You will receive</span>
-                    <span className="text-headline-md font-numeric-display text-gold-metallic">₦{finalAmount.toFixed(2)}</span>
+                    <span className="text-headline-md font-numeric-display text-gold-metallic">{activeRate.symbol}{finalAmount.toFixed(2)}</span>
                   </div>
                 </>
               )}
@@ -488,16 +490,16 @@ export default function WithdrawBankPage() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-body-sm text-body-sm text-on-surface-variant">Exchange Rate</span>
-                      <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
+                      <span className="font-data-md text-data-md text-on-surface">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-body-sm text-body-sm text-on-surface-variant">Processing Fee (1.5%)</span>
-                      <span className="font-data-md text-data-md text-error-alert">- ₦{processingFee.toFixed(2)}</span>
+                      <span className="font-data-md text-data-md text-error-alert">- {activeRate.symbol}{processingFee.toFixed(2)}</span>
                     </div>
                     <div className="border-t border-dashed border-outline-variant/50 pt-3 mt-3">
                       <div className="flex justify-between items-center">
                         <span className="font-body-md text-body-md font-semibold text-on-surface">You will receive</span>
-                        <span className="font-data-lg text-data-lg text-success-verified">₦{finalAmount.toFixed(2)}</span>
+                        <span className="font-data-lg text-data-lg text-success-verified">{activeRate.symbol}{finalAmount.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

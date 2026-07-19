@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useWithdrawStore } from '@/stores/withdrawStore';
+import { useCurrency } from '@/lib/useCurrency';
 
 export default function TransactionReceiptPage() {
   const router = useRouter();
   const { amountCoins, selectedAccount, transactionId, reset } = useWithdrawStore();
+  const { activeRate, getFiatEquivalent } = useCurrency();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function TransactionReceiptPage() {
 
   if (!mounted) return null;
 
-  const fiatAmount = amountCoins * 10.50;
+  const fiatAmount = getFiatEquivalent(amountCoins);
   const processingFee = fiatAmount * 0.015;
   const finalAmount = fiatAmount - processingFee;
 
@@ -58,7 +60,7 @@ export default function TransactionReceiptPage() {
             {/* Amount Display */}
             <div className="py-stack-lg border-b border-surface-variant flex flex-col items-center">
               <p className="font-label-caps text-label-caps text-on-surface-muted mb-stack-xs">TOTAL WITHDRAWAL</p>
-              <h3 className="font-headline-xl text-headline-xl text-primary-container">₦{finalAmount.toFixed(2)}</h3>
+              <h3 className="font-headline-xl text-headline-xl text-primary-container">{activeRate.symbol}{finalAmount.toFixed(2)}</h3>
             </div>
 
             {/* Detailed Ledger */}
@@ -154,7 +156,7 @@ export default function TransactionReceiptPage() {
             <div className="space-y-1">
               <p className="font-body-md text-body-md text-on-surface-variant uppercase tracking-wider">Withdrawal Submitted</p>
               <h2 className="font-data-lg text-[40px] leading-none text-primary font-bold tracking-tight">
-                ₦{finalAmount.toFixed(2)}
+                {activeRate.symbol}{finalAmount.toFixed(2)}
               </h2>
             </div>
           </div>
@@ -215,7 +217,7 @@ export default function TransactionReceiptPage() {
           <div className="w-full bg-surface-container rounded-xl p-4 border border-outline-variant/20">
             <div className="flex justify-between items-center mb-2">
               <span className="font-label-caps text-label-caps text-on-surface-variant">Conversion Rate</span>
-              <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
+              <span className="font-data-md text-data-md text-on-surface">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="font-body-sm text-body-sm text-on-surface-variant">Coins Withheld</span>
@@ -224,7 +226,7 @@ export default function TransactionReceiptPage() {
             <div className="w-full h-px bg-outline-variant/20 my-2"></div>
             <div className="flex justify-between items-center">
               <span className="font-body-sm text-body-sm text-on-surface-variant">Fee</span>
-              <span className="font-data-md text-data-md text-on-surface">₦{processingFee.toFixed(2)}</span>
+              <span className="font-data-md text-data-md text-on-surface">{activeRate.symbol}{processingFee.toFixed(2)}</span>
             </div>
           </div>
 

@@ -12,7 +12,7 @@ export default function WithdrawConfirmPage() {
   const router = useRouter();
   const { amountCoins, selectedAccount, setTransactionId, reset } = useWithdrawStore();
   const { wallet } = useWallet();
-  const { activeRate, formatFiat, loadingLocation } = useCurrency();
+  const { activeRate, formatFiat, loadingLocation, getFiatEquivalent } = useCurrency();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export default function WithdrawConfirmPage() {
     }
   }, [amountCoins, selectedAccount, router]);
 
-  const fiatAmount = amountCoins * 10.50;
+  const fiatAmount = getFiatEquivalent(amountCoins);
   const processingFee = fiatAmount * 0.015;
   const finalAmount = fiatAmount - processingFee;
 
@@ -128,17 +128,17 @@ export default function WithdrawConfirmPage() {
             <div className="flex flex-col gap-2">
               <div className="flex justify-between text-body-sm">
                 <span className="text-on-surface-muted">Exchange Rate</span>
-                <span className="font-numeric-display text-on-surface">1 CMP = ₦10.50</span>
+                <span className="font-numeric-display text-on-surface">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp}</span>
               </div>
               <div className="flex justify-between text-body-sm">
                 <span className="text-on-surface-muted">Withdrawal Fee (1.5%)</span>
-                <span className="font-numeric-display text-error">- ₦{processingFee.toFixed(2)}</span>
+                <span className="font-numeric-display text-error">- {activeRate.symbol}{processingFee.toFixed(2)}</span>
               </div>
             </div>
             <div className="h-[1px] bg-surface-variant w-full my-2"></div>
             <div className="flex justify-between items-center py-2">
               <span className="font-bold text-on-surface">Total to Receive</span>
-              <span className="font-numeric-display text-primary-container text-[24px] font-bold">₦{finalAmount.toFixed(2)}</span>
+              <span className="font-numeric-display text-primary-container text-[24px] font-bold">{activeRate.symbol}{finalAmount.toFixed(2)}</span>
             </div>
           </div>
 
@@ -248,16 +248,16 @@ export default function WithdrawConfirmPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-body-sm text-body-sm text-on-surface-variant">Exchange Rate</span>
-                <span className="font-data-md text-data-md text-on-surface">1 CMP = ₦10.50</span>
+                <span className="font-data-md text-data-md text-on-surface">1 CMP = {activeRate.symbol}{activeRate.ratePerCmp}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-body-sm text-body-sm text-on-surface-variant">Fee (1.5%)</span>
-                <span className="font-data-md text-data-md text-error-alert">- ₦{processingFee.toFixed(2)}</span>
+                <span className="font-data-md text-data-md text-error-alert">- {activeRate.symbol}{processingFee.toFixed(2)}</span>
               </div>
               <div className="border-t border-dashed border-outline-variant/50 pt-3 mt-3">
                 <div className="flex justify-between items-center">
                   <span className="font-body-md text-body-md font-semibold text-on-surface">You will receive</span>
-                  <span className="font-data-lg text-data-lg text-success-verified font-bold">₦{finalAmount.toFixed(2)}</span>
+                  <span className="font-data-lg text-data-lg text-success-verified font-bold">{activeRate.symbol}{finalAmount.toFixed(2)}</span>
                 </div>
               </div>
             </div>
