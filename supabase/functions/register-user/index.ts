@@ -140,7 +140,8 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (err: any) {
     console.error("register-user error:", err);
-    return jsonResponse({ error: "Internal server error. Please try again." });
+    const msg = err?.message || err?.toString() || "Unknown error";
+    return jsonResponse({ error: "Internal server error: " + msg });
   }
 };
 

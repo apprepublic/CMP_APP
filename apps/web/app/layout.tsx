@@ -44,6 +44,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@500;600&display=swap"
           rel="stylesheet"
         />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4023744925153520" crossorigin="anonymous"></script>
       </head>
       <body className={inter.className}>
         <Providers>

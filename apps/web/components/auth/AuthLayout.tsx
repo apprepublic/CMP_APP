@@ -64,27 +64,24 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           <div>
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">PLATFORM</h5>
             <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">How it Works</Link></li>
-
               <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/wallet">Store</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/music">Stream Music</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/contests">Contests</Link></li>
             </ul>
           </div>
           <div>
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">COMMUNITY</h5>
             <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Discord Hub</Link></li>
               <li><Link className="hover:text-secondary-fixed transition-colors" href="/referrals">Referral Program</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Creator Perks</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="/contests">Leaderboards</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/articles">Articles</Link></li>
             </ul>
           </div>
           <div>
             <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">LEGAL</h5>
             <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Terms of Service</Link></li>
-              <li><Link className="hover:text-secondary-fixed transition-colors" href="#">Cookie Policy</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/privacy">Privacy Policy</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/terms">Terms of Service</Link></li>
+              <li><Link className="hover:text-secondary-fixed transition-colors" href="/cookies">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>

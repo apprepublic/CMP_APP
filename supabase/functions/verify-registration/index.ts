@@ -15,6 +15,8 @@ const jsonResponse = (body: Record<string, any>) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -22,10 +24,10 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log("=== VERIFY FUNCTION STARTED ===");
-    
+
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const body = await req.json();
-    
+
     console.log("Request body:", JSON.stringify(body));
 
     const token = typeof body.token === "string" ? body.token.trim() : undefined;
@@ -46,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { data: pendingReg, error: lookupError } = await query.single();
-    
+
     if (lookupError || !pendingReg) {
       console.log("Lookup error:", lookupError);
       return jsonResponse({ error: "Invalid or expired verification. Please register again." });
@@ -65,11 +67,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!password) {
       console.log("No password provided, returning requiresPassword");
-      return jsonResponse({ 
-        requiresPassword: true, 
-        email: pendingReg.email, 
+      return jsonResponse({
+        requiresPassword: true,
+        email: pendingReg.email,
         fullName: pendingReg.full_name,
-        referralCode: pendingReg.referral_code 
+        referralCode: pendingReg.referral_code,
       });
     }
 
@@ -77,92 +79,29 @@ const handler = async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "Password must be 8-128 characters" });
     }
 
-    console.log("Creating auth user via direct Auth Admin API...");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Log env diagnostics (mask key for safety)
     console.log("SUPABASE_URL:", supabaseUrl ? supabaseUrl.slice(0, 30) + "..." : "MISSING");
     console.log("SERVICE_ROLE_KEY present:", !!serviceRoleKey);
 
-    // Rollback helper: delete auth user if downstream steps fail
-    let userId: string | null = null;
-    const cleanupAuthUser = async () => {
-      if (userId) {
-        try {
-          await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
-            method: "DELETE",
-            headers: {
-              "apikey": serviceRoleKey,
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-          });
-        } catch (e) {
-          console.error("Failed to clean up auth user:", e);
-        }
+    const rollback = async (uid: string) => {
+      try {
+        await fetch(`${supabaseUrl}/auth/v1/admin/users/${uid}`, {
+          method: "DELETE",
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+        });
+      } catch (e) {
+        console.error("Failed to clean up auth user:", e);
       }
     };
 
-    // Insert into users table FIRST (no auth dependency)
-    const tempId = crypto.randomUUID();
-    const { error: usersError } = await supabase.from("users").insert({
-      id: tempId,
-      email: pendingReg.email,
-      full_name: pendingReg.full_name,
-      phone_number: null,
-      avatar_url: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    if (usersError) {
-      console.error("Users table insert error:", usersError);
-      return jsonResponse({ error: "Failed to create user profile" });
-    }
-
-    // Create wallet with 500 signup bonus
-    const { data: walletData, error: walletError } = await supabase
-      .from("wallets")
-      .insert({
-        user_id: tempId,
-        coin_balance: 500,
-        lifetime_earned: 500,
-        lifetime_spent: 0,
-        referral_code: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select("id")
-      .single();
-
-    if (walletError) {
-      console.error("Wallet creation error:", walletError);
-      await supabase.from("users").delete().eq("id", tempId);
-      return jsonResponse({ error: "Failed to create wallet" });
-    }
-
-    const walletId = walletData?.id;
-    console.log("Wallet created for temp user:", tempId, "wallet_id:", walletId);
-
-    // Record signup bonus in coin_transactions
-    if (walletId) {
-      const { error: coinTransactionError } = await supabase.from("coin_transactions").insert({
-        id: crypto.randomUUID(),
-        wallet_id: walletId,
-        type: 'earn',
-        amount: 500,
-        balance_after: 500,
-        description: 'Signup bonus — Welcome to CMPapp!',
-        created_at: new Date().toISOString(),
-      });
-
-      if (coinTransactionError) {
-        console.error("Coin transaction error:", coinTransactionError);
-      }
-    }
-
-    // NOW create the auth user (last step — nothing depends on it to succeed)
+    // Create auth user via Auth Admin API
+    // This triggers on_auth_user_created → handle_new_user() → insert into public.users
+    // → create_wallet_for_user() → insert into wallets + coin_transactions
     const adminRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
       method: "POST",
       headers: {
@@ -192,36 +131,74 @@ const handler = async (req: Request): Promise<Response> => {
         typeof errMsg === "string" &&
         (errMsg.includes("already been registered") || errMsg.includes("User already exists"))
       ) {
-        // Auth user already exists — clean up the temp profile/wallet we created
-        await supabase.from("coin_transactions").delete().eq("wallet_id", walletId);
-        await supabase.from("wallets").delete().eq("id", walletId);
-        await supabase.from("users").delete().eq("id", tempId);
         return jsonResponse({ error: "This email is already registered. Please sign in instead." });
       }
       console.error("Auth Admin API error:", adminRes.status, JSON.stringify(adminBody));
-      // Auth creation failed — clean up temp profile/wallet
-      await supabase.from("coin_transactions").delete().eq("wallet_id", walletId);
-      await supabase.from("wallets").delete().eq("id", walletId);
-      await supabase.from("users").delete().eq("id", tempId);
       return jsonResponse({ error: "Failed to create account: " + errMsg });
     }
 
-    userId = adminBody.id;
+    const userId = adminBody.id;
     console.log("Auth user created:", userId);
 
-    // Update temp user id to real auth user id
-    const { error: updateIdError } = await supabase.from("users").update({ id: userId }).eq("id", tempId);
-    if (updateIdError) {
-      console.error("Failed to update user id, rolling back...", updateIdError);
-      await supabase.from("coin_transactions").delete().eq("wallet_id", walletId);
-      await supabase.from("wallets").delete().eq("id", walletId);
-      await supabase.from("users").delete().eq("id", tempId);
-      await cleanupAuthUser();
-      return jsonResponse({ error: "Failed to finalize account" });
+    // Wait for the auth trigger chain to create user profile and wallet
+    await sleep(1500);
+
+    // Verify user profile was created by the trigger
+    const { data: userProfile, error: profileLookupError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileLookupError || !userProfile) {
+      console.error("User profile not found after trigger. Creating manually...");
+      const { error: insertError } = await supabase.from("users").upsert({
+        id: userId,
+        email: pendingReg.email,
+        full_name: pendingReg.full_name,
+        phone_number: null,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+
+      if (insertError) {
+        console.error("Manual user insert error:", insertError);
+        await rollback(userId);
+        return jsonResponse({ error: "Failed to create user profile: " + insertError.message });
+      }
     }
 
-    // Update wallet user_id and pending_registration id
-    await supabase.from("wallets").update({ user_id: userId }).eq("user_id", tempId);
+    // Verify wallet was created by the trigger chain
+    const { data: walletData, error: walletLookupError } = await supabase
+      .from("wallets")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (walletLookupError || !walletData) {
+      console.error("Wallet not found after trigger. Creating manually...");
+      const { error: walletError } = await supabase.from("wallets").insert({
+        user_id: userId,
+        coin_balance: 500,
+        lifetime_earned: 500,
+        lifetime_spent: 0,
+        referral_code: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      if (walletError) {
+        console.error("Manual wallet creation error:", walletError);
+        await supabase.from("users").delete().eq("id", userId);
+        await rollback(userId);
+        return jsonResponse({ error: "Failed to create wallet: " + walletError.message });
+      }
+    }
+
+    console.log("Wallet verified for user:", userId);
+
+    // Finalize
     await supabase.from("pending_registrations").delete().eq("id", pendingReg.id);
 
     // Handle referral if provided
