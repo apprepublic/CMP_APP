@@ -407,6 +407,15 @@ class ApiService {
       .gte('completed_at', today.toISOString())
       .lt('completed_at', tomorrow.toISOString());
 
+    const { count: articleReadsToday } = await supabase
+      .from('coin_transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .eq('type', 'earn')
+      .ilike('description', 'Read article:%')
+      .gte('created_at', today.toISOString())
+      .lt('created_at', tomorrow.toISOString());
+
     const jsDay = today.getDay();
     const mondayBasedToday = jsDay === 0 ? 6 : jsDay - 1;
     const monday = new Date(today);
@@ -431,9 +440,19 @@ class ApiService {
       .gte('completed_at', monday.toISOString())
       .lt('completed_at', nextMonday.toISOString());
 
+    const { data: weekArticleReads } = await supabase
+      .from('coin_transactions')
+      .select('created_at')
+      .eq('user_id', session.user.id)
+      .eq('type', 'earn')
+      .ilike('description', 'Read article:%')
+      .gte('created_at', monday.toISOString())
+      .lt('created_at', nextMonday.toISOString());
+
     const completedDates = new Set<string>();
     (weekCompletions || []).forEach((c: any) => completedDates.add(new Date(c.last_completed_at).toISOString().slice(0, 10)));
     (weekPosted || []).forEach((c: any) => completedDates.add(new Date(c.completed_at).toISOString().slice(0, 10)));
+    (weekArticleReads || []).forEach((c: any) => completedDates.add(new Date(c.created_at).toISOString().slice(0, 10)));
 
     const dailyHistory = [];
     for (let i = 0; i < 7; i++) {
@@ -448,7 +467,7 @@ class ApiService {
         longestStreak: streakData?.longest_streak || 0,
         lastActiveDate: streakData?.last_activity_date || null,
         freezesOwned: streakData?.freezes_owned || 0,
-        tasksCompletedToday: (completionsToday || 0) + (postedCompletionsToday || 0),
+        tasksCompletedToday: (completionsToday || 0) + (postedCompletionsToday || 0) + (articleReadsToday || 0),
         dailyHistory,
       },
     };
