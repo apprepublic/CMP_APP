@@ -26,7 +26,13 @@ export default function LandingPage() {
         .from('waitlist')
         .insert({ email } as any);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          router.push(`/register?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        throw error;
+      }
 
       setEmail('');
       router.push(`/register?email=${encodeURIComponent(email)}`);
