@@ -60,6 +60,16 @@ export default function LandingPage() {
               </Link>
             </div>
           )}
+          {!isAuthenticated && (
+            <div className="flex items-center gap-x-8">
+              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/articles">
+                Articles
+              </Link>
+              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/music">
+                Music
+              </Link>
+            </div>
+          )}
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
