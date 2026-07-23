@@ -79,7 +79,7 @@ function MobileArticlesPage() {
             </div>
           ) : (
             articles.map((article) => (
-              <Link key={article.id} href={`/article?slug=${article.slug}`}
+              <Link key={article.id} href={`/articles/${article.slug}`}
                 className="block bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-[-4px_-4px_10px_rgba(255,255,255,0.8),4px_4px_10px_rgba(13,27,53,0.08)]">
                 {article.cover_image_url && (
                   <div className="relative w-full aspect-[16/9] overflow-hidden">
@@ -223,7 +223,7 @@ export default function ArticlesPage() {
               {articles.map((article) => (
                 <Link 
                   key={article.id} 
-                  href={`/article?slug=${article.slug}`}
+                  href={`/articles/${article.slug}`}
                   className="group block bg-surface-alt rounded-2xl overflow-hidden border border-outline-variant/30 hover:border-secondary transition-all shadow-sm hover:shadow-md"
                 >
                   {article.cover_image_url && (
