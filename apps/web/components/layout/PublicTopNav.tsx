@@ -8,52 +8,45 @@ import { useUserStore } from '@/stores/userStore';
 import { useWallet } from '@/lib/useWallet';
 import { cn } from '@/lib/utils';
 import {
-  Coins,
   FileText,
   Music,
-  ShoppingBag,
-  Users,
+  LayoutDashboard,
   Trophy,
-  Wallet,
-  Menu,
-  X,
   LogIn,
   UserPlus,
+  Menu,
+  X,
+  Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 
 const publicNavItems = [
-  { href: '/', label: 'Home', icon: Coins },
   { href: '/articles', label: 'Articles', icon: FileText },
   { href: '/music', label: 'Music', icon: Music },
   { href: '/contests', label: 'Contests', icon: Trophy },
 ];
 
-const authenticatedNavItems = [
-  { href: '/tasks', label: 'Tasks', icon: Coins },
+const authNavItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/articles', label: 'Articles', icon: FileText },
   { href: '/music', label: 'Music', icon: Music },
-
-  { href: '/referrals', label: 'Refer', icon: Users },
-  { href: '/contests', label: 'Contests', icon: Trophy },
 ];
 
-export function Header() {
+export function PublicTopNav() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated } = useUserStore();
+  const { isAuthenticated, user } = useUserStore();
   const { wallet } = useWallet();
 
-  const navItems = isAuthenticated ? authenticatedNavItems : publicNavItems;
+  const navItems = isAuthenticated ? authNavItems : publicNavItems;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-neu-bg shadow-neu-flat">
       <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
           <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
         </Link>
 
-        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center space-x-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -74,11 +67,10 @@ export function Header() {
           })}
         </nav>
 
-        {/* Right side */}
         <div className="flex items-center gap-2">
-          {isAuthenticated && user ? (
-            <>
-              <Link href="/wallet" className="hidden sm:flex">
+          {isAuthenticated ? (
+            <div className="hidden md:flex items-center gap-2">
+              <Link href="/wallet">
                 <Button variant="neumorphic" size="sm" className="gap-2">
                   <Wallet className="h-4 w-4 text-neo-secondary" />
                   <span className="font-semibold text-neo-text-primary">
@@ -88,12 +80,12 @@ export function Header() {
               </Link>
               <Link href="/settings">
                 <NeuIconBadge size="sm">
-                  {user.avatarUrl ? (
+                  {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
                   ) : (
                     <span className="h-6 w-6 rounded-full bg-neo-primary flex items-center justify-center text-white text-sm font-bold">
                       {(() => {
-                        const name = user.displayName || user.email || 'U';
+                        const name = user?.displayName || user?.email || 'U';
                         const parts = name.trim().split(/\s+/);
                         return parts.length >= 2
                           ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
@@ -103,9 +95,9 @@ export function Header() {
                   )}
                 </NeuIconBadge>
               </Link>
-            </>
+            </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="hidden md:flex gap-2">
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="gap-2 text-neo-text-secondary">
                   <LogIn className="h-4 w-4" />
@@ -121,7 +113,6 @@ export function Header() {
             </div>
           )}
 
-          {/* Mobile menu toggle */}
           <NeuIconBadge
             size="sm"
             className="md:hidden cursor-pointer"
@@ -132,7 +123,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Nav */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-neu-bg-dark bg-neu-bg">
           <nav className="container py-4 flex flex-col gap-2">
@@ -160,17 +150,49 @@ export function Header() {
                 </Link>
               );
             })}
-            {isAuthenticated && (
-              <Link href="/wallet" onClick={() => setMobileMenuOpen(false)}>
-                <button className="w-full flex items-center gap-3 py-3 px-4 rounded-xl shadow-neu-flat text-neo-text-secondary">
-                  <NeuIconBadge size="sm">
+            {isAuthenticated ? (
+              <div className="flex gap-2 mt-2">
+                <Link href="/wallet" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                  <Button variant="neumorphic" size="sm" className="w-full gap-2">
                     <Wallet className="h-4 w-4 text-neo-secondary" />
+                    <span className="font-semibold text-neo-text-primary">
+                      {new Intl.NumberFormat('en-NG').format(wallet?.balance || 0)}
+                    </span>
+                  </Button>
+                </Link>
+                <Link href="/settings" onClick={() => setMobileMenuOpen(false)}>
+                  <NeuIconBadge size="sm">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+                    ) : (
+                      <span className="h-6 w-6 rounded-full bg-neo-primary flex items-center justify-center text-white text-sm font-bold">
+                        {(() => {
+                          const name = user?.displayName || user?.email || 'U';
+                          const parts = name.trim().split(/\s+/);
+                          return parts.length >= 2
+                            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                            : name[0].toUpperCase();
+                        })()}
+                      </span>
+                    )}
                   </NeuIconBadge>
-                  <span className="font-body-md text-body-md">
-                    Wallet ({new Intl.NumberFormat('en-NG').format(wallet?.balance || 0)})
-                  </span>
-                </button>
-              </Link>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex gap-2 mt-2">
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                  <Button variant="ghost" size="sm" className="w-full gap-2 text-neo-text-secondary">
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="flex-1">
+                  <Button size="sm" className="w-full gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </nav>
         </div>

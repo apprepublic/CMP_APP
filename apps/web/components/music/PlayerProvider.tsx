@@ -69,9 +69,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [activeTask]);
 
   const isAuthenticated = useUserStore((state: any) => state.isAuthenticated);
+  const initialLoadRef = useRef(true);
 
   // Stop music and reset player state when user logs out
   useEffect(() => {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
     if (!isAuthenticated) {
       const audio = audioRef.current;
       if (audio) {
@@ -136,11 +141,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             })
             .catch((err: any) => {
               console.error('Failed to complete streaming task:', err);
-              toast({
-                title: 'Task Completion Failed',
-                description: err.message || 'Failed to complete streaming task.',
-                variant: 'destructive',
-              });
+              if (!isAuthenticated) {
+                toast({
+                  title: 'Sign up to claim coins',
+                  description: 'Create an account to earn rewards from streaming.',
+                  variant: 'default',
+                });
+              } else {
+                toast({
+                  title: 'Task Completion Failed',
+                  description: err.message || 'Failed to complete streaming task.',
+                  variant: 'destructive',
+                });
+              }
             });
 
           setActiveTask(null); // prevent duplicate submissions

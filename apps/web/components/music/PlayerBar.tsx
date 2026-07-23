@@ -3,6 +3,7 @@
 import { usePlayer } from './PlayerProvider';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { useUserStore } from '@/stores/userStore';
+import { toast } from '@/components/ui/use-toast';
 import { Shuffle, Repeat } from 'lucide-react';
 
 function fmt(t: number) {
@@ -17,17 +18,19 @@ export function PlayerBar() {
   const { isCollapsed } = useSidebarStore();
   const isAuthenticated = useUserStore((state: any) => state.isAuthenticated);
 
-  if (!isAuthenticated || !current) return null;
+  if (!current) return null;
 
   const pct = duration ? (progress / duration) * 100 : 0;
 
+  const positionClasses = isAuthenticated
+    ? (isCollapsed
+        ? 'w-full lg:w-[calc(100%-72px)] lg:left-[72px]'
+        : 'w-full lg:w-[calc(100%-16rem)] lg:left-64')
+    : 'w-full';
+
   return (
     <div
-      className={`fixed bottom-16 lg:bottom-0 z-30 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 ${
-        isCollapsed
-          ? 'w-full lg:w-[calc(100%-72px)] lg:left-[72px]'
-          : 'w-full lg:w-[calc(100%-16rem)] lg:left-64'
-      }`}
+      className={`fixed bottom-16 lg:bottom-0 z-30 bg-primary-container text-on-primary border-t border-outline/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 ${positionClasses}`}
     >
       {/* Progress Bar — scoped to its own container, does NOT span the full bar */}
       <div className="absolute top-0 left-0 w-full h-1 bg-surface-variant/20">
@@ -101,16 +104,26 @@ export function PlayerBar() {
           <span className="font-data-md text-data-md tabular-nums">{fmt(progress)} / {fmt(duration)}</span>
           {/* Download button — only enabled when song permits download */}
           {current?.is_download_enabled ? (
-            <a
-              href={current.audio_url}
-              download
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-secondary transition-colors"
-              aria-label="Download song"
-            >
-              <span className="material-symbols-outlined text-[20px]">download</span>
-            </a>
+            isAuthenticated ? (
+              <a
+                href={current.audio_url}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-secondary transition-colors"
+                aria-label="Download song"
+              >
+                <span className="material-symbols-outlined text-[20px]">download</span>
+              </a>
+            ) : (
+              <button
+                onClick={() => toast({ title: 'Sign up to claim coins', description: 'Create an account to download songs and earn rewards.', variant: 'default' })}
+                className="hover:text-secondary transition-colors"
+                aria-label="Sign up to download"
+              >
+                <span className="material-symbols-outlined text-[20px]">download</span>
+              </button>
+            )
           ) : (
             <button
               disabled
