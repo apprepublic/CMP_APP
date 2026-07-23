@@ -33,21 +33,19 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { error: funcError } = await supabase.functions.invoke('send-password-reset', {
+        body: { email: email.trim() },
       });
 
-      if (resetError) throw resetError;
+      if (funcError) throw new Error(funcError);
       
       setSuccess(true);
     } catch (err: any) {
       const msg = err?.message || '';
-      if (msg.includes('rate_limit') || msg.includes('429') || msg.includes('too many')) {
+      if (msg.includes('rate_limit') || msg.includes('too many')) {
         setError('Too many requests. Please wait a few minutes before trying again.');
-      } else if (msg.includes('Email not found') || msg.includes('user_not_found')) {
-        setSuccess(true);
       } else {
-        setError(msg || 'Failed to send recovery email. Please try again.');
+        setError('Failed to send recovery email. Please try again.');
       }
     } finally {
       setIsLoading(false);

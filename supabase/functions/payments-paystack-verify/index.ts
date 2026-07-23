@@ -103,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       const res = await pgClient.queryObject`
-        UPDATE wallets SET coin_balance = coin_balance + ${coinsToCredit}, updated_at = NOW()
+        UPDATE wallets SET coin_balance = (COALESCE(coin_balance::numeric, 0) + ${coinsToCredit})::text, updated_at = NOW()
         WHERE user_id = ${user.id}
         RETURNING id, coin_balance
       `;

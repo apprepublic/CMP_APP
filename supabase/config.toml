@@ -45,3 +45,9 @@ verify_jwt = false
 
 [functions.payments-nowpayments-webhook]
 verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.reset-password]
+verify_jwt = false

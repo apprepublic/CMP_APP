@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Lock, Eye, EyeOff, ArrowRight, AlertTriangle } from 'lucide-react';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 
 type PageState = 'checking' | 'invalid' | 'ready';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams?.get('token') || '';
+  const email = searchParams?.get('email') || '';
   const [pageState, setPageState] = useState<PageState>('checking');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,41 +21,25 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Validate recovery session on mount
+  // Validate token on mount
   useEffect(() => {
-    let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    if (!token) {
+      setPageState('invalid');
+      return;
+    }
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        if (!cancelled) setPageState('ready');
-      }
-    });
-
-    const init = async () => {
-      const { data, error: sessionError } = await supabase.auth.getSession();
-
-      if (cancelled) return;
-
-      if (!sessionError && data.session?.user) {
-        setPageState('ready');
-        return;
-      }
-
-      // No session yet — give the hash parser 3 seconds
-      timeoutId = setTimeout(() => {
-        if (!cancelled) setPageState('invalid');
-      }, 3000);
-    };
-
-    init();
-
-    return () => {
-      cancelled = true;
-      if (timeoutId) clearTimeout(timeoutId);
-      listener.subscription.unsubscribe();
-    };
-  }, []);
+    supabase.functions.invoke('reset-password', { body: { token } })
+      .then(({ data, error: funcError }) => {
+        if (funcError || data?.error) {
+          setPageState('invalid');
+        } else if (data?.valid) {
+          setPageState('ready');
+        } else {
+          setPageState('invalid');
+        }
+      })
+      .catch(() => setPageState('invalid'));
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,20 +58,15 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
+      const { data, error: funcError } = await supabase.functions.invoke('reset-password', {
+        body: { token, password: newPassword },
       });
 
-      if (updateError) throw updateError;
+      if (funcError || data?.error) throw new Error(data?.error || funcError?.message || 'Failed to update password');
 
       router.push('/reset-password-success');
     } catch (err: any) {
-      const msg = err?.message || '';
-      setError(
-        msg.includes('session') || msg.includes('not authenticated')
-          ? 'Your recovery link has expired. Please request a new one.'
-          : msg || 'Failed to update password'
-      );
+      setError(err?.message || 'Failed to update password');
     } finally {
       setIsLoading(false);
     }
@@ -202,5 +184,19 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </AuthLayout>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <AuthLayout>
+        <div className="w-full max-w-md bg-surface-container-lowest rounded-xl p-8 md:p-10 flex items-center justify-center min-h-[300px]">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#B8860B]" />
+        </div>
+      </AuthLayout>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
