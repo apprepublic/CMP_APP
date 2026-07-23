@@ -466,17 +466,41 @@ export default function LandingPage() {
           </section>
         </main>
 
-        <footer className="bg-surface-container-high py-stack-lg px-4 mt-auto">
-          <div className="max-w-5xl mx-auto flex flex-col items-center gap-4">
-            <div className="text-center">
-              <span className="font-['Montserrat'] text-[20px] font-bold text-primary">CMPapp</span>
-              <p className="font-body-sm text-body-sm text-on-surface-muted mt-1">© 2024 CMPapp. All rights reserved.</p>
+        <footer className="bg-primary text-white py-16 px-margin-mobile border-t border-white/10">
+          <div className="max-w-container-max mx-auto flex flex-col gap-10">
+            <div className="flex flex-col items-center text-center gap-4">
+              <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
+              <p className="font-body-sm text-body-sm text-white/70 max-w-xs">
+                The creative economy hub empowering the global digital generation through music, tasks, and community.
+              </p>
             </div>
-            <div className="flex gap-4 font-body-sm text-body-sm text-on-surface-variant">
-              <Link className="hover:text-primary transition-colors" href="#">Platform</Link>
-              <Link className="hover:text-primary transition-colors" href="#">Company</Link>
-              <Link className="hover:text-primary transition-colors" href="#">Terms</Link>
-              <Link className="hover:text-primary transition-colors" href="#">Privacy</Link>
+            <div className="grid grid-cols-3 gap-6 text-center">
+              <div>
+                <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-4">PLATFORM</h5>
+                <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/music">Stream Music</Link></li>
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/contests">Contests</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-4">COMMUNITY</h5>
+                <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/referrals">Referral Program</Link></li>
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/articles">Articles</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-4">LEGAL</h5>
+                <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/privacy">Privacy</Link></li>
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/terms">Terms</Link></li>
+                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/cookies">Cookies</Link></li>
+                </ul>
+              </div>
+            </div>
+            <div className="pt-8 border-t border-white/10 flex flex-col items-center gap-4 font-body-sm text-body-sm text-white/70">
+              <div>© 2024 CMPapp. Built for the Creative Revolution.</div>
             </div>
           </div>
         </footer>
