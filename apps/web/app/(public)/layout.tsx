@@ -1,5 +1,5 @@
 import { PremiumHeader } from '@/components/layout/PremiumHeader';
-import { Footer } from '@/components/layout/Footer';
+import { PremiumFooter } from '@/components/layout/PremiumFooter';
 import BottomNavBar from '@/components/layout/BottomNavBar';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -7,7 +7,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <>
       <PremiumHeader />
       <div className="flex-1 flex flex-col min-h-0 pt-16 md:pt-20">{children}</div>
-      <Footer />
+      <PremiumFooter />
       <BottomNavBar />
     </>
   );

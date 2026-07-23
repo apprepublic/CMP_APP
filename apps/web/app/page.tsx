@@ -7,6 +7,7 @@ import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
 import { CheckCircle } from 'lucide-react';
 import { PremiumHeader } from '@/components/layout/PremiumHeader';
+import { PremiumFooter } from '@/components/layout/PremiumFooter';
 
 export default function LandingPage() {
   const { isAuthenticated } = useUserStore();
@@ -431,6 +432,7 @@ export default function LandingPage() {
           </div>
         </footer>
       </div>
+      <PremiumFooter />
     </div>
   );
 }
