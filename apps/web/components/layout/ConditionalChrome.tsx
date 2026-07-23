@@ -24,7 +24,7 @@ const selfChromedPrefixes = [
   '/marketplace',
   '/referrals',
   '/contests',
-  '/', // Landing page has its own premium nav
+  '/',
 ];
 
 export function ConditionalChrome({ children }: { children: React.ReactNode }) {

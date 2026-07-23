@@ -4,13 +4,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
-import { useWallet } from '@/lib/useWallet';
 import { supabase } from '@/lib/supabase';
 import { CheckCircle } from 'lucide-react';
 
 export default function LandingPage() {
-  const { isAuthenticated, user } = useUserStore();
-  const { wallet } = useWallet();
+  const { isAuthenticated } = useUserStore();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,68 +38,6 @@ export default function LandingPage() {
     <div className="min-h-screen bg-surface">
       {/* Desktop/Tablet Landing Page */}
       <div className="hidden md:block">
-        <nav className="hidden md:flex fixed top-0 w-full z-50 bg-primary backdrop-blur-lg border-b border-white/10 shadow-md h-20 justify-between items-center px-margin-desktop">
-          <Link href="/" className="flex items-center gap-3">
-            <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
-          </Link>
-          {isAuthenticated && (
-            <div className="flex items-center gap-x-8">
-              <Link className="font-body-md text-body-md text-secondary-fixed border-b-2 border-secondary-fixed pb-1" href="/dashboard">
-                Dashboard
-              </Link>
-              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/tasks">
-                Earn
-              </Link>
-              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/music">
-                Music
-              </Link>
-              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/wallet">
-                Wallet
-              </Link>
-            </div>
-          )}
-          {!isAuthenticated && (
-            <div className="flex items-center gap-x-8">
-              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/articles">
-                Articles
-              </Link>
-              <Link className="font-body-md text-body-md text-white/90 hover:text-secondary-fixed transition-colors" href="/music">
-                Music
-              </Link>
-            </div>
-          )}
-          <div className="flex items-center gap-4">
-            {isAuthenticated && user ? (
-              <>
-                <div className="premium-border-gold rounded-full px-4 py-1 flex items-center gap-2 bg-white/10 backdrop-blur-md">
-                  <span className="material-symbols-outlined text-secondary-fixed text-xl">paid</span>
-                  <span className="font-data-md text-data-md text-secondary-fixed">
-                    {wallet?.balance?.toLocaleString() || 0}
-                  </span>
-                </div>
-                <button className="text-white hover:text-secondary-fixed transition-colors">
-                  <span className="material-symbols-outlined text-2xl">notifications</span>
-                </button>
-                <Link href="/settings">
-                  <span className="material-symbols-outlined text-2xl text-white hover:text-secondary-fixed transition-colors cursor-pointer">account_circle</span>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <button className="text-white hover:text-secondary-fixed font-medium transition-colors">
-                    Login
-                  </button>
-                </Link>
-                <Link href="/register">
-                  <button className="bg-secondary-fixed hover:bg-secondary text-on-secondary-fixed font-bold font-body-md text-body-md px-6 py-2.5 rounded-lg transition-all shadow-[0_0_20px_rgba(255,222,166,0.3)]">
-                    Sign Up
-                  </button>
-                </Link>
-              </>
-            )}
-          </div>
-        </nav>
 
         <section className="relative min-h-screen pt-20 flex flex-col justify-center overflow-hidden bg-primary">
           <div className="absolute inset-0 z-0 opacity-50">
@@ -292,68 +228,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <footer className="bg-primary text-white py-16 px-margin-mobile md:px-margin-desktop border-t border-white/10">
-          <div className="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-4 gap-gutter">
-            <div className="md:col-span-1">
-              <div className="flex items-center gap-3 mb-4">
-                <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
-              </div>
-              <p className="font-body-sm text-body-sm text-white/70">
-                The creative economy hub empowering the global digital generation through music, tasks, and community.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">PLATFORM</h5>
-              <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-                <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
-                <li><Link className="hover:text-secondary-fixed transition-colors" href="/music">Stream Music</Link></li>
-                <li><Link className="hover:text-secondary-fixed transition-colors" href="/contests">Contests</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-6">COMMUNITY</h5>
-              <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-                <li><Link className="hover:text-secondary-fixed transition-colors" href="/referrals">Referral Program</Link></li>
-                <li><Link className="hover:text-secondary-fixed transition-colors" href="/articles">Articles</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-sm font-semibold mb-4">LEGAL</h5>
-              <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-                <li><Link className="hover:text-white transition-colors" href="/privacy">Privacy Policy</Link></li>
-                <li><Link className="hover:text-white transition-colors" href="/terms">Terms of Service</Link></li>
-                <li><Link className="hover:text-white transition-colors" href="/cookies">Cookie Policy</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="max-w-container-max mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center font-body-sm text-body-sm text-white/70 gap-4">
-            <div>© 2024 CMPapp. Built for the Creative Revolution.</div>
-            <div className="flex gap-6">
-              <button className="cursor-pointer hover:text-secondary-fixed transition-colors">
-                <span className="material-symbols-outlined">language</span>
-              </button>
-              <button className="cursor-pointer hover:text-secondary-fixed transition-colors">
-                <span className="material-symbols-outlined">share</span>
-              </button>
-            </div>
-          </div>
-        </footer>
+
       </div>
 
       {/* Mobile Landing Page */}
       <div className="md:hidden min-h-screen bg-surface text-on-surface font-body-md antialiased flex flex-col">
-        <header className="fixed top-0 w-full z-50 bg-primary shadow-[0px_4px_20px_rgba(13,27,53,0.15)] flex justify-between items-center px-4 h-16">
-          <div className="flex items-center gap-2">
-            <Link href="/">
-              <img src="/logo.png" alt="CMPapp" className="h-8 w-auto" />
-            </Link>
-          </div>
-          <Link href="/register">
-            <button className="bg-gold-metallic text-primary font-label-caps text-label-caps px-4 py-2 rounded-full hover:opacity-80 transition-opacity active:scale-95" style={{border: '1px solid #f7bd48', boxShadow: 'inset 0 0 0 1px rgba(247, 189, 72, 0.3)'}}>
-              Sign Up
-            </button>
-          </Link>
-        </header>
 
         <main className="flex-grow pt-16">
           <section className="relative px-4 py-stack-lg text-center overflow-hidden">
@@ -466,44 +345,7 @@ export default function LandingPage() {
           </section>
         </main>
 
-        <footer className="bg-primary text-white py-16 px-margin-mobile border-t border-white/10">
-          <div className="max-w-container-max mx-auto flex flex-col gap-10">
-            <div className="flex flex-col items-center text-center gap-4">
-              <img src="/logo.png" alt="CMPapp" className="h-10 w-auto" />
-              <p className="font-body-sm text-body-sm text-white/70 max-w-xs">
-                The creative economy hub empowering the global digital generation through music, tasks, and community.
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-4">PLATFORM</h5>
-                <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/tasks">Earn Coins</Link></li>
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/music">Stream Music</Link></li>
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/contests">Contests</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-4">COMMUNITY</h5>
-                <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/referrals">Referral Program</Link></li>
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/articles">Articles</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h5 className="font-label-caps text-label-caps text-secondary-fixed mb-4">LEGAL</h5>
-                <ul className="space-y-3 font-body-sm text-body-sm text-white/70">
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/privacy">Privacy</Link></li>
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/terms">Terms</Link></li>
-                  <li><Link className="hover:text-secondary-fixed transition-colors" href="/cookies">Cookies</Link></li>
-                </ul>
-              </div>
-            </div>
-            <div className="pt-8 border-t border-white/10 flex flex-col items-center gap-4 font-body-sm text-body-sm text-white/70">
-              <div>© 2024 CMPapp. Built for the Creative Revolution.</div>
-            </div>
-          </div>
-        </footer>
+
       </div>
     </div>
   );
