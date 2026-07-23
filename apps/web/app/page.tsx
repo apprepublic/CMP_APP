@@ -372,6 +372,20 @@ export default function LandingPage() {
                   <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                 </button>
               </Link>
+              <div className="flex gap-3 mt-4">
+                <Link href="/articles">
+                  <button className="bg-white/10 backdrop-blur-sm border border-white/30 text-white font-body-md text-body-md px-6 py-2.5 rounded-full hover:bg-white/20 transition-all active:scale-95 inline-flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">article</span>
+                    Articles
+                  </button>
+                </Link>
+                <Link href="/music">
+                  <button className="bg-white/10 backdrop-blur-sm border border-white/30 text-white font-body-md text-body-md px-6 py-2.5 rounded-full hover:bg-white/20 transition-all active:scale-95 inline-flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">music_note</span>
+                    Music
+                  </button>
+                </Link>
+              </div>
             </div>
           </section>
 
