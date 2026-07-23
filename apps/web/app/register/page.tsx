@@ -25,6 +25,10 @@ export default function RegisterPage() {
       setReferredBy(ref);
       setFormData(prev => ({ ...prev, referralCode: ref }));
     }
+    const emailParam = params.get('email');
+    if (emailParam) {
+      setFormData(prev => ({ ...prev, email: emailParam }));
+    }
   }, []);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

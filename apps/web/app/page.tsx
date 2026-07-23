@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +14,7 @@ export default function LandingPage() {
   const { isAuthenticated } = useUserStore();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ export default function LandingPage() {
       if (error) throw error;
 
       setEmail('');
-      alert('Thank you! You\'ve been added to our waitlist.');
+      router.push(`/register?email=${encodeURIComponent(email)}`);
     } catch (err) {
       console.error('Error adding to waitlist:', err);
       alert('Something went wrong. Please try again.');
