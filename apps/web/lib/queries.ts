@@ -510,8 +510,7 @@ export async function getArticles(opts: { category?: string; search?: string; li
     .from('articles')
     .select('*')
     .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .limit(opts.limit ?? 50);
+    .order('created_at', { ascending: false });
   if (opts.category) q = q.eq('category', opts.category);
   if (opts.search) q = q.ilike('title', `%${opts.search}%`);
   return unwrap<Article[]>(await q);
