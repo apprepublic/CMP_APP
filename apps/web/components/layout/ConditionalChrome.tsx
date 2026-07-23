@@ -27,6 +27,9 @@ const selfChromedPrefixes = [
   '/contests',
   '/articles',
   '/article',
+  '/privacy',
+  '/terms',
+  '/cookies',
   '/', // Landing page has its own premium nav
 ];
 
