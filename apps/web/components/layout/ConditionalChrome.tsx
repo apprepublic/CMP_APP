@@ -24,7 +24,6 @@ const selfChromedPrefixes = [
   '/marketplace',
   '/referrals',
   '/contests',
-  '/',
 ];
 
 export function ConditionalChrome({ children }: { children: React.ReactNode }) {
